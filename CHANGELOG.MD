@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `landing/index.html`, `landing/style.css`, `landing/app.js` — local landing page
+  served at `http://localhost:8080`; single-page with Search/Chat and Manage sections;
+  dark mode via `prefers-color-scheme`; no external assets; all system fonts.
+- `landing/nginx.conf` — nginx config serving static files on port 8080; proxies
+  `/api/rag/` to the RAG service so the browser makes same-origin API calls.
+- `scripts/rag/server.py` — `/status` endpoint returning binding mode, installed
+  archives (name, size, mtime), archive count and total size, chat/embed model
+  names, and RAG index readiness; consumed by the landing page status line and
+  Manage section.
+- `compose/docker-compose.yml` — `landing` service (`nginx:1.27.3-alpine`) on
+  `LANDING_PORT` (default 8080); depends on `rag` being healthy.
+- `compose/docker-compose.pi.yml` — `rag` and `landing` services added, matching
+  the laptop stack with Pi-appropriate timeouts and a lower `RAG_MAX_ARTICLES` cap.
+- `compose/.env.example` — `LANDING_PORT=8080`.
+
 - `scripts/rag/server.py` — FastAPI RAG service exposing an OpenAI-compatible
   `/v1/chat/completions` endpoint; every response is grounded in retrieved passages
   or refused with an explicit no-sources message; supports streaming via SSE.

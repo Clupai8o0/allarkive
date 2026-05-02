@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllArkive</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-top">
+        <div class="wordmark">
+            <span class="wordmark-name">AllArkive</span>
+            <span class="wordmark-version">v0.1</span>
+        </div>
+        <nav class="section-nav" aria-label="Main navigation">
+            <a href="#search" id="nav-search">Search the archive</a>
+            <a href="#search" id="nav-chat">Chat with the AI</a>
+            <a href="#manage" id="nav-manage">Manage what's installed</a>
+        </nav>
+    </div>
+    <div id="status" class="status-line" aria-live="polite">
+        Connecting to services&hellip;
+    </div>
+</header>
+
+<main>
+
+    <!-- ── Search and chat ──────────────────────────────────────────────────── -->
+    <section id="search">
+        <div class="mode-toggle" role="group" aria-label="Query mode">
+            <button id="btn-search-mode" class="mode-btn active" type="button">Search archive</button>
+            <button id="btn-ai-mode" class="mode-btn" type="button">Ask AI</button>
+        </div>
+
+        <form id="query-form" autocomplete="off" spellcheck="false">
+            <div class="input-row">
+                <input
+                    id="query-input"
+                    type="search"
+                    placeholder="Search the archive&hellip;"
+                    aria-label="Query"
+                >
+                <button type="submit" id="submit-btn">Search</button>
+            </div>
+        </form>
+
+        <div id="ai-panel" class="ai-panel" hidden>
+            <div id="ai-response" class="ai-response" aria-live="polite"></div>
+        </div>
+
+        <p class="disclaimer">Responses can be wrong. Check the citations.</p>
+    </section>
+
+    <!-- ── Manage ───────────────────────────────────────────────────────────── -->
+    <section id="manage">
+        <h2>Manage what's installed</h2>
+
+        <div id="archives-table">
+            <p class="loading-msg">Loading archive info&hellip;</p>
+        </div>
+
+        <div class="manage-links">
+            <a href="http://localhost:8081" target="_blank" rel="noopener noreferrer" class="action-link">Open archive viewer</a>
+            <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" class="action-link">Open chat UI</a>
+        </div>
+
+        <p class="manage-note">
+            To add a bundle: <code>./scripts/fetch-bundle.sh balanced</code><br>
+            To remove a bundle: delete the <code>.zim</code> file from
+            <code>$ALLARKIVE_DATA_DIR/zim/</code> and restart the stack.
+        </p>
+    </section>
+
+</main>
+
+<footer>
+    <p>AllArkive is a research and reference tool. It is not a substitute for professional medical, legal, or safety advice.</p>
+    <p class="footer-meta">binding: localhost only &mdash; <a href="https://github.com/allarkive/allarkive">source</a></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

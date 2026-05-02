@@ -50,6 +50,8 @@ _TOP_K = int(os.environ.get("RAG_TOP_K", "5"))
 _MAX_DIST = float(os.environ.get("RAG_MAX_DISTANCE", "1.0"))
 _INDEX_PATH = str(Path(_INDEX_DIR) / "index.db")
 
+_ZIM_DIR = os.environ.get("ZIM_DIR", "/data")
+
 _db: sqlite3.Connection | None = None
 
 
@@ -195,6 +197,34 @@ class _ChatRequest(BaseModel):
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "index": Path(_INDEX_PATH).exists()}
+
+
+@app.get("/status")
+def status() -> dict:
+    archives = []
+    total_bytes = 0
+    zim_path = Path(_ZIM_DIR)
+    if zim_path.is_dir():
+        for f in sorted(zim_path.glob("*.zim")):
+            st = f.stat()
+            total_bytes += st.st_size
+            archives.append(
+                {
+                    "name": f.name,
+                    "size_bytes": st.st_size,
+                    "size_gb": round(st.st_size / 1e9, 1),
+                    "mtime": st.st_mtime,
+                }
+            )
+    return {
+        "binding": "localhost",
+        "archives": archives,
+        "archive_count": len(archives),
+        "archive_total_gb": round(total_bytes / 1e9, 1),
+        "chat_model": _CHAT_MODEL,
+        "embed_model": _EMBED_MODEL,
+        "rag_ready": Path(_INDEX_PATH).exists(),
+    }
 
 
 @app.get("/v1/models")

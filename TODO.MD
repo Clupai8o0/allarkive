@@ -58,12 +58,12 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Milestone 5 — Landing page
 
-- [ ] `[CC]` Static HTML/CSS/vanilla-JS landing page per `DESIGN.md`
-- [ ] `[CC]` Three sections: Search, Chat, Manage
-- [ ] `[CC]` Status line shows binding mode, archive size, model name
-- [ ] `[CC]` Required disclaimer text (verbatim from `DESIGN.md`) in chat surface and footer
-- [ ] `[CC]` Dark mode via `prefers-color-scheme`
-- [ ] `[CC]` No external CDN; bundle every asset locally
+- [x] `[CC]` Static HTML/CSS/vanilla-JS landing page per `DESIGN.md`
+- [x] `[CC]` Three sections: Search, Chat, Manage
+- [x] `[CC]` Status line shows binding mode, archive size, model name
+- [x] `[CC]` Required disclaimer text (verbatim from `DESIGN.md`) in chat surface and footer
+- [x] `[CC]` Dark mode via `prefers-color-scheme`
+- [x] `[CC]` No external CDN; bundle every asset locally
 - [ ] `[Sh]` UX review against `DESIGN.md`
 
 ## Milestone 6 — Pi targets
