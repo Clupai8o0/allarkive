@@ -25,6 +25,7 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 - [ ] `[S]` Install Kiwix, fetch one small ZIM, serve it, smoke test
 - [ ] `[S]` Install Open WebUI, point at Ollama, smoke test
 - [ ] `[S]` Write up every step, every error, every confusion → `docs/install/laptop.md` v0
+  _(CC created a starter draft; Sam fills in `____________` blanks and corrects wrong steps)_
 - [ ] `[Sh]` Follow the draft on Laptop 2 from scratch, no questions to Sam
 - [ ] `[Sh]` Every snag = a doc gap → file as issues
 - [ ] `[E]` Resolve all install-doc issues; mark guide v1

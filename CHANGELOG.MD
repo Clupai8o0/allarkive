@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `docs/install/laptop.md` — manual install guide (draft v0) covering Ollama,
+  Kiwix, and Open WebUI on Ubuntu 22.04/24.04 LTS; includes smoke tests, port
+  summary, and troubleshooting. To be validated and corrected during Milestone 2.
 - Initial repository scaffolding.
 - `CLAUDE.md` master instructions for agent-driven development.
 - `ARCHITECTURE.md` describing the three-layer design.
