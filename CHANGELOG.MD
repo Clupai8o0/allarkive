@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `docs/install/laptop.md` — rewritten from Milestone 2 draft to use
+  docker-compose as the primary install path; manual-install appendix note
+  preserved.
+- `docs/install/server.md` — headless Linux server install guide; covers
+  Docker Engine install, SSH port forwarding for browser access, data
+  directory setup, and systemd service unit.
+- `docs/install/macos.md` — macOS install guide; covers Docker Desktop,
+  Apple Silicon Metal acceleration, resource limits, and file-sharing
+  permissions.
+- `docs/install/windows.md` — Windows install guide via WSL2 + Docker
+  Desktop; covers WSL2 install, memory configuration, filesystem performance
+  notes, NVIDIA GPU passthrough, and Defender exclusions.
+- `docs/bundles/README.md` — bundle reference: contents, ZIM sizes, license
+  summary, how to add custom ZIMs, and indexing time estimates for each bundle.
+- `docs/deployment/lan-access.md` — opt-in LAN access guide; Caddy and nginx
+  reverse-proxy examples, basic auth setup, firewall rules, and security
+  posture summary.
+- `docs/THREAT_MODEL.md` — renamed from `THREAD_MODEL.MD` (filename typo
+  fix); added build-learnings section covering: Open WebUI auth-off default,
+  RAG "no sources" enforcement, Docker bridge isolation, RAG API key not being
+  a security boundary, image digest pinning status, and iFixit commercial-use
+  restriction.
+
+### Changed
 - `compose/docker-compose.pi-archive.yml` — archive-only compose stack for a
   dedicated Raspberry Pi kiwix node (deployment pattern C); single service
   with a `KIWIX_BIND` variable for toggling between loopback-only and LAN

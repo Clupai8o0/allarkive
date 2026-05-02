@@ -86,14 +86,14 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Milestone 7 — Documentation
 
-- [ ] `[E]` Write `docs/install/laptop.md` (already drafted in Milestone 2)
-- [ ] `[E]` Write `docs/install/server.md` (Linux server, no GUI)
-- [ ] `[E]` Write `docs/install/macos.md`
-- [ ] `[E]` Write `docs/install/windows.md` (WSL2 path)
-- [ ] `[E]` Write `docs/bundles/README.md` — what each bundle contains, sizes, licenses
-- [ ] `[E]` Write `docs/deployment/lan-access.md` — opt-in remote access with reverse proxy + auth
-- [ ] `[E]` Fill out `THREAT_MODEL.md` with anything we learned during build
-- [ ] `[E]` Add screenshots to install guides
+- [x] `[CC]` Write `docs/install/laptop.md` (rewritten from Milestone 2 draft to use docker-compose)
+- [x] `[CC]` Write `docs/install/server.md` (Linux server, no GUI)
+- [x] `[CC]` Write `docs/install/macos.md`
+- [x] `[CC]` Write `docs/install/windows.md` (WSL2 path)
+- [x] `[CC]` Write `docs/bundles/README.md` — what each bundle contains, sizes, licenses
+- [x] `[CC]` Write `docs/deployment/lan-access.md` — opt-in remote access with reverse proxy + auth
+- [x] `[CC]` Fill out `THREAT_MODEL.md` with build learnings; fix filename typo (THREAD→THREAT)
+- [ ] `[S]` Add screenshots to install guides _(requires a running install — do during Milestone 2 smoke test)_
 
 ## Milestone 8 — Soft-launch prep
 

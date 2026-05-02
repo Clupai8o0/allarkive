@@ -85,6 +85,28 @@ If your machine is taken and decrypted, everything you've stored is readable. We
 ### Legal exposure for the content in your archive
 Some content in the bundles we ship may be illegal in some jurisdictions. We curate from sources with established legal standing in most places (Wikipedia, Project Gutenberg, etc.) but we are not lawyers and this is not legal advice. **You are responsible for what you possess and serve from your machine.**
 
+## Build learnings (updated during v0.1 development)
+
+Things we learned while building that informed or changed our understanding of the threat surface:
+
+### Open WebUI ships with authentication disabled by default
+The default config (`WEBUI_AUTH=false`) means no login is required to use the chat interface. This is the right default for a single-user localhost install — adding a login screen adds friction with no security benefit when the host is already trusted. **If you enable LAN access, enable authentication before exposing the port.** See `docs/deployment/lan-access.md`.
+
+### The RAG "no sources found" path is enforced at the API level
+The RAG service returns a structured error response when retrieval finds nothing relevant, rather than passing a bare query to the model. The model is not asked to answer without sources. This is a defence against the model hallucinating plausible-sounding citations, but it does not protect against the model generating wrong answers when it does have sources — the sources only prove the passage existed, not that it is correct.
+
+### Inter-service communication goes over a Docker bridge network
+Kiwix, Ollama, Open WebUI, and the RAG service communicate over a Docker-managed bridge network. From outside Docker, only the published ports (`127.0.0.1:PORT`) are reachable. Ollama's API is published to the host for debugging convenience but would ideally remain internal-only in a future hardened build.
+
+### The RAG API key is not a security boundary
+`RAG_API_KEY` in `compose/.env` (default: `allarkive`) is used to satisfy Open WebUI's requirement for an API key when configuring an external OpenAI-compatible endpoint. It is not a meaningful secret — anyone who can reach `127.0.0.1:8000` can call the RAG API regardless. Don't treat it as authentication.
+
+### Image tags are not yet pinned to digests
+The compose files pin image versions (e.g. `kiwix:3.8.2`) but not digests. Digest pinning is documented in the compose file as a required step before production use. Until digests are pinned, a compromised or replaced upstream image with the same tag could be pulled silently on `docker compose pull`. Pin digests before any deployment that matters.
+
+### iFixit content is CC-BY-NC-SA — not for commercial use
+The default `minimal` and `balanced` bundles include iFixit repair guides, which are licensed CC-BY-NC-SA 3.0. Non-commercial use is permitted; commercial deployment is not. This is a legal exposure, not a security one, but it is worth knowing before deploying in a commercial context.
+
 ## Default security posture
 
 Out of the box:
@@ -92,6 +114,7 @@ Out of the box:
 - No service is exposed to the LAN or the internet.
 - No telemetry, no analytics, no external CDN.
 - No login screen on the local landing page (it's localhost — anyone with shell access already has more power than the login screen).
+- Open WebUI has no login screen by default (`WEBUI_AUTH=false`) — same reasoning as above; enable it if you expose the port to the LAN.
 - No outbound network calls at runtime once installed.
 
 If you change any of these, you're choosing a different posture. Document your reasoning to your future self.

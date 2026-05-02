@@ -1,0 +1,310 @@
+# Installing AllArkive on Windows (WSL2)
+
+This guide installs AllArkive on Windows using WSL2 (Windows Subsystem for
+Linux 2) and Docker Desktop. AllArkive runs inside a Linux environment on
+your Windows machine — the Windows-native experience is limited to opening
+a browser to view the UI.
+
+**Tested on**: Windows 11 22H2 and later. Windows 10 21H2 and later should
+also work with WSL2 support.
+
+**Time estimate**: 30–60 minutes setup (WSL2 install included), then waiting
+for downloads.
+
+---
+
+## Prerequisites
+
+### Hardware
+
+| | Minimum | Recommended |
+|-|---------|-------------|
+| RAM | 8 GB | 16 GB |
+| Free disk | 20 GB (WSL2 + minimal bundle + model) | 80 GB (balanced bundle + model) |
+| CPU | Any x86_64 | More cores = faster inference |
+| GPU | Not required | NVIDIA GPU supported — see below |
+
+### Windows version
+
+WSL2 requires Windows 10 version 21H2 or later, or any version of Windows 11.
+Check: **Start → Settings → System → About → Windows specifications**.
+
+---
+
+## Step 1: Install WSL2
+
+Open PowerShell as Administrator and run:
+
+```powershell
+wsl --install
+```
+
+This installs WSL2 and Ubuntu (the default distro). Reboot when prompted.
+
+After rebooting, Ubuntu will finish installing and ask you to create a
+username and password. Use a simple username with no spaces.
+
+Verify:
+
+```powershell
+wsl --status
+# Should show: Default Version: 2
+```
+
+---
+
+## Step 2: Install Docker Desktop for Windows
+
+Download from `https://www.docker.com/products/docker-desktop/`.
+
+During installation:
+- Select **Use WSL 2 instead of Hyper-V** (should be pre-selected).
+- After installation, open Docker Desktop.
+
+Enable the WSL2 integration for your Ubuntu distro:
+**Docker Desktop → Settings → Resources → WSL Integration → Enable integration
+with additional distros → Ubuntu → Apply & Restart**.
+
+Verify inside your Ubuntu terminal:
+
+```bash
+docker compose version
+```
+
+---
+
+## Step 3: Configure WSL2 memory
+
+By default WSL2 may claim too much RAM. Create `%USERPROFILE%\.wslconfig`
+in Windows (not inside WSL) with:
+
+```ini
+[wsl2]
+memory=10GB
+processors=4
+```
+
+Adjust `memory` based on your system RAM (leave at least 2 GB for Windows).
+Restart WSL for changes to take effect:
+
+```powershell
+wsl --shutdown
+```
+
+Then reopen your Ubuntu terminal.
+
+---
+
+## Step 4: Store data on the WSL2 filesystem
+
+**Performance note**: Docker on Windows has fast I/O within the WSL2
+filesystem (`~/` or `/var/lib/`) but very slow I/O when accessing Windows
+paths like `/mnt/c/`. Keep all AllArkive data inside WSL2.
+
+If you need a large external drive for ZIM files, format it as NTFS and
+mount it inside WSL2:
+
+```bash
+# Example: a drive at D:\ mounted into WSL2
+sudo mkdir /mnt/d
+sudo mount -t drvfs D: /mnt/d
+# Then set ALLARKIVE_DATA_DIR=/mnt/d/allarkive in compose/.env
+```
+
+---
+
+## Step 5: Clone the repository (inside Ubuntu)
+
+Open your Ubuntu terminal (search "Ubuntu" in Start):
+
+```bash
+git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+```
+
+---
+
+## Step 6: Set up configuration
+
+```bash
+cp compose/.env.example compose/.env
+```
+
+Generate a secret key:
+
+```bash
+openssl rand -hex 32
+```
+
+Open `compose/.env` (e.g. `nano compose/.env`) and paste the result into
+`WEBUI_SECRET_KEY=`.
+
+Create data directories:
+
+```bash
+sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
+sudo chown -R "$USER" /var/lib/allarkive
+```
+
+---
+
+## Step 7: Fetch a bundle
+
+```bash
+./scripts/fetch-bundle.sh balanced
+```
+
+| Bundle | Contents | Disk (ZIMs only) |
+|--------|----------|-----------------|
+| `minimal` | WikiMed + iFixit | ~4 GB |
+| `balanced` | Wikipedia (text) + WikiMed + iFixit + Gutenberg + SuperUser | ~33 GB |
+| `comprehensive` | Full Wikipedia (images) + more Stack Exchange | 150+ GB |
+
+---
+
+## Step 8: Start the stack
+
+```bash
+cd compose/
+docker compose up -d
+```
+
+Watch logs during first startup:
+
+```bash
+docker compose logs -f
+```
+
+Wait for all containers to show `healthy`:
+
+```bash
+docker compose ps
+```
+
+---
+
+## Step 9: Index the archive
+
+```bash
+docker compose exec rag python -m rag.index
+```
+
+---
+
+## Step 10: Open the landing page
+
+In your Windows browser (not inside WSL), visit `http://localhost:8080`.
+
+WSL2 automatically forwards ports from the Linux environment to Windows
+localhost, so you do not need to do anything extra.
+
+---
+
+## NVIDIA GPU acceleration
+
+If your machine has an NVIDIA GPU with the Windows NVIDIA driver (version 470+):
+
+1. Install the [CUDA on WSL2](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)
+   drivers from NVIDIA (Windows-side only — do not install CUDA inside WSL).
+2. Inside WSL, verify:
+   ```bash
+   nvidia-smi
+   ```
+3. Start AllArkive with the GPU profile:
+   ```bash
+   docker compose --profile gpu up -d
+   ```
+
+---
+
+## Port summary
+
+| Service | Port | Access from Windows browser |
+|---------|------|----------------------------|
+| Landing page | 8080 | http://localhost:8080 |
+| kiwix-serve | 8081 | http://localhost:8081 |
+| Open WebUI | 3000 | http://localhost:3000 |
+| Ollama | 11434 | http://localhost:11434 |
+| RAG service | 8000 | http://localhost:8000 |
+
+---
+
+## Stopping and starting
+
+```bash
+# In your Ubuntu terminal:
+cd allarkive/compose
+docker compose down
+
+# Start again:
+docker compose up -d
+```
+
+Docker Desktop must be running before starting the stack.
+
+---
+
+## Troubleshooting
+
+### WSL2 does not start
+
+Open PowerShell as Administrator and run:
+
+```powershell
+wsl --update
+wsl --shutdown
+```
+
+Then reopen Ubuntu.
+
+### Docker commands not found inside WSL2
+
+Ensure Docker Desktop is running and WSL integration is enabled for your
+Ubuntu distro (see Step 2). Restart Docker Desktop if it was already
+enabled.
+
+### Ports not forwarding to Windows
+
+WSL2 forwards ports automatically in recent builds of Windows 11. If
+`localhost:8080` does not work, try the WSL2 IP address directly:
+
+```bash
+# Inside WSL2:
+ip addr show eth0 | grep 'inet '
+# Note the IP, e.g. 172.18.45.2
+```
+
+Then visit `http://172.18.45.2:8080` in your Windows browser.
+
+### Slow downloads inside WSL2
+
+DNS resolution inside WSL2 can be slow on some Windows setups. Add to
+`/etc/wsl.conf` inside Ubuntu (create if missing):
+
+```ini
+[network]
+generateResolvConf = false
+```
+
+Then edit `/etc/resolv.conf` to use `nameserver 8.8.8.8`. Restart WSL:
+`wsl --shutdown`.
+
+### Antivirus interference
+
+Windows Defender or third-party antivirus may scan every file written to the
+WSL2 filesystem, dramatically slowing ZIM downloads and indexing. Add the
+WSL2 virtual disk (`%LOCALAPPDATA%\Packages\CanonicalGroupLimited.Ubuntu*`)
+to your antivirus exclusion list.
+
+### Out of disk space
+
+WSL2 allocates a virtual disk that grows as needed but does not shrink
+automatically. If you delete large files inside WSL and need to reclaim
+Windows disk space:
+
+```powershell
+# In PowerShell (WSL must be shut down first):
+wsl --shutdown
+diskpart
+# then: select vdisk file="path\to\ext4.vhdx", compact vdisk
+```
