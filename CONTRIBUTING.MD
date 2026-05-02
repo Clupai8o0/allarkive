@@ -147,3 +147,7 @@ We expect to add more maintainers as the project grows. See [`GOVERNANCE.md`](GO
 ## Licensing
 
 By contributing, you agree that your contributions will be licensed under the same license as the rest of the project (AGPL-3.0 for glue code, or the original license for any third-party content you bundle).
+
+### Why AGPL-3.0
+
+We chose AGPL-3.0 over MIT or Apache-2.0 because AllArkive is infrastructure: if someone forks the glue code, improves it, and runs it as a service, those improvements should come back to the project. The Affero clause closes the "SaaS loophole" that standard GPL leaves open. MIT would have been simpler to adopt, but the project's value is in the network effect of a shared, auditable codebase—not in maximum corporate adoption—so the copyleft cost is worth paying. Bundled content (ZIM archives, model weights) keeps its own license; AGPL-3.0 covers only the glue code in this repository. This decision was made jointly by Sam and Sham and recorded in `CLAUDE.md` as a locked decision; relitigate it by opening an issue, not a PR.

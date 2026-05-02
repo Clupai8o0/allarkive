@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `.github/ISSUE_TEMPLATE/` — bug, feature, and bundle-proposal templates.
 - `.github/PULL_REQUEST_TEMPLATE.md`.
 - Directory skeleton: `compose/`, `scripts/rag/`, `bundles/`, `landing/`, `docs/install/`, `docs/bundles/`, `docs/deployment/`.
+- License rationale paragraph in `CONTRIBUTING.md` — documents why AGPL-3.0 was chosen over MIT/Apache-2.0.
 
 ### Changed
 - _Nothing yet._

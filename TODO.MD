@@ -15,7 +15,7 @@ v0.1 task list. Updated as work happens. If a task is no longer needed, strike i
 - [x] `[CC]` Add `.github/workflows/mirror-codeberg.yml` — push mirror on every commit to `main`
 - [x] `[CC]` Add `.github/ISSUE_TEMPLATE/` — bug, feature, bundle proposal
 - [x] `[CC]` Add `.github/PULL_REQUEST_TEMPLATE.md`
-- [ ] `[E]` Confirm AGPL-3.0 vs MIT one more time before merging LICENSE
+- [x] `[E]` Confirm AGPL-3.0 vs MIT one more time before merging LICENSE
 
 ## Milestone 2 — Manual install on Laptop 1
 
