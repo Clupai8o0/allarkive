@@ -32,13 +32,16 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Milestone 3 — docker-compose
 
-- [ ] `[CC]` Draft `compose/docker-compose.yml` automating the manual steps
+- [x] `[CC]` Draft `compose/docker-compose.yml` automating the manual steps
 - [ ] `[CC]` Pin all images by digest, not tag
-- [ ] `[CC]` Bind every service to `127.0.0.1` by default
-- [ ] `[CC]` `compose/.env.example` with placeholders
-- [ ] `[CC]` `scripts/bootstrap.sh` — pulls images, fetches default bundle, indexes, starts services
-- [ ] `[CC]` `scripts/fetch-bundle.sh` — downloads + SHA-256 verifies a named bundle
-- [ ] `[CC]` Bundle manifests: `bundles/minimal/manifest.json`, `bundles/balanced/manifest.json`, `bundles/comprehensive/manifest.json`
+  _(version tags pinned: kiwix 3.8.2, ollama 0.22.1, open-webui 0.9.2;_
+  _digest pinning requires `docker pull` + `docker inspect` — do this during Milestone 3 smoke test)_
+- [x] `[CC]` Bind every service to `127.0.0.1` by default
+- [x] `[CC]` `compose/.env.example` with placeholders
+- [x] `[CC]` `scripts/bootstrap.sh` — pulls images, fetches default bundle, indexes, starts services
+- [x] `[CC]` `scripts/fetch-bundle.sh` — downloads + SHA-256 verifies a named bundle
+- [x] `[CC]` Bundle manifests: `bundles/minimal/manifest.json`, `bundles/balanced/manifest.json`, `bundles/comprehensive/manifest.json`
+  _(draft manifests created; ZIM sha256 fields are empty — pin them after first download)_
 - [ ] `[E]` Decide which ZIMs go in each bundle; capture decisions in bundle docs
 - [ ] `[S]` Wipe Laptop 1, run `bootstrap.sh` end-to-end, fix what breaks
 

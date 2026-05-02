@@ -1,0 +1,133 @@
+# AllArkive — default stack
+#
+# Requires: Docker Engine 24+ with the Compose plugin.
+# Copy compose/.env.example to compose/.env and fill in WEBUI_SECRET_KEY
+# before running.
+#
+# DIGEST PINNING (required before production use):
+#   docker pull IMAGE:TAG
+#   docker inspect --format='{{index .RepoDigests 0}}' IMAGE:TAG
+# Replace `image: IMAGE:TAG` with `image: IMAGE@sha256:DIGEST` in this file.
+# Renovate/Dependabot can keep those digests up to date automatically.
+#
+# Usage:
+#   cd compose/
+#   docker compose up -d
+#
+# For GPU support (Ollama inference acceleration):
+#   docker compose --profile gpu up -d
+
+services:
+
+  # ── Layer 1: Archive ────────────────────────────────────────────────────────
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:3.8.2   # pin to digest before production
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ' | xargs echo)
+      if [ -z "$$zims" ]; then
+        printf 'ERROR: no ZIM files found in /data.\n'
+        printf 'Run: ./scripts/fetch-bundle.sh balanced\n'
+        exit 1
+      fi
+      exec kiwix-serve --port 8080 --address 0.0.0.0 $$zims
+    ports:
+      - "127.0.0.1:${KIWIX_PORT:-8081}:8080"
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/zim:/data:ro"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ > /dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Layer 2a: AI ─────────────────────────────────────────────────────────────
+  #
+  # CPU-only variant (default). For GPU acceleration, use the `gpu` profile:
+  #   docker compose --profile gpu up -d
+  ollama:
+    image: ollama/ollama:0.22.1              # pin to digest before production
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/models:/root/.ollama"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  ollama-gpu:
+    image: ollama/ollama:0.22.1              # pin to digest before production
+    profiles: ["gpu"]
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/models:/root/.ollama"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Layer 2b: Chat UI ─────────────────────────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:0.9.2  # pin to digest before production
+    ports:
+      - "127.0.0.1:${WEBUI_PORT:-3000}:8080"
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/data:/app/backend/data"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in compose/.env (run: openssl rand -hex 32)}
+      - WEBUI_AUTH=${WEBUI_AUTH:-false}
+      - ENABLE_SIGNUP=${WEBUI_ENABLE_SIGNUP:-false}
+      # Telemetry — AllArkive never phones home.
+      - ANONYMIZED_TELEMETRY=false
+      - DO_NOT_TRACK=1
+      - SCARF_NO_ANALYTICS=true
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  # ── Layer 2c: RAG pipeline — added in Milestone 4 ─────────────────────────────
+  # rag:
+  #   build:
+  #     context: ../scripts/rag
+  #   ports:
+  #     - "127.0.0.1:${RAG_PORT:-8000}:8000"
+  #   environment:
+  #     - KIWIX_URL=http://kiwix:8080
+  #     - OLLAMA_URL=http://ollama:11434
+  #     - INDEX_DIR=/index
+  #   volumes:
+  #     - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index"
+  #   depends_on:
+  #     - kiwix
+  #     - ollama
+  #   restart: unless-stopped

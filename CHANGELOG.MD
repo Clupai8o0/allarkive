@@ -7,6 +7,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `compose/docker-compose.yml` — default stack with kiwix-serve, Ollama, and
+  Open WebUI; all services bound to 127.0.0.1; CPU-only by default with a
+  `--profile gpu` opt-in for NVIDIA GPU acceleration; telemetry disabled on
+  Open WebUI; health checks on every service.
+- `compose/docker-compose.pi.yml` — Raspberry Pi variant (deployment pattern B);
+  data root defaults to `/mnt/ssd/allarkive`; extended healthcheck grace periods;
+  Ollama memory cap via `OLLAMA_MEMORY_LIMIT`.
+- `compose/.env.example` — documented environment template covering ports, data
+  directory, Open WebUI secret key, and Pi overrides.
+- `scripts/bootstrap.sh` — first-run setup: checks prerequisites, creates data
+  directories, fetches the default bundle, starts the compose stack, and pulls
+  the default Ollama model with streamed progress.
+- `scripts/fetch-bundle.sh` — downloads and SHA-256 verifies ZIM files listed
+  in a bundle manifest; resumes partial downloads; pins new checksums back to the
+  manifest after first verification.
+- `bundles/balanced/manifest.json` — draft balanced bundle: Wikipedia EN nopic,
+  WikiMed, iFixit, Project Gutenberg, SuperUser (~30 GB total ZIMs).
+- `bundles/minimal/manifest.json` — draft minimal bundle: WikiMed + iFixit
+  (~3.5 GB total ZIMs; Pi-friendly).
+- `bundles/comprehensive/manifest.json` — draft comprehensive bundle: Wikipedia
+  EN with images, WikiMed, iFixit, Gutenberg, Stack Overflow, SuperUser, Math SE
+  (~130 GB+ total ZIMs).
 - `docs/install/laptop.md` — manual install guide (draft v0) covering Ollama,
   Kiwix, and Open WebUI on Ubuntu 22.04/24.04 LTS; includes smoke tests, port
   summary, and troubleshooting. To be validated and corrected during Milestone 2.

@@ -1,0 +1,91 @@
+{
+  "_comment": "Comprehensive bundle — for users with large disk (200+ GB free). Includes full Wikipedia with images and major Stack Exchange stacks. Final ZIM selection is an [E] task in Milestone 3; this is a draft.",
+  "name": "comprehensive",
+  "description": "Full English Wikipedia (with images), WikiMed, iFixit, Project Gutenberg, Stack Overflow, SuperUser, and Math Stack Exchange. For users with 200+ GB free disk and patience.",
+  "version": "draft",
+  "hardware": {
+    "min_free_disk_gb": 160,
+    "recommended_free_disk_gb": 250,
+    "min_ram_gb": 16,
+    "notes": "Wikipedia with images alone is ~85 GB. Stack Overflow adds ~30 GB. Disk estimate covers ZIM files only; add ~5 GB for the AI model."
+  },
+  "model": {
+    "name": "qwen2.5:7b",
+    "notes": "Open question — see TODO.md. A larger model (e.g. qwen2.5:14b) performs better on systems with 32+ GB RAM."
+  },
+  "zims": [
+    {
+      "name": "Wikipedia (English, with images)",
+      "filename": "wikipedia_en_all_maxi_2026-03.zim",
+      "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2026-03.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2026-03.zim.sha256",
+      "approx_size_gb": 85,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "name": "WikiMed — medical reference (English)",
+      "filename": "wikipedia_en_medicine_maxi_2026-04.zim",
+      "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim.sha256",
+      "approx_size_gb": 0.5,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "name": "iFixit — repair guides (English)",
+      "filename": "ifixit_en_all_2025-12.zim",
+      "url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim.sha256",
+      "approx_size_gb": 3,
+      "license": "CC-BY-NC-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "license_notes": "Non-commercial use only."
+    },
+    {
+      "name": "Project Gutenberg (English)",
+      "filename": "gutenberg_en_all_2025-11.zim",
+      "url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim.sha256",
+      "approx_size_gb": 5,
+      "license": "Public Domain and various open licenses",
+      "license_url": "https://www.gutenberg.org/policy/license.html",
+      "license_notes": "Pre-1928 works are public domain in the US. Verify per-text licenses for newer works."
+    },
+    {
+      "name": "Stack Overflow",
+      "filename": "stackoverflow.com_en_all_2023-11.zim",
+      "url": "https://download.kiwix.org/zim/stack_exchange/stackoverflow.com_en_all_2023-11.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/stack_exchange/stackoverflow.com_en_all_2023-11.zim.sha256",
+      "approx_size_gb": 30,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "license_notes": "Newer Stack Overflow data is available but this is the most recent bundled ZIM as of research date."
+    },
+    {
+      "name": "SuperUser (Stack Exchange)",
+      "filename": "superuser.com_en_all_2026-02.zim",
+      "url": "https://download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-02.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-02.zim.sha256",
+      "approx_size_gb": 2,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "name": "Math Stack Exchange",
+      "filename": "math.stackexchange.com_en_all_2026-02.zim",
+      "url": "https://download.kiwix.org/zim/stack_exchange/math.stackexchange.com_en_all_2026-02.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/stack_exchange/math.stackexchange.com_en_all_2026-02.zim.sha256",
+      "approx_size_gb": 3,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    }
+  ]
+}
