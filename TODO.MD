@@ -68,12 +68,21 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Milestone 6 — Pi targets
 
-- [ ] `[E]` Image Pi 1 OS, attach USB SSD, mount at `/mnt/ssd`
-- [ ] `[E]` Run `compose/docker-compose.pi.yml` (text-only, smaller model) on Pi 1
-- [ ] `[E]` Document everything that breaks on ARM / low RAM → `docs/deployment/pi-text-only.md`
-- [ ] `[E]` Image Pi 2 OS, attach USB SSD, install `kiwix-serve` only
-- [ ] `[E]` Document the archive-only deployment → `docs/deployment/pi-archive-only.md`
-- [ ] `[E]` Test the split deployment: AI on Laptop 1 talking to archive on Pi 2 → `docs/deployment/split.md`
+- [ ] `[S]` Image Pi 1 OS, attach USB SSD, mount at `/mnt/ssd`
+- [ ] `[S]` Run `compose/docker-compose.pi.yml` (text-only, smaller model) on Pi 1
+  _(doc written; fix any gaps that appear during the actual run)_
+- [ ] `[S]` Validate `docs/deployment/pi-text-only.md` — fill in timings, fix any wrong steps
+- [ ] `[S]` Image Pi 2 OS, attach USB SSD, install `kiwix-serve` only
+  _(use `compose/docker-compose.pi-archive.yml` + doc at `docs/deployment/pi-archive-only.md`)_
+- [ ] `[S]` Validate `docs/deployment/pi-archive-only.md` during the actual Pi 2 setup
+- [ ] `[S]` Test the split deployment: AI on Laptop 1 talking to archive on Pi 2
+  _(follow `docs/deployment/split.md`; fix any gaps)_
+- [x] `[CC]` Draft `docs/deployment/pi-text-only.md` — Pi 1 full walkthrough
+- [x] `[CC]` Draft `docs/deployment/pi-archive-only.md` — Pi 2 kiwix-only walkthrough
+- [x] `[CC]` Draft `docs/deployment/split.md` — split topology walkthrough
+- [x] `[CC]` Create `compose/docker-compose.pi-archive.yml` — archive-only compose for Pi 2
+- [x] `[CC]` Fix `compose/docker-compose.pi.yml` — add OPENAI_API_BASE_URLS to open-webui,
+  add `depends_on: rag` with health condition, default CHAT_MODEL to `qwen2.5:1.5b`
 
 ## Milestone 7 — Documentation
 

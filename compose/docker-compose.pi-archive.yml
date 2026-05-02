@@ -1,0 +1,52 @@
+# AllArkive Pi — archive-only stack (deployment pattern C)
+#
+# For Raspberry Pi 4 or 5 running kiwix-serve only.
+# No AI layer (no Ollama, no RAG). Use this when the Pi is a dedicated
+# archive node and the AI runs on a separate machine (see split deployment:
+# docs/deployment/split.md).
+#
+# Requirements:
+#   - USB SSD mounted at /mnt/ssd (do not run from SD card)
+#   - At least 8 GB free on the SSD for the minimal bundle
+#   - Docker Engine 24+ with the Compose plugin
+#
+# Usage (from repo root):
+#   scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim
+#   cd compose/
+#   docker compose -f docker-compose.pi-archive.yml up -d
+#
+# See docs/deployment/pi-archive-only.md for the full walkthrough.
+#
+# DIGEST PINNING: pin the kiwix image to a SHA-256 digest before use.
+#   docker pull ghcr.io/kiwix/kiwix-serve:3.8.2
+#   docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/kiwix/kiwix-serve:3.8.2
+# Replace `image: ghcr.io/kiwix/kiwix-serve:3.8.2` with the digest form.
+
+services:
+
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:3.8.2
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ' | xargs echo)
+      if [ -z "$$zims" ]; then
+        printf 'ERROR: no ZIM files found in /data.\n'
+        printf 'Run: ./scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim\n'
+        exit 1
+      fi
+      exec kiwix-serve --port 8080 --address 0.0.0.0 $$zims
+    ports:
+      # Default: loopback only. For LAN access from another machine (split deployment),
+      # change 127.0.0.1 to 0.0.0.0 and secure with a firewall or reverse proxy.
+      # See docs/deployment/split.md before exposing to the network.
+      - "${KIWIX_BIND:-127.0.0.1}:${KIWIX_PORT:-8081}:8080"
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/mnt/ssd/allarkive}/zim:/data:ro"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ > /dev/null"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s

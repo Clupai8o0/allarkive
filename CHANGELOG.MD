@@ -7,6 +7,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `compose/docker-compose.pi-archive.yml` — archive-only compose stack for a
+  dedicated Raspberry Pi kiwix node (deployment pattern C); single service
+  with a `KIWIX_BIND` variable for toggling between loopback-only and LAN
+  access without editing the compose file.
+- `docs/deployment/pi-text-only.md` — full walkthrough for running the
+  AllArkive stack (kiwix + Ollama + RAG + landing page) on a Raspberry Pi 4/5
+  with a USB SSD; covers OS imaging, SSD mount, Docker install, bootstrap,
+  smoke tests, and ARM/low-RAM troubleshooting.
+- `docs/deployment/pi-archive-only.md` — walkthrough for a dedicated kiwix
+  archive node on a Pi; covers LAN exposure, firewall rules, ZIM bundle
+  download, and verification steps.
+- `docs/deployment/split.md` — guide for the split topology: AI (Ollama + RAG)
+  on a laptop, archive (kiwix) on a separate Pi; covers NFS mount, index copy
+  alternatives, network configuration, and citation URL consistency.
+
+### Changed
+- `compose/docker-compose.pi.yml` — added `OPENAI_API_BASE_URLS` and
+  `OPENAI_API_KEYS` to the `open-webui` service so `allarkive-rag` appears as
+  a selectable model (matching the laptop stack); added `depends_on: rag`
+  with `condition: service_healthy` to `open-webui`; added
+  `condition: service_healthy` to `rag` and `landing` depends_on blocks;
+  extended Ollama `start_period` to 90 s; changed default `CHAT_MODEL` from
+  `qwen2.5:7b` to `qwen2.5:1.5b` to fit Pi 4 with 4 GB RAM; added model size
+  guidance comment.
+
+
 - `landing/index.html`, `landing/style.css`, `landing/app.js` — local landing page
   served at `http://localhost:8080`; single-page with Search/Chat and Manage sections;
   dark mode via `prefers-color-scheme`; no external assets; all system fonts.
