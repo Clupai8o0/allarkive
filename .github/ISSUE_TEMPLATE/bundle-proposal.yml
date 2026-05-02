@@ -1,0 +1,64 @@
+name: Bundle proposal
+description: Propose a new knowledge bundle for AllArkive.
+labels: [bundle]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md#for-new-bundles) before filing. Bundles with proprietary or license-incompatible content won't be merged into the defaults.
+
+  - type: input
+    id: name
+    attributes:
+      label: Bundle name
+      placeholder: "e.g. science-basics"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's in it and who is it for?
+      description: Describe the bundle's contents and target audience.
+    validations:
+      required: true
+
+  - type: textarea
+    id: contents
+    attributes:
+      label: ZIM files
+      description: |
+        List each ZIM file with source URL, SHA-256 checksum, size, and license.
+        Example:
+        ```
+        - wikipedia_en_wp10_2024-09.zim
+          URL: https://download.kiwix.org/zim/wikipedia/wikipedia_en_wp10_2024-09.zim
+          SHA-256: abc123...
+          Size: 12 GB
+          License: CC-BY-SA 4.0
+        ```
+    validations:
+      required: true
+
+  - type: input
+    id: total-size
+    attributes:
+      label: Total size (uncompressed)
+      placeholder: "e.g. 15 GB"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: maintainer
+    attributes:
+      label: Are you offering to maintain this bundle?
+      options:
+        - "Yes"
+        - "No — proposing for others to maintain"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else

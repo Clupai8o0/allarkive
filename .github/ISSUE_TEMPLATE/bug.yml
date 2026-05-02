@@ -1,0 +1,63 @@
+name: Bug report
+description: Something broke. Help us reproduce it.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: check [docs/install/](../blob/main/docs/install/) for your platform. If the issue is upstream (Kiwix, Ollama, Open WebUI), link to their tracker too.
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. Ubuntu 24.04, macOS 15.0, Windows 11 (WSL2)"
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware
+      placeholder: "e.g. MacBook Pro M2 16 GB, Raspberry Pi 4 8 GB"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: AllArkive version or commit
+      placeholder: "e.g. v0.1.0 or git sha abc1234"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, what actually occurred.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `./scripts/bootstrap.sh`
+        2. Open http://localhost:8080
+        3. Click ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste the relevant portion of your install log or docker logs output.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else

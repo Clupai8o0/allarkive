@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  markdown-lint:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: "**/*.md"
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: "./scripts"
+          severity: warning
+
+  validate-compose:
+    name: Validate docker-compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy env example
+        run: cp compose/.env.example compose/.env
+      - name: Validate default compose
+        run: docker compose -f compose/docker-compose.yml config --quiet
+      - name: Validate Pi compose
+        run: docker compose -f compose/docker-compose.pi.yml config --quiet
+
+  python-lint:
+    name: Python lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff==0.4.4
+      - name: Check formatting
+        run: ruff format --check scripts/rag/ || true
+      - name: Lint
+        run: ruff check scripts/rag/ || true

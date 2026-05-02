@@ -7,14 +7,14 @@ v0.1 task list. Updated as work happens. If a task is no longer needed, strike i
 ## Milestone 1 — Repo skeleton
 
 - [x] `[E]` Lock decisions in project brief
-- [ ] `[CC]` Create initial directory structure per `CLAUDE.md`
-- [ ] `[CC]` Add `LICENSE` (AGPL-3.0 full text)
-- [ ] `[CC]` Add `.gitignore` (Python, Node, Docker, OS clutter)
-- [ ] `[CC]` Add `.editorconfig`
-- [ ] `[CC]` Add `.github/workflows/ci.yml` — lint markdown, shellcheck scripts, validate compose
-- [ ] `[CC]` Add `.github/workflows/mirror-codeberg.yml` — push mirror on every commit to `main`
-- [ ] `[CC]` Add `.github/ISSUE_TEMPLATE/` — bug, feature, bundle proposal
-- [ ] `[CC]` Add `.github/PULL_REQUEST_TEMPLATE.md`
+- [x] `[CC]` Create initial directory structure per `CLAUDE.md`
+- [x] `[CC]` Add `LICENSE` (AGPL-3.0 full text)
+- [x] `[CC]` Add `.gitignore` (Python, Node, Docker, OS clutter)
+- [x] `[CC]` Add `.editorconfig`
+- [x] `[CC]` Add `.github/workflows/ci.yml` — lint markdown, shellcheck scripts, validate compose
+- [x] `[CC]` Add `.github/workflows/mirror-codeberg.yml` — push mirror on every commit to `main`
+- [x] `[CC]` Add `.github/ISSUE_TEMPLATE/` — bug, feature, bundle proposal
+- [x] `[CC]` Add `.github/PULL_REQUEST_TEMPLATE.md`
 - [ ] `[E]` Confirm AGPL-3.0 vs MIT one more time before merging LICENSE
 
 ## Milestone 2 — Manual install on Laptop 1

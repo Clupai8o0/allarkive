@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose something new for AllArkive.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [ROADMAP.md](../blob/main/ROADMAP.md) first — if it's already listed as out of scope for v0.1, note that and propose it for v0.2+.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user need, not the technical solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would this work from the user's perspective?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Roadmap fit
+      options:
+        - v0.1 (in scope, not yet done)
+        - v0.2 (quality of life)
+        - v0.3+ (bigger idea)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else could solve this? Why is this approach better?
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else

@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ROADMAP.md` separating v0.1 scope from v0.2+ ideas.
 - `TODO.md`, `DOCS.md`, `GOVERNANCE.md`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
+- `LICENSE` — AGPL-3.0 full text.
+- `.gitignore` covering Python, Node, Docker, OS clutter, and ZIM archives.
+- `.editorconfig` with per-filetype indent and line-ending rules.
+- `.github/workflows/ci.yml` — markdown lint, shellcheck, compose validation, Python lint.
+- `.github/workflows/mirror-codeberg.yml` — push mirror to Codeberg on every `main` commit.
+- `.github/ISSUE_TEMPLATE/` — bug, feature, and bundle-proposal templates.
+- `.github/PULL_REQUEST_TEMPLATE.md`.
+- Directory skeleton: `compose/`, `scripts/rag/`, `bundles/`, `landing/`, `docs/install/`, `docs/bundles/`, `docs/deployment/`.
 
 ### Changed
 - _Nothing yet._
