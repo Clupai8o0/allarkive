@@ -47,13 +47,13 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Milestone 4 — RAG pipeline
 
-- [ ] `[E]` Decide vector store (sqlite-vec vs lancedb vs qdrant) — see `ARCHITECTURE.md` open questions
-- [ ] `[E]` Decide embedding model
-- [ ] `[CC]` Build `scripts/rag/` — index ZIM content, expose retrieval API
-- [ ] `[CC]` Prompt template: requires citations, refuses if no relevant passages
-- [ ] `[CC]` Citation post-processing: rewrite to `kiwix://` links into the local archive viewer
-- [ ] `[CC]` "No sources found" path tested
-- [ ] `[CC]` Integrate with Open WebUI as a model proxy or function
+- [x] `[E]` Decide vector store → **sqlite-vec** (embedded, no extra service)
+- [x] `[E]` Decide embedding model → **nomic-embed-text** via Ollama (768-dim)
+- [x] `[CC]` Build `scripts/rag/` — index ZIM content, expose retrieval API
+- [x] `[CC]` Prompt template: requires citations, refuses if no relevant passages
+- [x] `[CC]` Citation post-processing: rewrite to kiwix links into the local archive viewer
+- [x] `[CC]` "No sources found" path tested
+- [x] `[CC]` Integrate with Open WebUI as a model proxy (OpenAI-compatible API on port 8000)
 - [ ] `[E]` Smoke test: 20 questions, manually verify citations are real and on-topic
 
 ## Milestone 5 — Landing page
@@ -99,9 +99,9 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 ## Open questions (resolve before v0.1)
 
-- Vector DB choice (see Milestone 4)
-- Embedding model choice (see Milestone 4)
-- Recommended model: Qwen 2.5 7B vs Llama 3.1 8B vs Mistral — pick one for the `balanced` bundle
+- ~~Vector DB choice~~ → sqlite-vec (Milestone 4)
+- ~~Embedding model choice~~ → nomic-embed-text (Milestone 4)
+- Recommended chat model: Qwen 2.5 7B vs Llama 3.1 8B vs Mistral — pick one for the `balanced` bundle
 - Default port for the landing page: `8080` works but conflicts with common dev tools — keep or change?
 - DCO sign-off vs CLA — currently leaning DCO (see `CONTRIBUTING.md`)
 

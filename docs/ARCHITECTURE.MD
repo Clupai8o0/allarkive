@@ -173,14 +173,24 @@ See `ROADMAP.md` for full list. Headlines:
 - No hardened/airgap-only build target.
 - No telemetry. Ever.
 
+## Decisions made in Milestone 4
+
+- **Vector DB**: sqlite-vec. Embedded SQLite extension — no extra service, no daemon, no port.
+  Index lives at `$ALLARKIVE_DATA_DIR/index/index.db`.
+- **Embedding model**: `nomic-embed-text` via Ollama (768 dimensions). Pulled alongside the
+  chat model by `bootstrap.sh`. Runs fully offline once downloaded.
+- **RAG integration with Open WebUI**: the RAG service exposes an OpenAI-compatible API on
+  port 8000. Open WebUI is configured via `OPENAI_API_BASE_URLS` to show `allarkive-rag` as
+  a selectable model alongside native Ollama models.
+- **Citation format**: `[N]` inline markers in the model response are rewritten by the RAG
+  service to Markdown links pointing at `http://127.0.0.1:8081/{zim_name}/{article_path}`.
+
 ## Decisions to revisit in v0.2+
 
 These are not commitments, just things we noted while building v0.1:
 
-- Vector DB choice: are we sticking with [TBD — sqlite-vec, lancedb, qdrant?]
-- Embedding model: small + fast vs slightly larger + better recall.
+- Embedding model: `nomic-embed-text` is the v0.1 default; better recall vs. speed tradeoffs
+  exist (e.g. `mxbai-embed-large`, `all-minilm`).
 - Whether RAG should also surface "related entries you didn't ask about."
 - Multi-language retrieval and response.
 - Bundle deltas (don't re-download 50 GB to update).
-
-Every "TBD" above must be resolved before v0.1 ships.

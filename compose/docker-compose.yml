@@ -100,12 +100,18 @@ services:
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in compose/.env (run: openssl rand -hex 32)}
       - WEBUI_AUTH=${WEBUI_AUTH:-false}
       - ENABLE_SIGNUP=${WEBUI_ENABLE_SIGNUP:-false}
+      # Expose the RAG service as an OpenAI-compatible model inside Open WebUI.
+      # Users will see "allarkive-rag" in the model picker alongside Ollama models.
+      - OPENAI_API_BASE_URLS=http://rag:8000/v1
+      - OPENAI_API_KEYS=${RAG_API_KEY:-allarkive}
       # Telemetry — AllArkive never phones home.
       - ANONYMIZED_TELEMETRY=false
       - DO_NOT_TRACK=1
       - SCARF_NO_ANALYTICS=true
     depends_on:
       ollama:
+        condition: service_healthy
+      rag:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -115,19 +121,34 @@ services:
       retries: 5
       start_period: 60s
 
-  # ── Layer 2c: RAG pipeline — added in Milestone 4 ─────────────────────────────
-  # rag:
-  #   build:
-  #     context: ../scripts/rag
-  #   ports:
-  #     - "127.0.0.1:${RAG_PORT:-8000}:8000"
-  #   environment:
-  #     - KIWIX_URL=http://kiwix:8080
-  #     - OLLAMA_URL=http://ollama:11434
-  #     - INDEX_DIR=/index
-  #   volumes:
-  #     - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index"
-  #   depends_on:
-  #     - kiwix
-  #     - ollama
-  #   restart: unless-stopped
+  # ── Layer 2c: RAG pipeline ────────────────────────────────────────────────────
+  rag:
+    build:
+      context: ../scripts/rag
+    image: allarkive-rag:0.1.0
+    ports:
+      - "127.0.0.1:${RAG_PORT:-8000}:8000"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - INDEX_DIR=/index
+      - KIWIX_PUBLIC_URL=${KIWIX_PUBLIC_URL:-http://127.0.0.1:8081}
+      - EMBED_MODEL=${EMBED_MODEL:-nomic-embed-text}
+      - CHAT_MODEL=${CHAT_MODEL:-qwen2.5:7b}
+      - RAG_TOP_K=${RAG_TOP_K:-5}
+      - RAG_MAX_DISTANCE=${RAG_MAX_DISTANCE:-1.0}
+      - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-5000}
+    volumes:
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index"
+      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/zim:/data:ro"
+    depends_on:
+      ollama:
+        condition: service_healthy
+      kiwix:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

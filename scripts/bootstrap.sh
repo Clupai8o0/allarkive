@@ -33,6 +33,7 @@ SKIP_BUNDLE=false
 # Override from environment if set
 DATA_DIR="${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}"
 DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-qwen2.5:7b}"
+EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
@@ -281,8 +282,64 @@ PYEOF
 
     info "Model pull complete: ${DEFAULT_MODEL}"
 else
-    warn "Ollama is not reachable at ${OLLAMA_URL}. Pull the model manually after startup:"
+    warn "Ollama is not reachable at ${OLLAMA_URL}. Pull models manually after startup:"
     warn "  docker compose -f ${COMPOSE_FILE} exec ollama ollama pull ${DEFAULT_MODEL}"
+    warn "  docker compose -f ${COMPOSE_FILE} exec ollama ollama pull ${EMBED_MODEL}"
+fi
+
+# ── Step 7b: Pull embedding model ─────────────────────────────────────────────
+
+info "Pulling embedding model: ${EMBED_MODEL}"
+
+if curl -sf "${OLLAMA_URL}/api/version" > /dev/null 2>&1; then
+    curl -s "${OLLAMA_URL}/api/pull" \
+         -H 'Content-Type: application/json' \
+         -d "{\"name\": \"${EMBED_MODEL}\"}" \
+         | python3 - "${EMBED_MODEL}" <<'PYEOF'
+import json, sys
+model = sys.argv[1]
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        obj = json.loads(line)
+        status = obj.get("status", "")
+        completed = obj.get("completed", 0)
+        total = obj.get("total", 0)
+        if total:
+            pct = int(100 * completed / total)
+            print(f"\r  {status}: {pct}%", end="", flush=True)
+        else:
+            print(f"  {status}", flush=True)
+    except json.JSONDecodeError:
+        pass
+print()
+PYEOF
+    info "Embedding model pull complete: ${EMBED_MODEL}"
+fi
+
+# ── Step 7c: Wait for RAG service, then run indexer ───────────────────────────
+
+wait_healthy rag 60 || true
+
+info "Running RAG indexer (indexes ZIM content for retrieval)..."
+info "(This can take several minutes for large bundles.)"
+
+if docker compose -f "${COMPOSE_FILE}" ps --format json rag 2>/dev/null \
+        | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('State',''))" \
+        2>/dev/null | grep -q "running"; then
+    docker compose -f "${COMPOSE_FILE}" exec rag \
+        python indexer.py \
+            --zim-dir /data \
+            --index-dir /index \
+            --ollama-url http://ollama:11434 \
+    && info "Indexing complete." \
+    || warn "Indexer returned an error — see logs above. Queries will return no-sources until indexing succeeds."
+else
+    warn "RAG container is not running — skipping indexer."
+    warn "After the stack is healthy, index manually:"
+    warn "  docker compose -f ${COMPOSE_FILE} exec rag python indexer.py"
 fi
 
 # ── Step 8: Summary ───────────────────────────────────────────────────────────
@@ -290,6 +347,7 @@ fi
 KIWIX_PORT="${KIWIX_PORT:-8081}"
 WEBUI_PORT="${WEBUI_PORT:-3000}"
 OLLAMA_PORT="${OLLAMA_PORT:-11434}"
+RAG_PORT="${RAG_PORT:-8000}"
 
 ZIM_COUNT="$(find "${DATA_DIR}/zim" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
 
@@ -300,11 +358,17 @@ echo "════════════════════════�
 echo ""
 echo "  Archive (kiwix):    http://127.0.0.1:${KIWIX_PORT}"
 echo "  Chat (Open WebUI):  http://127.0.0.1:${WEBUI_PORT}"
+echo "  RAG service:        http://127.0.0.1:${RAG_PORT}"
 echo "  Model API (Ollama): http://127.0.0.1:${OLLAMA_PORT}"
 echo ""
 echo "  ZIM files: ${ZIM_COUNT} file(s) in ${DATA_DIR}/zim"
-echo "  Model: ${DEFAULT_MODEL}"
+echo "  Chat model: ${DEFAULT_MODEL}"
+echo "  Embedding model: ${EMBED_MODEL}"
 echo "  Binding: localhost only (127.0.0.1) — nothing is exposed externally"
+echo ""
+echo "  Select 'allarkive-rag' in Open WebUI to query with citations."
+echo "  Re-index after adding new ZIMs:"
+echo "    docker compose -f ${COMPOSE_FILE} exec rag python indexer.py"
 echo ""
 echo "  To stop: docker compose -f ${COMPOSE_FILE} down"
 echo "  To view logs: docker compose -f ${COMPOSE_FILE} logs -f"

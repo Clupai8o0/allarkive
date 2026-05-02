@@ -7,6 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `scripts/rag/server.py` — FastAPI RAG service exposing an OpenAI-compatible
+  `/v1/chat/completions` endpoint; every response is grounded in retrieved passages
+  or refused with an explicit no-sources message; supports streaming via SSE.
+- `scripts/rag/indexer.py` — CLI indexer that reads ZIM files via `libzim`, chunks
+  article text, embeds with Ollama (`nomic-embed-text`), and stores normalised
+  float32 vectors in an sqlite-vec index at `$ALLARKIVE_DATA_DIR/index/index.db`.
+  Idempotent: re-run safely; skips unchanged ZIMs; `--force` to rebuild.
+- `scripts/rag/prompt.py` — system prompt template requiring `[N]` citation markers
+  and a hard refusal when no relevant passages are found.
+- `scripts/rag/citations.py` — post-processor that rewrites `[N]` markers to
+  Markdown links pointing at the local kiwix article viewer.
+- `scripts/rag/Dockerfile` — multi-arch (`linux/amd64`, `linux/arm64`) Python 3.11
+  image for the RAG service.
+- `scripts/rag/requirements.txt` — pinned Python dependencies for the RAG service.
+- `compose/docker-compose.yml` — RAG service (`allarkive-rag:0.1.0`) added to the
+  default stack; Open WebUI wired to the RAG service via `OPENAI_API_BASE_URLS` so
+  `allarkive-rag` appears as a selectable model alongside Ollama models.
+- `compose/.env.example` — RAG tuning knobs: `EMBED_MODEL`, `CHAT_MODEL`,
+  `RAG_TOP_K`, `RAG_MAX_DISTANCE`, `RAG_MAX_ARTICLES`, `KIWIX_PUBLIC_URL`.
+- `scripts/bootstrap.sh` — pulls `nomic-embed-text` embedding model and runs the
+  indexer automatically on first boot.
+
+### Changed
+- `compose/docker-compose.yml` — `open-webui` now depends on `rag` being healthy
+  before starting, ensuring the model is visible at first launch.
+- `scripts/bootstrap.sh` — summary screen shows RAG port and re-index instructions.
+- `docs/ARCHITECTURE.md` — filled in Milestone 4 decisions (vector DB, embedding
+  model, Open WebUI integration approach).
+- `TODO.md` — Milestone 4 CC tasks marked done; vector DB and embedding model open
+  questions resolved.
+
 - `compose/docker-compose.yml` — default stack with kiwix-serve, Ollama, and
   Open WebUI; all services bound to 127.0.0.1; CPU-only by default with a
   `--profile gpu` opt-in for NVIDIA GPU acceleration; telemetry disabled on
