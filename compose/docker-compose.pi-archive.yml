@@ -17,15 +17,14 @@
 #
 # See docs/deployment/pi-archive-only.md for the full walkthrough.
 #
-# DIGEST PINNING: pin the kiwix image to a SHA-256 digest before use.
-#   docker pull ghcr.io/kiwix/kiwix-serve:3.8.2
-#   docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/kiwix/kiwix-serve:3.8.2
-# Replace `image: ghcr.io/kiwix/kiwix-serve:3.8.2` with the digest form.
+# Image is pinned to a SHA-256 digest. To update, pull the new tag and
+# replace the digest with the output of:
+#   docker buildx imagetools inspect IMAGE:TAG --format "{{json .Manifest}}"
 
 services:
 
   kiwix:
-    image: ghcr.io/kiwix/kiwix-serve:3.8.2
+    image: ghcr.io/kiwix/kiwix-serve:3.8.2@sha256:0b6541355b250c6b45d2d7725e88f22f1d6a0f45ad9480d9c0bd4bc58436a12f
     entrypoint: ["/bin/sh", "-c"]
     command: |
       set -e

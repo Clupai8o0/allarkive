@@ -1,8 +1,8 @@
 {
-  "_comment": "Balanced bundle — default for laptop installs. Includes English Wikipedia (text-only), medical reference, repair guides, classic literature, and technical Q&A. ZIM checksums must be filled in from the .sha256 files published alongside each download. The [E] task in Milestone 3 is to confirm final ZIM selection; this is a draft.",
+  "_comment": "Balanced bundle — default for laptop installs. Includes English Wikipedia (text-only), medical reference, repair guides, classic literature, and technical Q&A. ZIM checksums must be filled in from the .sha256 files published alongside each download.",
   "name": "balanced",
   "description": "English Wikipedia (text only), WikiMed medical reference, iFixit repair guides, Project Gutenberg, and SuperUser Q&A. Sized for a laptop with 50+ GB free disk.",
-  "version": "draft",
+  "version": "1.0",
   "hardware": {
     "min_free_disk_gb": 35,
     "recommended_free_disk_gb": 60,
@@ -11,7 +11,7 @@
   },
   "model": {
     "name": "qwen2.5:7b",
-    "notes": "Open question — see TODO.md. qwen2.5:7b is the current placeholder."
+    "notes": "Default model for the balanced bundle. Good accuracy-to-size ratio; fits comfortably in 8 GB RAM. Chosen over Llama 3.1 8B and Mistral 7B for better instruction following and stronger multilingual capability."
   },
   "zims": [
     {

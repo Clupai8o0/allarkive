@@ -21,9 +21,9 @@ v0.1 task list. Updated as work happens. If a task is no longer needed, strike i
 
 The first install is manual and notes-driven. Output is the first draft of `docs/install/laptop.md`.
 
-- [ ] `[S]` Install Ollama on Laptop 1, pull recommended model, smoke test
-- [ ] `[S]` Install Kiwix, fetch one small ZIM, serve it, smoke test
-- [ ] `[S]` Install Open WebUI, point at Ollama, smoke test
+- [x] `[S]` Install Ollama on Laptop 1, pull recommended model, smoke test
+- [x] `[S]` Install Kiwix, fetch one small ZIM, serve it, smoke test
+- [x] `[S]` Install Open WebUI, point at Ollama, smoke test
 - [ ] `[S]` Write up every step, every error, every confusion → `docs/install/laptop.md` v0
   _(CC created a starter draft; Sam fills in `____________` blanks and corrects wrong steps)_
 - [ ] `[Sh]` Follow the draft on Laptop 2 from scratch, no questions to Sam
@@ -33,16 +33,16 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 ## Milestone 3 — docker-compose
 
 - [x] `[CC]` Draft `compose/docker-compose.yml` automating the manual steps
-- [ ] `[CC]` Pin all images by digest, not tag
-  _(version tags pinned: kiwix 3.8.2, ollama 0.22.1, open-webui 0.9.2;_
-  _digest pinning requires `docker pull` + `docker inspect` — do this during Milestone 3 smoke test)_
+- [x] `[CC]` Pin all images by digest, not tag
+  _(digests pinned via `docker buildx imagetools inspect`: kiwix, ollama, open-webui, nginx)_
 - [x] `[CC]` Bind every service to `127.0.0.1` by default
 - [x] `[CC]` `compose/.env.example` with placeholders
 - [x] `[CC]` `scripts/bootstrap.sh` — pulls images, fetches default bundle, indexes, starts services
 - [x] `[CC]` `scripts/fetch-bundle.sh` — downloads + SHA-256 verifies a named bundle
 - [x] `[CC]` Bundle manifests: `bundles/minimal/manifest.json`, `bundles/balanced/manifest.json`, `bundles/comprehensive/manifest.json`
-  _(draft manifests created; ZIM sha256 fields are empty — pin them after first download)_
-- [ ] `[E]` Decide which ZIMs go in each bundle; capture decisions in bundle docs
+  _(ZIM sha256 fields are empty — pin them after first download)_
+- [x] `[E]` Decide which ZIMs go in each bundle; capture decisions in bundle docs
+  _(minimal: WikiMed + iFixit; balanced: Wikipedia text + WikiMed + iFixit + Gutenberg + SuperUser; comprehensive: adds Wikipedia with images + Stack Overflow + Math SE. LICENSE.md created for each bundle.)_
 - [ ] `[S]` Wipe Laptop 1, run `bootstrap.sh` end-to-end, fix what breaks
 
 ## Milestone 4 — RAG pipeline
@@ -110,7 +110,7 @@ The first install is manual and notes-driven. Output is the first draft of `docs
 
 - ~~Vector DB choice~~ → sqlite-vec (Milestone 4)
 - ~~Embedding model choice~~ → nomic-embed-text (Milestone 4)
-- Recommended chat model: Qwen 2.5 7B vs Llama 3.1 8B vs Mistral — pick one for the `balanced` bundle
+- ~~Recommended chat model~~ → **qwen2.5:7b** for `balanced` and `comprehensive` (better instruction following and multilingual capability vs Llama 3.1 8B and Mistral 7B); **qwen2.5:3b** for `minimal` (fits 4 GB Pi)
 - Default port for the landing page: `8080` works but conflicts with common dev tools — keep or change?
 - DCO sign-off vs CLA — currently leaning DCO (see `CONTRIBUTING.md`)
 

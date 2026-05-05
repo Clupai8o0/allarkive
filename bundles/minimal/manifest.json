@@ -1,8 +1,8 @@
 {
-  "_comment": "Minimal bundle — for Raspberry Pi and low-disk installs. Keeps ZIM total under 5 GB. Final ZIM selection is an [E] task in Milestone 3; this is a draft.",
+  "_comment": "Minimal bundle — for Raspberry Pi and low-disk installs. Keeps ZIM total under 5 GB.",
   "name": "minimal",
   "description": "WikiMed medical reference and iFixit repair guides. Sized for Raspberry Pi with a USB SSD and limited free space.",
-  "version": "draft",
+  "version": "1.0",
   "hardware": {
     "min_free_disk_gb": 4,
     "recommended_free_disk_gb": 8,
@@ -11,7 +11,7 @@
   },
   "model": {
     "name": "qwen2.5:3b",
-    "notes": "Smaller model for Pi. Slower and less capable than 7B but fits in 4 GB RAM."
+    "notes": "Smallest viable model for 4 GB Pi. Slower and less capable than 7B but fits in constrained RAM with headroom for the OS."
   },
   "zims": [
     {

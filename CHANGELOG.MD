@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `bundles/minimal/LICENSE.md`, `bundles/balanced/LICENSE.md`,
+  `bundles/comprehensive/LICENSE.md` — per-bundle license summaries listing
+  each ZIM's source, license, and attribution as required by CLAUDE.md.
+
+### Changed
+- All Docker images in `compose/docker-compose.yml`,
+  `compose/docker-compose.pi.yml`, and `compose/docker-compose.pi-archive.yml`
+  are now pinned to SHA-256 digests (multi-arch manifest digests fetched via
+  `docker buildx imagetools inspect`). Images affected: kiwix-serve 3.8.2,
+  ollama 0.22.1, open-webui 0.9.2, nginx 1.27.3-alpine.
+- Bundle manifests promoted from `"version": "draft"` to `"version": "1.0"`;
+  ZIM selection finalised and model choices resolved:
+  `minimal` → WikiMed + iFixit, qwen2.5:3b;
+  `balanced` → Wikipedia text + WikiMed + iFixit + Gutenberg + SuperUser, qwen2.5:7b;
+  `comprehensive` → adds Wikipedia with images + Stack Overflow + Math SE, qwen2.5:7b.
+
+
 - `docs/install/laptop.md` — rewritten from Milestone 2 draft to use
   docker-compose as the primary install path; manual-install appendix note
   preserved.

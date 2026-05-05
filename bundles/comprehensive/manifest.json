@@ -1,17 +1,17 @@
 {
-  "_comment": "Comprehensive bundle — for users with large disk (200+ GB free). Includes full Wikipedia with images and major Stack Exchange stacks. Final ZIM selection is an [E] task in Milestone 3; this is a draft.",
+  "_comment": "Comprehensive bundle — for users with large disk (200+ GB free). Includes full Wikipedia with images and major Stack Exchange stacks.",
   "name": "comprehensive",
   "description": "Full English Wikipedia (with images), WikiMed, iFixit, Project Gutenberg, Stack Overflow, SuperUser, and Math Stack Exchange. For users with 200+ GB free disk and patience.",
-  "version": "draft",
+  "version": "1.0",
   "hardware": {
     "min_free_disk_gb": 160,
     "recommended_free_disk_gb": 250,
     "min_ram_gb": 16,
-    "notes": "Wikipedia with images alone is ~85 GB. Stack Overflow adds ~30 GB. Disk estimate covers ZIM files only; add ~5 GB for the AI model."
+    "notes": "Wikipedia with images alone is ~85 GB. Stack Overflow adds ~30 GB. Disk estimate covers ZIM files only; add ~5 GB for the AI model. Systems with 32+ GB RAM can run qwen2.5:14b for better quality."
   },
   "model": {
     "name": "qwen2.5:7b",
-    "notes": "Open question — see TODO.md. A larger model (e.g. qwen2.5:14b) performs better on systems with 32+ GB RAM."
+    "notes": "Default for 16 GB RAM systems. Upgrade to qwen2.5:14b on machines with 32+ GB RAM for noticeably better output on long-context queries over large archives."
   },
   "zims": [
     {
@@ -65,7 +65,7 @@
       "approx_size_gb": 30,
       "license": "CC-BY-SA 4.0",
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "license_notes": "Newer Stack Overflow data is available but this is the most recent bundled ZIM as of research date."
+      "license_notes": "Newest available bundled ZIM as of research date. Check download.kiwix.org for updates."
     },
     {
       "name": "SuperUser (Stack Exchange)",

@@ -4,11 +4,9 @@
 # Copy compose/.env.example to compose/.env and fill in WEBUI_SECRET_KEY
 # before running.
 #
-# DIGEST PINNING (required before production use):
-#   docker pull IMAGE:TAG
-#   docker inspect --format='{{index .RepoDigests 0}}' IMAGE:TAG
-# Replace `image: IMAGE:TAG` with `image: IMAGE@sha256:DIGEST` in this file.
-# Renovate/Dependabot can keep those digests up to date automatically.
+# Images are pinned to SHA-256 digests. To update, pull the new tag and
+# replace the digest with the output of:
+#   docker buildx imagetools inspect IMAGE:TAG --format "{{json .Manifest}}"
 #
 # Usage:
 #   cd compose/
@@ -21,7 +19,7 @@ services:
 
   # ── Layer 1: Archive ────────────────────────────────────────────────────────
   kiwix:
-    image: ghcr.io/kiwix/kiwix-serve:3.8.2   # pin to digest before production
+    image: ghcr.io/kiwix/kiwix-serve:3.8.2@sha256:0b6541355b250c6b45d2d7725e88f22f1d6a0f45ad9480d9c0bd4bc58436a12f
     entrypoint: ["/bin/sh", "-c"]
     command: |
       set -e
@@ -49,7 +47,7 @@ services:
   # CPU-only variant (default). For GPU acceleration, use the `gpu` profile:
   #   docker compose --profile gpu up -d
   ollama:
-    image: ollama/ollama:0.22.1              # pin to digest before production
+    image: ollama/ollama:0.22.1@sha256:3ca37ec2b9cb6341b62554074205c616778fe98abcf9e4fc50361b79a07407ae
     ports:
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
     volumes:
@@ -65,7 +63,7 @@ services:
       start_period: 30s
 
   ollama-gpu:
-    image: ollama/ollama:0.22.1              # pin to digest before production
+    image: ollama/ollama:0.22.1@sha256:3ca37ec2b9cb6341b62554074205c616778fe98abcf9e4fc50361b79a07407ae
     profiles: ["gpu"]
     ports:
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
@@ -90,7 +88,7 @@ services:
 
   # ── Layer 2b: Chat UI ─────────────────────────────────────────────────────────
   open-webui:
-    image: ghcr.io/open-webui/open-webui:0.9.2  # pin to digest before production
+    image: ghcr.io/open-webui/open-webui:0.9.2@sha256:a7e4796ae894d1e2a0c1824860ade472f35c507608a01c3581377b5c19b0ed49
     ports:
       - "127.0.0.1:${WEBUI_PORT:-3000}:8080"
     volumes:
@@ -156,7 +154,7 @@ services:
 
   # ── Layer 3: Landing page ─────────────────────────────────────────────────────
   landing:
-    image: nginx:1.27.3-alpine          # pin to digest before production
+    image: nginx:1.27.3-alpine@sha256:814a8e88df978ade80e584cc5b333144b9372a8e3c98872d07137dbf3b44d0e4
     ports:
       - "127.0.0.1:${LANDING_PORT:-8080}:8080"
     volumes:
