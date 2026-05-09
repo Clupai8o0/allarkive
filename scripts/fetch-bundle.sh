@@ -89,6 +89,11 @@ for cmd in curl sha256sum python3; do
     fi
 done
 
+# ── Retry / resume settings ───────────────────────────────────────────────────
+
+MAX_RETRIES=3
+RETRY_DELAY=10  # seconds between retries
+
 # ── Ensure destination directory exists ───────────────────────────────────────
 
 mkdir -p "${DEST_DIR}"
@@ -132,11 +137,12 @@ download_and_verify() {
     local sha256_url="$3"
     local expected_sha="$4"
     local dest="${DEST_DIR}/${filename}"
+    local part="${dest}.part"
 
     echo "──────────────────────────────────────────────────────────────────────────"
     echo "ZIM: ${filename}"
 
-    # Check if already downloaded and valid
+    # Already present and valid?
     if [[ -f "${dest}" ]]; then
         echo "  File exists — verifying checksum..."
         if verify_file "${dest}" "${sha256_url}" "${expected_sha}"; then
@@ -149,13 +155,38 @@ download_and_verify() {
         fi
     fi
 
-    # Download
+    # Show resume hint if a partial download was left from a previous run.
+    if [[ -f "${part}" ]]; then
+        local part_size
+        part_size="$(du -sh "${part}" 2>/dev/null | cut -f1 || echo "?")"
+        echo "  Resuming partial download (${part_size} already on disk)."
+    fi
+
     echo "  Downloading from: ${url}"
     echo "  Destination: ${dest}"
     echo "  (Large files — this may take a while on a slow connection.)"
-    if ! curl --fail --location --continue-at - --progress-bar \
-              --output "${dest}" "${url}"; then
-        echo "  ERROR: download failed for ${filename}" >&2
+
+    local attempt=1
+    while [[ "${attempt}" -le "${MAX_RETRIES}" ]]; do
+        if [[ "${attempt}" -gt 1 ]]; then
+            echo "  Retrying (attempt ${attempt}/${MAX_RETRIES}) after ${RETRY_DELAY}s..."
+            sleep "${RETRY_DELAY}"
+        fi
+
+        # --continue-at - resumes into the .part file if it already has bytes.
+        if curl --fail --location --continue-at - --progress-bar \
+                 --output "${part}" "${url}"; then
+            mv "${part}" "${dest}"
+            break
+        fi
+
+        echo "  Attempt ${attempt}/${MAX_RETRIES} failed." >&2
+        attempt=$((attempt + 1))
+    done
+
+    if [[ ! -f "${dest}" ]]; then
+        echo "  ERROR: download failed after ${MAX_RETRIES} attempt(s) for ${filename}" >&2
+        echo "  Partial file kept at ${part} — re-run to resume." >&2
         FAIL=$((FAIL + 1))
         return 1
     fi
