@@ -19,6 +19,9 @@ nano compose/.env
 ./scripts/bootstrap.sh --bundle balanced
 ```
 
+On macOS, `bootstrap.sh` automatically uses `~/allarkive-data` as the data
+directory (avoids the `/var/lib/` permission issue). No extra config needed.
+
 The manual steps below are equivalent — follow them for more control.
 
 ---

@@ -30,8 +30,15 @@ PI_MODE=false
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
 SKIP_BUNDLE=false
 
-# Override from environment if set
-DATA_DIR="${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}"
+# Override from environment if set.
+# On macOS, /var/lib/ is not user-writable; default to ~/allarkive-data instead.
+if [[ -n "${ALLARKIVE_DATA_DIR:-}" ]]; then
+    DATA_DIR="${ALLARKIVE_DATA_DIR}"
+elif [[ "$(uname -s)" == "Darwin" ]]; then
+    DATA_DIR="${HOME}/allarkive-data"
+else
+    DATA_DIR="/var/lib/allarkive"
+fi
 DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-qwen2.5:7b}"
 EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
