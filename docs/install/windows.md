@@ -13,6 +13,24 @@ for downloads.
 
 ---
 
+## Quick start (automated)
+
+Once WSL2 and Docker Desktop are installed (Steps 1–3 below), the rest is
+one command inside your Ubuntu terminal:
+
+```bash
+git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+./scripts/bootstrap.sh --bundle balanced
+```
+
+The manual steps below cover WSL2 setup and the same actions in detail.
+
+---
+
 ## Prerequisites
 
 ### Hardware
@@ -169,6 +187,14 @@ cd compose/
 docker compose up -d
 ```
 
+On first run, Docker does two things before services start:
+
+1. **Builds the RAG image from source** (`scripts/rag/`) — 2–4 minutes.
+2. **Pulls the remaining images** (kiwix-serve, Ollama, Open WebUI, nginx).
+
+If the build fails with a network error, check Docker Desktop is running and
+WSL integration is enabled (Step 2).
+
 Watch logs during first startup:
 
 ```bash
@@ -186,7 +212,14 @@ docker compose ps
 ## Step 9: Index the archive
 
 ```bash
-docker compose exec rag python -m rag.index
+docker compose exec rag python indexer.py
+```
+
+The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
+the compose file — no extra arguments needed. To force a full rebuild:
+
+```bash
+docker compose exec rag python indexer.py --force
 ```
 
 ---
@@ -245,6 +278,15 @@ Docker Desktop must be running before starting the stack.
 ---
 
 ## Troubleshooting
+
+### RAG image build fails
+
+Check that Docker Desktop is running and WSL integration is enabled (Step 2).
+If the build fails partway, retry with:
+
+```bash
+docker compose build rag && docker compose up -d
+```
 
 ### WSL2 does not start
 

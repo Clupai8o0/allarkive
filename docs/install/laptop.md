@@ -12,6 +12,28 @@ on your internet connection and which bundle you choose).
 
 ---
 
+## Quick start (automated)
+
+If you just want everything running with one command, use `bootstrap.sh`.
+It handles directory creation, bundle download, image build, model pull,
+and indexing automatically:
+
+```bash
+git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+# Generate and paste a secret key:
+openssl rand -hex 32  # copy this output into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+# Then run everything:
+./scripts/bootstrap.sh --bundle balanced
+```
+
+The manual steps below are equivalent — follow them if you want more control
+or need to debug a specific step.
+
+---
+
 ## Prerequisites
 
 ### Hardware
@@ -111,8 +133,13 @@ cd compose/
 docker compose up -d
 ```
 
-This pulls images, starts all services, and waits for health checks to pass.
-On first run, Ollama will download the default model (~4 GB for `qwen2.5:7b`).
+On first run, Docker does two things before the services start:
+
+1. **Builds the RAG image from source** (`scripts/rag/`) — takes 2–4 minutes
+   depending on your machine and network (downloads Python dependencies).
+2. **Pulls the remaining images** (kiwix-serve, Ollama, Open WebUI, nginx).
+
+Subsequent starts are fast — images are already present.
 
 To watch progress:
 
@@ -120,8 +147,15 @@ To watch progress:
 docker compose logs -f
 ```
 
-Wait until you see Open WebUI reporting healthy. Typically 2–5 minutes on
-first run, less than a minute on subsequent starts.
+Wait until all containers show `healthy`:
+
+```bash
+docker compose ps
+```
+
+Typically 2–5 minutes on first run (excluding model download), less than a
+minute on subsequent starts. On first run, Ollama also downloads the default
+model (~4 GB for `qwen2.5:7b`) in the background.
 
 ### GPU acceleration (optional)
 
@@ -135,16 +169,24 @@ docker compose --profile gpu up -d
 
 ## Step 6: Index the archive
 
-The RAG pipeline indexes your ZIM files on first use. Trigger it manually
-so you can watch the output:
+The RAG pipeline indexes your ZIM files so the AI can search them. Trigger
+it manually so you can watch the output:
 
 ```bash
-docker compose exec rag python -m rag.index
+docker compose exec rag python indexer.py
+```
+
+The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
+the compose file, so no extra arguments are needed. To force a full rebuild
+of an existing index:
+
+```bash
+docker compose exec rag python indexer.py --force
 ```
 
 Indexing time depends on the bundle and hardware. The balanced bundle takes
 roughly 10–30 minutes on a modern laptop. The index persists across restarts;
-you only need to re-index if you change your ZIM files.
+you only need to re-index if you add or change ZIM files.
 
 ---
 
@@ -226,6 +268,19 @@ docker compose logs rag
 ```
 
 Wait for all containers to show `healthy`. The first startup is slow.
+
+### RAG image build fails
+
+The RAG image is built from `scripts/rag/`. Common causes:
+- No internet during build (needs to download Python packages)
+- Docker out of disk space
+
+Check with `docker compose logs rag` and `df -h`. To retry the build:
+
+```bash
+docker compose build rag
+docker compose up -d
+```
 
 ### Ollama model download is stuck
 

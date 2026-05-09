@@ -8,6 +8,21 @@ both Intel and Apple Silicon.
 
 ---
 
+## Quick start (automated)
+
+```bash
+git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+./scripts/bootstrap.sh --bundle balanced
+```
+
+The manual steps below are equivalent — follow them for more control.
+
+---
+
 ## Prerequisites
 
 ### Hardware
@@ -135,11 +150,17 @@ cd compose/
 docker compose up -d
 ```
 
-On first run, Ollama downloads the default model inside the container
-(~4 GB). Watch progress:
+On first run, Docker does two things before services start:
+
+1. **Builds the RAG image from source** (`scripts/rag/`) — 2–4 minutes.
+2. **Pulls the remaining images** (kiwix-serve, Ollama, Open WebUI, nginx).
+
+Subsequent starts skip both steps and are fast.
+
+Watch progress:
 
 ```bash
-docker compose logs -f ollama
+docker compose logs -f
 ```
 
 Wait for all containers to report healthy:
@@ -148,18 +169,26 @@ Wait for all containers to report healthy:
 docker compose ps
 ```
 
-The first startup takes 2–5 minutes. Subsequent starts are fast.
+On first run also expect Ollama to download the default model (~4 GB) in
+the background. Total first-run time: 5–15 minutes depending on network.
 
 ---
 
 ## Step 6: Index the archive
 
 ```bash
-docker compose exec rag python -m rag.index
+docker compose exec rag python indexer.py
+```
+
+The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
+the compose file — no extra arguments needed. To force a full rebuild:
+
+```bash
+docker compose exec rag python indexer.py --force
 ```
 
 Indexing time is roughly 10–30 minutes for the balanced bundle. The index
-persists in `$ALLARKIVE_DATA_DIR/index/`.
+persists in `$ALLARKIVE_DATA_DIR/index/` across restarts.
 
 ---
 
@@ -202,6 +231,14 @@ Ollama runs natively.
 
 Click the whale icon in the menu bar and wait for it to show "Running". Then
 retry `docker compose up -d`.
+
+### RAG image build fails
+
+The RAG image is built from `scripts/rag/` on first run. If it fails:
+- Check you have internet access during build (downloads Python packages)
+- Check Docker Desktop has enough disk (Settings → Resources → Disk image size)
+
+To retry: `docker compose build rag && docker compose up -d`
 
 ### `bind: address already in use` on port 8080
 

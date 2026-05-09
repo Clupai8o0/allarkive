@@ -8,6 +8,23 @@ no desktop environment.
 
 ---
 
+## Quick start (automated)
+
+Once Docker is installed (see Prerequisites), the rest is one command:
+
+```bash
+git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+./scripts/bootstrap.sh --bundle balanced
+```
+
+The manual steps below cover the same actions in detail.
+
+---
+
 ## Prerequisites
 
 ### Hardware
@@ -140,14 +157,21 @@ cd compose/
 docker compose up -d
 ```
 
+On first run, Docker does two things before services start:
+
+1. **Builds the RAG image from source** (`scripts/rag/`) — 2–4 minutes.
+2. **Pulls the remaining images** (kiwix-serve, Ollama, Open WebUI, nginx).
+
+Subsequent starts skip both and are fast. On first run, Ollama also downloads
+the default model (~4 GB) in the background.
+
 Watch startup logs in a separate window:
 
 ```bash
 docker compose logs -f
 ```
 
-On first run, Ollama downloads the default model (~4 GB). Wait for all
-containers to show `healthy` before proceeding.
+Wait for all containers to show `healthy` before proceeding.
 
 ### Checking service health
 
@@ -168,7 +192,14 @@ docker compose logs ollama
 ## Step 6: Index the archive
 
 ```bash
-docker compose exec rag python -m rag.index
+docker compose exec rag python indexer.py
+```
+
+The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
+the compose file — no extra arguments needed. To force a full rebuild:
+
+```bash
+docker compose exec rag python indexer.py --force
 ```
 
 Indexing time: roughly 10–30 minutes for the balanced bundle on a typical
@@ -235,6 +266,18 @@ For LAN or internet access, see `docs/deployment/lan-access.md`.
 ---
 
 ## Troubleshooting
+
+### RAG image build fails
+
+The RAG image builds from `scripts/rag/` on first `docker compose up`. If
+it fails mid-build (network timeout, disk full):
+
+```bash
+docker compose build rag
+docker compose up -d
+```
+
+Check disk with `df -h` — the build needs ~500 MB temporary space.
 
 ### Docker permission denied
 
