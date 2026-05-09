@@ -249,6 +249,21 @@ Adjust `WorkingDirectory` to wherever you cloned the repository.
 
 ---
 
+## Cleanup and uninstall
+
+Use `scripts/cleanup.sh`. Nothing is deleted unless you explicitly ask.
+
+| Command | What it removes |
+|---------|----------------|
+| `./scripts/cleanup.sh` | Stops and removes containers only. Data and images kept. |
+| `./scripts/cleanup.sh --images` | Also removes Docker images (re-pulled on next start). |
+| `./scripts/cleanup.sh --data` | Also deletes the data directory: ZIMs, models, RAG index, Open WebUI DB. **Irreversible.** Prompts before deleting. |
+| `./scripts/cleanup.sh --all` | `--images` + `--data`. Full wipe. Prompts before deleting. |
+
+After a full wipe, start fresh with `./scripts/bootstrap.sh --bundle balanced`.
+
+---
+
 ## Port summary
 
 All ports bind to `127.0.0.1` on the server by default.

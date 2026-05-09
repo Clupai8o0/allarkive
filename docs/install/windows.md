@@ -277,6 +277,22 @@ Docker Desktop must be running before starting the stack.
 
 ---
 
+## Cleanup and uninstall
+
+Run these inside your Ubuntu (WSL2) terminal. Nothing is deleted unless you
+explicitly ask.
+
+| Command | What it removes |
+|---------|----------------|
+| `./scripts/cleanup.sh` | Stops and removes containers only. Data and images kept. |
+| `./scripts/cleanup.sh --images` | Also removes Docker images (re-pulled on next start). |
+| `./scripts/cleanup.sh --data` | Also deletes the data directory: ZIMs, models, RAG index, Open WebUI DB. **Irreversible.** Prompts before deleting. |
+| `./scripts/cleanup.sh --all` | `--images` + `--data`. Full wipe. Prompts before deleting. |
+
+After a full wipe, start fresh with `./scripts/bootstrap.sh --bundle balanced`.
+
+---
+
 ## Troubleshooting
 
 ### RAG image build fails
