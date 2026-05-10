@@ -124,6 +124,7 @@ services:
     build:
       context: ../scripts/rag
     image: allarkive-rag:0.1.0
+    pull_policy: build
     ports:
       - "127.0.0.1:${RAG_PORT:-8000}:8000"
     environment:

@@ -93,6 +93,34 @@ else
     R=''; B=''; DIM=''; CY=''; BCY=''; GR=''; BGR=''; YL=''; RD=''; WH=''
 fi
 
+# ── Spinner ───────────────────────────────────────────────────────────────────
+_SPIN_PID=""
+
+_spin_start() {
+    local msg="${1:-}"
+    (
+        local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+        local i=0
+        while true; do
+            printf "\r  %s  %s " "${CY}${frames[$((i % 10))]}${R}" "${DIM}${msg}${R}"
+            i=$((i + 1))
+            sleep 0.1
+        done
+    ) &
+    _SPIN_PID=$!
+}
+
+_spin_stop() {
+    if [[ -n "${_SPIN_PID:-}" ]]; then
+        kill "${_SPIN_PID}" 2>/dev/null || true
+        wait "${_SPIN_PID}" 2>/dev/null || true
+        _SPIN_PID=""
+        printf "\r\033[K"
+    fi
+}
+
+trap '_spin_stop 2>/dev/null || true' EXIT INT TERM
+
 # ── Prerequisite checks ───────────────────────────────────────────────────────
 
 for cmd in curl sha256sum python3; do
@@ -339,7 +367,9 @@ verify_file() {
     local expected_sha="$3"
 
     local actual_sha
+    _spin_start "verifying checksum..."
     actual_sha="$(sha256sum "${file}" | awk '{print $1}')"
+    _spin_stop
 
     if [[ -n "${expected_sha}" ]]; then
         if [[ "${actual_sha}" != "${expected_sha}" ]]; then
@@ -356,7 +386,9 @@ verify_file() {
     fi
 
     local kiwix_sha
+    _spin_start "fetching Kiwix checksum..."
     kiwix_sha="$(curl -sf "${sha256_url}" | awk '{print $1}')"
+    _spin_stop
     if [[ -z "${kiwix_sha}" ]]; then
         echo "  ${YL}⚠${R}  could not fetch checksum from ${sha256_url}" >&2
         echo "  ${DIM}·  skipping verification — check manually.${R}" >&2
