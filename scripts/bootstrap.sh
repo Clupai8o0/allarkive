@@ -276,20 +276,31 @@ sys.exit(0)
 " "$1"
 }
 
+_ASSIGNED_PORTS=()
+
 _resolve_port() {
     # Usage: PORT=$(_resolve_port VARNAME DEFAULT)
-    # Reads current value from .env; bumps to next free port if in use; writes back.
+    # Reads current value from .env; bumps to next free port if in use or already
+    # claimed by another service in this run; writes back.
     local varname="$1" default="$2"
     local preferred
     preferred="$(grep -E "^${varname}=" "${ENV_FILE}" 2>/dev/null | cut -d= -f2- || true)"
     preferred="${preferred:-${default}}"
     local port="${preferred}"
-    while ! _port_free "${port}"; do
+    _already_assigned() {
+        local p="$1" a
+        for a in "${_ASSIGNED_PORTS[@]+"${_ASSIGNED_PORTS[@]}"}"; do
+            [[ "$a" == "$p" ]] && return 0
+        done
+        return 1
+    }
+    while ! _port_free "${port}" || _already_assigned "${port}"; do
         port=$((port + 1))
     done
     if [[ "${port}" != "${preferred}" ]]; then
         warn "Port ${preferred} already in use — using ${port} for ${varname}."
     fi
+    _ASSIGNED_PORTS+=("${port}")
     _env_set "${varname}" "${port}" "${ENV_FILE}"
     printf '%s' "${port}"
 }
@@ -469,11 +480,6 @@ fi
 # ── Step 6: Start the Compose stack ───────────────────────────────────────────
 
 step "Starting Docker Compose stack"
-
-# Stop any previous AllArkive stack so its port allocations are released
-# before we start fresh. Ports held by non-AllArkive processes are left alone.
-info "Tearing down any previous AllArkive stack..."
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down 2>/dev/null || true
 
 info "Starting Docker Compose stack (${COMPOSE_FILE})..."
 if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then

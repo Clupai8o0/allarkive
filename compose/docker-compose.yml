@@ -20,17 +20,20 @@ services:
   # ── Layer 1: Archive ────────────────────────────────────────────────────────
   kiwix:
     image: ghcr.io/kiwix/kiwix-serve:3.8.2@sha256:0b6541355b250c6b45d2d7725e88f22f1d6a0f45ad9480d9c0bd4bc58436a12f
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      while true; do
-        zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ')
-        if [ -n "$$zims" ]; then
-          exec kiwix-serve --port 8080 --address 0.0.0.0 $$zims
-        fi
-        printf 'No ZIM files in /data — retrying in 30s.\n'
-        printf 'Fetch a bundle: scripts/fetch-bundle.sh balanced\n'
-        sleep 30
-      done
+    entrypoint: []
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ')
+          if [ -n "$$zims" ]; then
+            exec kiwix-serve --port 8080 $$zims
+          fi
+          printf 'No ZIM files in /data -- retrying in 30s.\n'
+          printf 'Fetch a bundle: scripts/fetch-bundle.sh balanced\n'
+          sleep 30
+        done
     ports:
       - "127.0.0.1:${KIWIX_PORT:-8081}:8080"
     volumes:
