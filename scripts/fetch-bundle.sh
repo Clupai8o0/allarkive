@@ -80,6 +80,9 @@ if [[ ! -f "${MANIFEST}" ]]; then
     exit 1
 fi
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+warn() { echo "  ${YL}⚠${R}  $*" >&2; }
+
 # ── Terminal colors ────────────────────────────────────────────────────────────
 if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
     R=$'\033[0m';  B=$'\033[1m';   DIM=$'\033[2m'
@@ -224,9 +227,8 @@ for zim in data.get("zims", []):
     if not filename or not url:
         print(f"WARN: skipping ZIM entry with missing filename or url", file=sys.stderr)
         continue
-    # Only treat sha256 as valid if it's a 64-char hex string.
-    # Numbers and other placeholders are silently ignored so we fall through
-    # to the live sha256_url fetch instead of comparing against garbage.
+    # Only use sha256 if it is a valid 64-char hex string.
+    # Numbers and other placeholders are ignored — fall through to sha256_url.
     raw = str(zim.get("sha256", "") or "").strip().lower()
     expected_sha = raw if (len(raw) == 64 and all(c in "0123456789abcdef" for c in raw)) else ""
     print(f"{filename}\t{url}\t{sha256_url}\t{expected_sha}\t{approx_gb}")
@@ -322,8 +324,8 @@ download_and_verify() {
         PASS=$((PASS + 1))
     else
         warn "Checksum mismatch for ${filename} — file kept at ${dest}"
-        warn "Verify manually: sha256sum '${dest}'"
-        warn "If the file is corrupt, delete it and re-run to resume."
+        warn "Verify manually: sha256sum ${dest}"
+        warn "If the file is corrupt, delete it and re-run to resume the download."
         FAIL=$((FAIL + 1))
         return 1
     fi
