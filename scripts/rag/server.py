@@ -44,6 +44,7 @@ log = logging.getLogger("rag.server")
 _OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 _INDEX_DIR = os.environ.get("INDEX_DIR", "/index")
 _KIWIX_PUBLIC_URL = os.environ.get("KIWIX_PUBLIC_URL", "http://127.0.0.1:8081")
+_WEBUI_PUBLIC_URL = os.environ.get("WEBUI_PUBLIC_URL", "http://127.0.0.1:3000")
 _EMBED_MODEL = os.environ.get("EMBED_MODEL", "nomic-embed-text")
 _CHAT_MODEL = os.environ.get("CHAT_MODEL", "qwen2.5:7b")
 _TOP_K = int(os.environ.get("RAG_TOP_K", "5"))
@@ -219,6 +220,7 @@ def status() -> dict:
     return {
         "binding": "localhost",
         "kiwix_url": _KIWIX_PUBLIC_URL,
+        "webui_url": _WEBUI_PUBLIC_URL,
         "archives": archives,
         "archive_count": len(archives),
         "archive_total_gb": round(total_bytes / 1e9, 1),

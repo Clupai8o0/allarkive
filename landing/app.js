@@ -185,7 +185,13 @@ async function loadStatus() {
         const res = await fetch(`${RAG_API}/status`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.kiwix_url) KIWIX_URL = data.kiwix_url;
+        if (data.kiwix_url) {
+            KIWIX_URL = data.kiwix_url;
+            document.getElementById('link-archive').href = data.kiwix_url;
+        }
+        if (data.webui_url) {
+            document.getElementById('link-chat').href = data.webui_url;
+        }
         renderStatusLine(statusEl, data);
         renderArchivesTable(archivesEl, data);
     } catch {

@@ -40,7 +40,7 @@ services:
       - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ > /dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/ > /dev/null 2>&1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -134,6 +134,7 @@ services:
       - INDEX_DIR=/index
       - ZIM_DIR=/data
       - KIWIX_PUBLIC_URL=${KIWIX_PUBLIC_URL:-http://127.0.0.1:8081}
+      - WEBUI_PUBLIC_URL=http://127.0.0.1:${WEBUI_PORT:-3000}
       - EMBED_MODEL=${EMBED_MODEL:-nomic-embed-text}
       - CHAT_MODEL=${CHAT_MODEL:-qwen2.5:7b}
       - RAG_TOP_K=${RAG_TOP_K:-5}

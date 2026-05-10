@@ -396,6 +396,11 @@ _env_set ALLARKIVE_INDEX_DIR  "${INDEX_DIR}"  "${ENV_FILE}"
 _env_set ALLARKIVE_WEBUI_DIR  "${WEBUI_DATA_DIR}" "${ENV_FILE}"
 info "Storage paths written to ${ENV_FILE}."
 
+# Release AllArkive ports before checking availability so re-runs don't
+# increment ports that are only held by our own previous containers.
+info "Releasing previous AllArkive stack (if running)..."
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down 2>/dev/null || true
+
 # Detect port conflicts and auto-assign free alternatives.
 info "Checking ports..."
 LANDING_PORT="$(_resolve_port LANDING_PORT 8080)"
@@ -404,6 +409,11 @@ OLLAMA_PORT="$(_resolve_port  OLLAMA_PORT  11434)"
 WEBUI_PORT="$(_resolve_port   WEBUI_PORT   3000)"
 RAG_PORT="$(_resolve_port     RAG_PORT     8000)"
 info "Ports: landing=${LANDING_PORT}  kiwix=${KIWIX_PORT}  webui=${WEBUI_PORT}  rag=${RAG_PORT}  ollama=${OLLAMA_PORT}"
+
+# Keep KIWIX_PUBLIC_URL and WEBUI_PUBLIC_URL in sync with the resolved ports
+# so the RAG service returns the correct URLs to the landing page.
+_env_set KIWIX_PUBLIC_URL "http://127.0.0.1:${KIWIX_PORT}"   "${ENV_FILE}"
+_env_set WEBUI_PUBLIC_URL "http://127.0.0.1:${WEBUI_PORT}"   "${ENV_FILE}"
 
 # Detect a locally-running Ollama and reuse it instead of starting a Docker container.
 # On macOS with Docker Desktop, containers reach the host via host.docker.internal.
@@ -617,6 +627,7 @@ fi
 
 # ── Step 8: Summary ───────────────────────────────────────────────────────────
 
+LANDING_PORT="${LANDING_PORT:-8080}"
 KIWIX_PORT="${KIWIX_PORT:-8081}"
 WEBUI_PORT="${WEBUI_PORT:-3000}"
 OLLAMA_PORT="${OLLAMA_PORT:-11434}"
@@ -628,13 +639,22 @@ echo ""
 echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
 echo "  ${CY}║${R}  ${BGR}✓${R}  ${B}${WH}AllArkive is running${R}"
 echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
-echo "  ${CY}║${R}  ${DIM}Archive  (kiwix)  ${R}${WH}http://127.0.0.1:${KIWIX_PORT}${R}"
-echo "  ${CY}║${R}  ${DIM}Chat     (WebUI)  ${R}${WH}http://127.0.0.1:${WEBUI_PORT}${R}"
-echo "  ${CY}║${R}  ${DIM}RAG      (API)    ${R}${WH}http://127.0.0.1:${RAG_PORT}${R}"
+echo "  ${CY}║${R}  ${B}Start here:${R}"
+echo "  ${CY}║${R}  ${DIM}Landing  (entry point)  ${R}${WH}http://127.0.0.1:${LANDING_PORT}${R}"
+echo "  ${CY}║${R}"
+echo "  ${CY}║${R}  ${DIM}Other services (linked from the landing page):${R}"
+echo "  ${CY}║${R}  ${DIM}Archive  (kiwix)        ${R}${WH}http://127.0.0.1:${KIWIX_PORT}${R}"
+echo "  ${CY}║${R}  ${DIM}Chat     (Open WebUI)   ${R}${WH}http://127.0.0.1:${WEBUI_PORT}${R}"
+echo "  ${CY}║${R}  ${DIM}RAG      (API)          ${R}${WH}http://127.0.0.1:${RAG_PORT}${R}"
 if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
-    echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:11434${R}  ${DIM}(local)${R}"
+    echo "  ${CY}║${R}  ${DIM}Model    (Ollama)      ${R}${WH}http://127.0.0.1:11434${R}  ${DIM}(local)${R}"
 else
-    echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:${OLLAMA_PORT}${R}"
+    echo "  ${CY}║${R}  ${DIM}Model    (Ollama)      ${R}${WH}http://127.0.0.1:${OLLAMA_PORT}${R}"
+fi
+echo "  ${CY}║${R}"
+if [[ "${LANDING_PORT}" != "8080" || "${KIWIX_PORT}" != "8081" ]]; then
+    echo "  ${CY}║${R}  ${YL}Note:${R} ports were auto-adjusted to avoid conflicts."
+    echo "  ${CY}║${R}  ${DIM}Defaults are landing=8080, archive=8081. Edit compose/.env to fix.${R}"
 fi
 echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
 echo "  ${CY}║${R}  ${DIM}ZIM files       : ${ZIM_COUNT} file(s)${R}"
