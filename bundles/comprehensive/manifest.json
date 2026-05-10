@@ -1,13 +1,13 @@
 {
-  "_comment": "Comprehensive bundle — for users with large disk (200+ GB free). Includes full Wikipedia with images and major Stack Exchange stacks.",
+  "_comment": "Comprehensive bundle — for users with large disk (350+ GB free). Includes full Wikipedia with images, Project Gutenberg en_all, and major Stack Exchange stacks.",
   "name": "comprehensive",
-  "description": "Full English Wikipedia (with images), WikiMed, iFixit, Project Gutenberg, Stack Overflow, SuperUser, and Math Stack Exchange. For users with 200+ GB free disk and patience.",
+  "description": "Full English Wikipedia (with images), WikiMed, iFixit, Project Gutenberg (full English corpus ~200 GB), Stack Overflow, SuperUser, and Math Stack Exchange. Requires ~330 GB free disk.",
   "version": "1.0",
   "hardware": {
-    "min_free_disk_gb": 160,
-    "recommended_free_disk_gb": 250,
+    "min_free_disk_gb": 330,
+    "recommended_free_disk_gb": 370,
     "min_ram_gb": 16,
-    "notes": "Wikipedia with images alone is ~85 GB. Stack Overflow adds ~30 GB. Disk estimate covers ZIM files only; add ~5 GB for the AI model. Systems with 32+ GB RAM can run qwen2.5:14b for better quality."
+    "notes": "Gutenberg en_all dominates at ~200 GB. Wikipedia with images adds ~85 GB; Stack Overflow ~30 GB. Disk estimate covers ZIM files only; add ~5 GB for the AI model. Systems with 32+ GB RAM can run qwen2.5:14b for better quality."
   },
   "model": {
     "name": "qwen2.5:7b",
@@ -51,7 +51,7 @@
       "url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim",
       "sha256": "",
       "sha256_url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim.sha256",
-      "approx_size_gb": 5,
+      "approx_size_gb": 200,
       "license": "Public Domain and various open licenses",
       "license_url": "https://www.gutenberg.org/policy/license.html",
       "license_notes": "Pre-1928 works are public domain in the US. Verify per-text licenses for newer works."

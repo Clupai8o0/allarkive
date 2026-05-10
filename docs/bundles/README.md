@@ -11,8 +11,8 @@ with AllArkive v0.1, their contents, sizes, and license obligations.
 | Bundle | Use case | ZIM disk | + model | Total |
 |--------|----------|----------|---------|-------|
 | `minimal` | Pi 4, low-disk machines, testing | ~4 GB | ~2–4 GB | ~6–8 GB |
-| `balanced` | Daily-use laptop (recommended) | ~33 GB | ~4 GB | ~37 GB |
-| `comprehensive` | Large-disk machines, full research | 150+ GB | ~4 GB | 155+ GB |
+| `balanced` | Daily-use laptop (recommended) | ~28 GB | ~4 GB | ~32 GB |
+| `comprehensive` | Large-disk machines, full research | ~330 GB | ~4 GB | ~335 GB |
 
 All bundles run fully offline once installed. Updates require re-downloading
 the relevant ZIM files.
@@ -66,10 +66,13 @@ that fits on a modern laptop.
 | Wikipedia (English, text only) | General encyclopaedia | ~22 GB | CC-BY-SA 4.0 |
 | WikiMed — medical reference (English) | Medical reference wiki | ~500 MB | CC-BY-SA 4.0 |
 | iFixit — repair guides (English) | Repair and disassembly guides | ~3 GB | CC-BY-NC-SA 3.0 |
-| Project Gutenberg (English) | Classic literature, public domain | ~5 GB | Public domain + various |
 | SuperUser (Stack Exchange) | General tech Q&A | ~2 GB | CC-BY-SA 4.0 |
 
-**Total ZIM size**: ~33 GB
+**Total ZIM size**: ~28 GB
+
+Project Gutenberg (`en_all`) is **not** in this bundle — the full corpus is
+~200 GB. It is included in the `comprehensive` bundle. You can also add it
+manually as a custom ZIM (see the section below).
 
 **Recommended model**: `qwen2.5:7b` (~4 GB, fits in 8 GB RAM)
 
@@ -95,20 +98,25 @@ applicable to specific texts you use.
 
 ## The `comprehensive` bundle
 
-**Good for**: users with 200+ GB free disk who want a full reference library
-including Wikipedia with images, plus major Stack Exchange communities.
+**Good for**: users with 350+ GB free disk who want a full reference library
+including Wikipedia with images, the complete Project Gutenberg corpus, and
+major Stack Exchange communities.
 
 | Source | Type | Approx size | License |
 |--------|------|------------|---------|
 | Wikipedia (English, with images) | General encyclopaedia | ~85 GB | CC-BY-SA 4.0 |
 | WikiMed — medical reference (English) | Medical reference wiki | ~500 MB | CC-BY-SA 4.0 |
 | iFixit — repair guides (English) | Repair and disassembly guides | ~3 GB | CC-BY-NC-SA 3.0 |
-| Project Gutenberg (English) | Classic literature, public domain | ~5 GB | Public domain + various |
+| Project Gutenberg (English, full corpus) | Classic literature, public domain | ~200 GB | Public domain + various |
 | Stack Overflow | Programming Q&A | ~30 GB | CC-BY-SA 4.0 |
 | SuperUser (Stack Exchange) | General tech Q&A | ~2 GB | CC-BY-SA 4.0 |
 | Math Stack Exchange | Mathematics Q&A | ~3 GB | CC-BY-SA 4.0 |
 
-**Total ZIM size**: ~128 GB
+**Total ZIM size**: ~323 GB
+
+The Gutenberg `en_all` ZIM (~200 GB) dominates the disk requirement. If you
+want everything else without Gutenberg, use the `balanced` bundle and add
+individual sources manually.
 
 **Recommended model**: `qwen2.5:7b` on 16 GB RAM; `qwen2.5:14b` on 32+ GB
 for better reasoning quality over large archives.

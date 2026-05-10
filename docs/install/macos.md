@@ -33,7 +33,7 @@ The manual steps below are equivalent — follow them for more control.
 | | Minimum | Recommended |
 |-|---------|-------------|
 | RAM | 8 GB | 16 GB |
-| Free disk | 10 GB (minimal bundle + model) | 60 GB (balanced bundle + model) |
+| Free disk | 10 GB (minimal bundle + model) | 35 GB (balanced bundle + model) |
 
 Apple Silicon (M1/M2/M3/M4) is supported. Ollama runs models natively on
 Apple Silicon via Metal — no NVIDIA GPU needed.
@@ -141,8 +141,8 @@ checksums. A failed checksum stops the script — do not proceed if this happens
 | Bundle | Contents | Disk (ZIMs only) |
 |--------|----------|-----------------|
 | `minimal` | WikiMed + iFixit | ~4 GB |
-| `balanced` | Wikipedia (text) + WikiMed + iFixit + Gutenberg + SuperUser | ~33 GB |
-| `comprehensive` | Full Wikipedia (images) + more Stack Exchange | 150+ GB |
+| `balanced` | Wikipedia (text) + WikiMed + iFixit + SuperUser | ~28 GB |
+| `comprehensive` | Full Wikipedia (images) + Gutenberg + Stack Exchange | ~330 GB |
 
 ---
 

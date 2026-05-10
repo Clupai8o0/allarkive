@@ -26,15 +26,15 @@ This is **not** a survival kit, a prepper bunker, or a doomsday cache. It's a li
 
 ## What's in the default bundle (v0.1)
 
-The "balanced" bundle, recommended for most laptops:
+The "balanced" bundle, recommended for most laptops (~28 GB ZIM total):
 
-- **Wikipedia** (English, text-only) — ~50 GB
+- **Wikipedia** (English, text-only) — ~22 GB
+- **WikiMed** — medical reference, for general lookups, **not** medical advice
 - **iFixit** — repair guides
-- **Project Gutenberg** — public-domain books
-- **A medical reference wiki** — for general lookups, **not** medical advice
-- **Stack Exchange** — programming and DIY Q&A
+- **SuperUser** — general tech Q&A
 
 Smaller and larger bundles are documented in [`docs/bundles/`](docs/bundles/).
+Project Gutenberg (full corpus, ~200 GB) is in the `comprehensive` bundle.
 
 > The AI can be wrong. RAG with citations makes its output checkable, not infallible. **Not a substitute for professional medical, legal, or safety advice.**
 
@@ -50,8 +50,8 @@ cp compose/.env.example compose/.env
 Full guide with screenshots: [`docs/install/`](docs/install/).
 
 System requirements:
-- **Minimum**: 8 GB RAM, 100 GB disk, x86_64 or arm64
-- **Recommended**: 16 GB RAM, 250 GB SSD, modern CPU
+- **Minimum**: 8 GB RAM, 35 GB disk, x86_64 or arm64
+- **Recommended**: 16 GB RAM, 50 GB SSD, modern CPU
 - **Pi text-only build**: Raspberry Pi 4 (4 GB+) with USB SSD
 
 After install, open `http://localhost:8080` for the landing page.

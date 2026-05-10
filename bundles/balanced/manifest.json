@@ -1,13 +1,13 @@
 {
   "_comment": "Balanced bundle — default for laptop installs. Includes English Wikipedia (text-only), medical reference, repair guides, classic literature, and technical Q&A. ZIM checksums must be filled in from the .sha256 files published alongside each download.",
   "name": "balanced",
-  "description": "English Wikipedia (text only), WikiMed medical reference, iFixit repair guides, Project Gutenberg, and SuperUser Q&A. Sized for a laptop with 50+ GB free disk.",
+  "description": "English Wikipedia (text only), WikiMed medical reference, iFixit repair guides, and SuperUser Q&A. ~28 GB ZIM total — fits comfortably on any modern laptop.",
   "version": "1.0",
   "hardware": {
-    "min_free_disk_gb": 35,
-    "recommended_free_disk_gb": 60,
+    "min_free_disk_gb": 30,
+    "recommended_free_disk_gb": 40,
     "min_ram_gb": 8,
-    "notes": "Disk estimate covers ZIM files only; add ~5 GB for the default AI model."
+    "notes": "Disk estimate covers ZIM files only; add ~5 GB for the default AI model. For Project Gutenberg (en_all, ~200 GB), use the comprehensive bundle or add it manually."
   },
   "model": {
     "name": "qwen2.5:7b",
@@ -18,7 +18,7 @@
       "name": "Wikipedia (English, text only)",
       "filename": "wikipedia_en_all_nopic_2026-03.zim",
       "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_nopic_2026-03.zim",
-      "sha256": "",
+      "sha256": "0d0ff0cff37953886edca65a1fd5809eb77c96346d85c0fdd7f34eac55a1996e",
       "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_nopic_2026-03.zim.sha256",
       "approx_size_gb": 22,
       "license": "CC-BY-SA 4.0",
@@ -28,7 +28,7 @@
       "name": "WikiMed — medical reference (English)",
       "filename": "wikipedia_en_medicine_maxi_2026-04.zim",
       "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim",
-      "sha256": "",
+      "sha256": "6f67340a7cd7665bb57c27d2bbff97e26f2037477c9ea597345a118286820331",
       "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim.sha256",
       "approx_size_gb": 0.5,
       "license": "CC-BY-SA 4.0",
@@ -38,23 +38,12 @@
       "name": "iFixit — repair guides (English)",
       "filename": "ifixit_en_all_2025-12.zim",
       "url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim",
-      "sha256": "",
+      "sha256": "9bb5f3408707fd0300c6ef47a425c3217187f144cd9154a928183816aa72eead",
       "sha256_url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim.sha256",
       "approx_size_gb": 3,
       "license": "CC-BY-NC-SA 3.0",
       "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
       "license_notes": "Non-commercial use only."
-    },
-    {
-      "name": "Project Gutenberg (English)",
-      "filename": "gutenberg_en_all_2025-11.zim",
-      "url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim",
-      "sha256": "",
-      "sha256_url": "https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim.sha256",
-      "approx_size_gb": 5,
-      "license": "Public Domain and various open licenses",
-      "license_url": "https://www.gutenberg.org/policy/license.html",
-      "license_notes": "Pre-1928 works are public domain in the US. Verify per-text licenses for newer works."
     },
     {
       "name": "SuperUser (Stack Exchange)",

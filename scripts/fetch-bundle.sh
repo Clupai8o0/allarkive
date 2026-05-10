@@ -80,19 +80,109 @@ if [[ ! -f "${MANIFEST}" ]]; then
     exit 1
 fi
 
+# ── Terminal colors ────────────────────────────────────────────────────────────
+if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
+    R=$'\033[0m';  B=$'\033[1m';   DIM=$'\033[2m'
+    CY=$'\033[36m';  BCY=$'\033[96m'
+    GR=$'\033[32m';  BGR=$'\033[92m'
+    YL=$'\033[93m';  RD=$'\033[91m';  WH=$'\033[97m'
+else
+    R=''; B=''; DIM=''; CY=''; BCY=''; GR=''; BGR=''; YL=''; RD=''; WH=''
+fi
+
 # ── Prerequisite checks ───────────────────────────────────────────────────────
 
 for cmd in curl sha256sum python3; do
     if ! command -v "${cmd}" > /dev/null 2>&1; then
-        echo "ERROR: required command not found: ${cmd}" >&2
+        echo "  ${RD}✗  required command not found: ${cmd}${R}" >&2
         exit 1
     fi
 done
+
+echo ""
+echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
+echo "  ${CY}║${R}  ${B}${WH}AllArkive${R}  Bundle Fetcher"
+echo "  ${CY}║${R}  ${DIM}bundle : ${BUNDLE_NAME}${R}"
+echo "  ${CY}║${R}  ${DIM}dest   : ${DEST_DIR}${R}"
+echo "  ${CY}╚══════════════════════════════════════════════════════════════════╝${R}"
+echo ""
 
 # ── Retry / resume settings ───────────────────────────────────────────────────
 
 MAX_RETRIES=3
 RETRY_DELAY=10  # seconds between retries
+
+# ── Per-file progress bar (Python-managed) ────────────────────────────────────
+# Runs curl silently, polls the .part file size every 0.25 s, draws a bar.
+# Falls back gracefully if HEAD request can't get Content-Length.
+
+_download_with_progress() {
+    local url="$1"
+    local part="$2"
+    python3 - "${url}" "${part}" <<'PYEOF'
+import sys, os, subprocess, time
+
+url, part = sys.argv[1], sys.argv[2]
+
+BGR = '\033[92m'; CY = '\033[96m'; DIM = '\033[2m'
+YL  = '\033[93m'; WH  = '\033[97m'; R   = '\033[0m'
+
+total = 0
+try:
+    import urllib.request
+    req = urllib.request.Request(url, method='HEAD')
+    req.add_header('User-Agent', 'AllArkive/1.0')
+    with urllib.request.urlopen(req, timeout=15) as r:
+        total = int(r.headers.get('Content-Length') or 0)
+except Exception:
+    pass
+
+proc = subprocess.Popen(
+    ['curl', '--fail', '--location', '--continue-at', '-',
+     '--silent', '--no-progress-meter', '--output', part, url],
+    stderr=subprocess.DEVNULL,
+)
+
+BAR_W = 36
+
+def human(n):
+    for unit, d in [('TB', 1<<40), ('GB', 1<<30), ('MB', 1<<20), ('KB', 1<<10)]:
+        if n >= d:
+            return f"{n/d:.1f} {unit}"
+    return f"{n} B"
+
+def draw(current, total, done=False):
+    if total > 0:
+        pct = min(current / total, 1.0)
+        filled = int(pct * BAR_W)
+        bar = f"{BGR}{'█'*filled}{DIM}{'░'*(BAR_W-filled)}{R}"
+        line = f"\r    [{bar}]  {YL}{pct*100:5.1f}%{R}  {WH}{human(current)} / {human(total)}{R}"
+    else:
+        spin = '▏▎▍▌▋▊▉█▉▊▋▌▍▎▏'[int(time.monotonic() * 4) % 15]
+        bar = f"{DIM}{'░'*(BAR_W-1)}{R}{CY}{spin}{R}"
+        line = f"\r    [{bar}]  {human(current)} downloaded"
+    print(line, end=('\n' if done else ''), flush=True)
+
+try:
+    while proc.poll() is None:
+        try:
+            draw(os.path.getsize(part), total)
+        except OSError:
+            draw(0, total)
+        time.sleep(0.25)
+    try:
+        draw(os.path.getsize(part), total, done=True)
+    except OSError:
+        print()
+except KeyboardInterrupt:
+    proc.terminate()
+    proc.wait()
+    print()
+    raise
+
+sys.exit(proc.returncode)
+PYEOF
+}
 
 # ── Ensure destination directory exists ───────────────────────────────────────
 
@@ -139,18 +229,20 @@ download_and_verify() {
     local dest="${DEST_DIR}/${filename}"
     local part="${dest}.part"
 
-    echo "──────────────────────────────────────────────────────────────────────────"
-    echo "ZIM: ${filename}"
+    echo ""
+    echo "  ${CY}╭──────────────────────────────────────────────────────────────────╮${R}"
+    echo "  ${CY}│${R}  ${B}↓  ${filename}${R}"
+    echo "  ${CY}╰──────────────────────────────────────────────────────────────────╯${R}"
 
     # Already present and valid?
     if [[ -f "${dest}" ]]; then
-        echo "  File exists — verifying checksum..."
+        echo "  ${DIM}·${R}  file exists — verifying checksum..."
         if verify_file "${dest}" "${sha256_url}" "${expected_sha}"; then
-            echo "  Already present and valid. Skipping download."
+            echo "  ${BGR}✓${R}  already present and valid. Skipping."
             SKIP=$((SKIP + 1))
             return 0
         else
-            echo "  Checksum mismatch — re-downloading."
+            echo "  ${YL}⚠${R}  checksum mismatch — re-downloading."
             rm -f "${dest}"
         fi
     fi
@@ -159,45 +251,43 @@ download_and_verify() {
     if [[ -f "${part}" ]]; then
         local part_size
         part_size="$(du -sh "${part}" 2>/dev/null | cut -f1 || echo "?")"
-        echo "  Resuming partial download (${part_size} already on disk)."
+        echo "  ${BCY}↻${R}  resuming partial download (${part_size} already on disk)."
     fi
 
-    echo "  Downloading from: ${url}"
-    echo "  Destination: ${dest}"
-    echo "  (Large files — this may take a while on a slow connection.)"
+    echo "  ${DIM}·${R}  ${url}"
+    echo "  ${DIM}·${R}  ${dest}"
 
     local attempt=1
     while [[ "${attempt}" -le "${MAX_RETRIES}" ]]; do
         if [[ "${attempt}" -gt 1 ]]; then
-            echo "  Retrying (attempt ${attempt}/${MAX_RETRIES}) after ${RETRY_DELAY}s..."
+            echo "  ${YL}↻${R}  retrying (attempt ${attempt}/${MAX_RETRIES}) after ${RETRY_DELAY}s..."
             sleep "${RETRY_DELAY}"
         fi
 
-        # --continue-at - resumes into the .part file if it already has bytes.
-        if curl --fail --location --continue-at - --progress-bar \
-                 --output "${part}" "${url}"; then
+        # --continue-at - resumes from existing .part bytes; progress drawn by Python.
+        if _download_with_progress "${url}" "${part}"; then
             mv "${part}" "${dest}"
             break
         fi
 
-        echo "  Attempt ${attempt}/${MAX_RETRIES} failed." >&2
+        echo "  ${RD}✗${R}  attempt ${attempt}/${MAX_RETRIES} failed." >&2
         attempt=$((attempt + 1))
     done
 
     if [[ ! -f "${dest}" ]]; then
-        echo "  ERROR: download failed after ${MAX_RETRIES} attempt(s) for ${filename}" >&2
-        echo "  Partial file kept at ${part} — re-run to resume." >&2
+        echo "  ${RD}✗  download failed after ${MAX_RETRIES} attempt(s) for ${filename}${R}" >&2
+        echo "  ${DIM}·  partial file kept at ${part} — re-run to resume.${R}" >&2
         FAIL=$((FAIL + 1))
         return 1
     fi
 
     # Verify
     if verify_file "${dest}" "${sha256_url}" "${expected_sha}"; then
-        echo "  Verified OK."
+        echo "  ${BGR}✓${R}  verified OK."
         PASS=$((PASS + 1))
     else
-        echo "  ERROR: checksum verification failed for ${filename}" >&2
-        echo "  Removing corrupt file: ${dest}" >&2
+        echo "  ${RD}✗  checksum verification failed for ${filename}${R}" >&2
+        echo "  ${DIM}·  removing corrupt file: ${dest}${R}" >&2
         rm -f "${dest}"
         FAIL=$((FAIL + 1))
         return 1
@@ -212,39 +302,36 @@ verify_file() {
     local actual_sha
     actual_sha="$(sha256sum "${file}" | awk '{print $1}')"
 
-    # If the manifest has a pinned SHA-256, check against it first.
     if [[ -n "${expected_sha}" ]]; then
         if [[ "${actual_sha}" != "${expected_sha}" ]]; then
-            echo "  MISMATCH: manifest expected ${expected_sha}" >&2
-            echo "            got               ${actual_sha}" >&2
+            echo "  ${RD}✗  mismatch: expected ${expected_sha}${R}" >&2
+            echo "           ${RD}got      ${actual_sha}${R}" >&2
             return 1
         fi
         return 0
     fi
 
-    # No pinned SHA-256 in manifest — download from official Kiwix source.
     if [[ -z "${sha256_url}" ]]; then
-        echo "  WARN: no sha256 or sha256_url in manifest — skipping verification" >&2
+        echo "  ${YL}⚠${R}  no sha256 or sha256_url in manifest — skipping verification" >&2
         return 0
     fi
 
     local kiwix_sha
     kiwix_sha="$(curl -sf "${sha256_url}" | awk '{print $1}')"
     if [[ -z "${kiwix_sha}" ]]; then
-        echo "  WARN: could not fetch checksum from ${sha256_url}" >&2
-        echo "  Skipping verification — manually check the file." >&2
+        echo "  ${YL}⚠${R}  could not fetch checksum from ${sha256_url}" >&2
+        echo "  ${DIM}·  skipping verification — check manually.${R}" >&2
         return 0
     fi
 
     if [[ "${actual_sha}" != "${kiwix_sha}" ]]; then
-        echo "  MISMATCH: Kiwix expected ${kiwix_sha}" >&2
-        echo "            got            ${actual_sha}" >&2
+        echo "  ${RD}✗  mismatch: Kiwix expected ${kiwix_sha}${R}" >&2
+        echo "           ${RD}got               ${actual_sha}${R}" >&2
         return 1
     fi
 
-    # Pin the verified hash back to the manifest as a note (not written to disk).
-    echo "  Verified via Kiwix .sha256 file."
-    echo "  Pin this hash in bundles/${BUNDLE_NAME}/manifest.json: ${actual_sha}"
+    echo "  ${BGR}✓${R}  verified via Kiwix .sha256"
+    echo "  ${DIM}·  pin in bundles/${BUNDLE_NAME}/manifest.json: ${actual_sha}${R}"
     return 0
 }
 
@@ -256,19 +343,28 @@ done <<< "${ZIM_LIST}"
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo ""
-echo "══════════════════════════════════════════════════════════════════════════"
-echo "Bundle: ${BUNDLE_NAME}"
-echo "Destination: ${DEST_DIR}"
-echo "Downloaded and verified: ${PASS}"
-echo "Already present (skipped): ${SKIP}"
-echo "Failed: ${FAIL}"
-echo "══════════════════════════════════════════════════════════════════════════"
+echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
+if [[ "${FAIL}" -gt 0 ]]; then
+    echo "  ${CY}║${R}  ${RD}✗${R}  Bundle: ${B}${BUNDLE_NAME}${R}  —  ${RD}${FAIL} failed${R}"
+else
+    echo "  ${CY}║${R}  ${BGR}✓${R}  Bundle: ${B}${BUNDLE_NAME}${R}  — all ZIMs present"
+fi
+echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
+echo "  ${CY}║${R}  ${DIM}↓  downloaded and verified : ${PASS}${R}"
+echo "  ${CY}║${R}  ${DIM}→  already present (skipped): ${SKIP}${R}"
+if [[ "${FAIL}" -gt 0 ]]; then
+    echo "  ${CY}║${R}  ${RD}✗  failed                  : ${FAIL}${R}"
+else
+    echo "  ${CY}║${R}  ${DIM}✓  failed                  : ${FAIL}${R}"
+fi
+echo "  ${CY}║${R}  ${DIM}·  destination: ${DEST_DIR}${R}"
+echo "  ${CY}╚══════════════════════════════════════════════════════════════════╝${R}"
+echo ""
 
 if [[ "${FAIL}" -gt 0 ]]; then
-    echo "ERROR: ${FAIL} ZIM(s) failed. Check output above." >&2
+    echo "  ${RD}✗  ${FAIL} ZIM(s) failed. Check output above.${R}" >&2
     exit 1
 fi
 
-echo ""
-echo "All ZIM files are present and verified."
-echo "Start the stack with: docker compose -f compose/docker-compose.yml up -d"
+echo "  ${BGR}✓${R}  All ZIM files are present and verified."
+echo "  ${DIM}·  start the stack: docker compose -f compose/docker-compose.yml up -d${R}"
