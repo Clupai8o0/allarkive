@@ -590,11 +590,17 @@ info "(This can take several minutes for large bundles.)"
 if docker compose -f "${COMPOSE_FILE}" ps --format json rag 2>/dev/null \
         | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('State',''))" \
         2>/dev/null | grep -q "running"; then
+    # Use host.docker.internal when Ollama is running natively on the host.
+    if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
+        _INDEXER_OLLAMA_URL="http://host.docker.internal:11434"
+    else
+        _INDEXER_OLLAMA_URL="http://ollama:11434"
+    fi
     docker compose -f "${COMPOSE_FILE}" exec rag \
         python indexer.py \
             --zim-dir /data \
             --index-dir /index \
-            --ollama-url http://ollama:11434 \
+            --ollama-url "${_INDEXER_OLLAMA_URL}" \
     && info "Indexing complete." \
     || warn "Indexer returned an error — see logs above. Queries will return no-sources until indexing succeeds."
 else
@@ -619,7 +625,11 @@ echo "  ${CY}╠═════════════════════�
 echo "  ${CY}║${R}  ${DIM}Archive  (kiwix)  ${R}${WH}http://127.0.0.1:${KIWIX_PORT}${R}"
 echo "  ${CY}║${R}  ${DIM}Chat     (WebUI)  ${R}${WH}http://127.0.0.1:${WEBUI_PORT}${R}"
 echo "  ${CY}║${R}  ${DIM}RAG      (API)    ${R}${WH}http://127.0.0.1:${RAG_PORT}${R}"
-echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:${OLLAMA_PORT}${R}"
+if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
+    echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:11434${R}  ${DIM}(local)${R}"
+else
+    echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:${OLLAMA_PORT}${R}"
+fi
 echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
 echo "  ${CY}║${R}  ${DIM}ZIM files       : ${ZIM_COUNT} file(s)${R}"
 echo "  ${CY}║${R}  ${DIM}ZIM dir         : ${ZIM_DIR}${R}"
