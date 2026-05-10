@@ -394,6 +394,21 @@ WEBUI_PORT="$(_resolve_port   WEBUI_PORT   3000)"
 RAG_PORT="$(_resolve_port     RAG_PORT     8000)"
 info "Ports: landing=${LANDING_PORT}  kiwix=${KIWIX_PORT}  webui=${WEBUI_PORT}  rag=${RAG_PORT}  ollama=${OLLAMA_PORT}"
 
+# Detect a locally-running Ollama and reuse it instead of starting a Docker container.
+# On macOS with Docker Desktop, containers reach the host via host.docker.internal.
+USE_LOCAL_OLLAMA=false
+if curl -sf "http://127.0.0.1:11434/api/version" > /dev/null 2>&1; then
+    warn "Local Ollama detected on port 11434 — using it instead of the Docker service."
+    _env_set OLLAMA_BASE_URL "http://host.docker.internal:11434" "${ENV_FILE}"
+    _env_set OLLAMA_URL      "http://host.docker.internal:11434" "${ENV_FILE}"
+    USE_LOCAL_OLLAMA=true
+    OLLAMA_URL="http://127.0.0.1:11434"
+else
+    _env_set OLLAMA_BASE_URL "http://ollama:11434" "${ENV_FILE}"
+    _env_set OLLAMA_URL      "http://ollama:11434" "${ENV_FILE}"
+    OLLAMA_URL="http://127.0.0.1:${OLLAMA_PORT}"
+fi
+
 # ── Step 4: Disk space check ──────────────────────────────────────────────────
 
 step "Checking disk space"
@@ -461,7 +476,13 @@ info "Tearing down any previous AllArkive stack..."
 docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down 2>/dev/null || true
 
 info "Starting Docker Compose stack (${COMPOSE_FILE})..."
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
+if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
+    info "Skipping Docker Ollama — using local Ollama on 127.0.0.1:11434."
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d \
+        --scale ollama=0 --scale ollama-gpu=0
+else
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
+fi
 
 info "Stack started. Waiting for services to be healthy..."
 
@@ -498,7 +519,6 @@ wait_healthy kiwix 60 || true
 # ── Step 7: Pull models and index ─────────────────────────────────────────────
 
 step "Pulling models and running RAG indexer"
-OLLAMA_URL="http://127.0.0.1:${OLLAMA_PORT:-11434}"
 
 info "Pulling model: ${DEFAULT_MODEL}"
 info "(This downloads model weights — may take several minutes.)"

@@ -75,7 +75,7 @@ services:
     ports:
       - "127.0.0.1:${RAG_PORT:-8000}:8000"
     environment:
-      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
       - INDEX_DIR=/index
       - ZIM_DIR=/data
       - KIWIX_PUBLIC_URL=${KIWIX_PUBLIC_URL:-http://127.0.0.1:8081}
@@ -89,9 +89,6 @@ services:
     volumes:
       - "${ALLARKIVE_INDEX_DIR:-/mnt/ssd/allarkive/index}:/index"
       - "${ALLARKIVE_ZIM_DIR:-/mnt/ssd/allarkive/zim}:/data:ro"
-    depends_on:
-      ollama:
-        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
@@ -125,7 +122,7 @@ services:
     volumes:
       - "${ALLARKIVE_WEBUI_DIR:-/mnt/ssd/allarkive/data}:/app/backend/data"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in compose/.env}
       - WEBUI_AUTH=${WEBUI_AUTH:-false}
       - ENABLE_SIGNUP=${WEBUI_ENABLE_SIGNUP:-false}
@@ -136,8 +133,6 @@ services:
       - DO_NOT_TRACK=1
       - SCARF_NO_ANALYTICS=true
     depends_on:
-      ollama:
-        condition: service_healthy
       rag:
         condition: service_healthy
     restart: unless-stopped
