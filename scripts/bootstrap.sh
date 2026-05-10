@@ -479,7 +479,7 @@ info "Starting Docker Compose stack (${COMPOSE_FILE})..."
 if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
     info "Skipping Docker Ollama — using local Ollama on 127.0.0.1:11434."
     docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d \
-        --scale ollama=0 --scale ollama-gpu=0
+        --scale ollama=0
 else
     docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
 fi
