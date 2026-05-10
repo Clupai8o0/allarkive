@@ -22,14 +22,15 @@ services:
     image: ghcr.io/kiwix/kiwix-serve:3.8.2@sha256:0b6541355b250c6b45d2d7725e88f22f1d6a0f45ad9480d9c0bd4bc58436a12f
     entrypoint: ["/bin/sh", "-c"]
     command: |
-      set -e
-      zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ' | xargs echo)
-      if [ -z "$$zims" ]; then
-        printf 'ERROR: no ZIM files found in /data.\n'
-        printf 'Run: ./scripts/fetch-bundle.sh balanced\n'
-        exit 1
-      fi
-      exec kiwix-serve --port 8080 --address 0.0.0.0 $$zims
+      while true; do
+        zims=$$(find /data -maxdepth 1 -name '*.zim' | sort | tr '\n' ' ')
+        if [ -n "$$zims" ]; then
+          exec kiwix-serve --port 8080 --address 0.0.0.0 $$zims
+        fi
+        printf 'No ZIM files in /data — retrying in 30s.\n'
+        printf 'Fetch a bundle: scripts/fetch-bundle.sh balanced\n'
+        sleep 30
+      done
     ports:
       - "127.0.0.1:${KIWIX_PORT:-8081}:8080"
     volumes:
@@ -142,8 +143,6 @@ services:
       - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"
     depends_on:
       ollama:
-        condition: service_healthy
-      kiwix:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
