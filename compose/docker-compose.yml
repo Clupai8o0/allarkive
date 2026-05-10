@@ -61,7 +61,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 90s
 
   ollama-gpu:
     image: ollama/ollama:0.22.1@sha256:3ca37ec2b9cb6341b62554074205c616778fe98abcf9e4fc50361b79a07407ae
@@ -143,7 +143,7 @@ services:
       - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"
     depends_on:
       ollama:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
