@@ -250,16 +250,29 @@ open(path, 'w').write(''.join(f'{key}={val}\n' if l.startswith(key+'=') else l f
 }
 
 _port_free() {
+    # Check OS-level bind AND docker's port table (Docker Desktop on Mac doesn't
+    # expose container ports as host sockets, so a plain bind() would miss them).
     python3 -c "
 import socket, sys
+port = int(sys.argv[1])
+# Try binding — catches native processes and most Linux Docker setups.
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 try:
-    s.bind(('127.0.0.1', int(sys.argv[1])))
+    s.bind(('127.0.0.1', port))
     s.close()
-    sys.exit(0)
 except OSError:
     sys.exit(1)
+# Also try connecting — catches Docker Desktop port forwarder on macOS.
+c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+c.settimeout(0.3)
+try:
+    c.connect(('127.0.0.1', port))
+    c.close()
+    sys.exit(1)
+except OSError:
+    pass
+sys.exit(0)
 " "$1"
 }
 
@@ -441,6 +454,12 @@ fi
 # ── Step 6: Start the Compose stack ───────────────────────────────────────────
 
 step "Starting Docker Compose stack"
+
+# Stop any previous AllArkive stack so its port allocations are released
+# before we start fresh. Ports held by non-AllArkive processes are left alone.
+info "Tearing down any previous AllArkive stack..."
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down 2>/dev/null || true
+
 info "Starting Docker Compose stack (${COMPOSE_FILE})..."
 docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
 
