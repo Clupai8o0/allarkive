@@ -41,7 +41,7 @@ or need to debug a specific step.
 | | Minimum | Recommended |
 |-|---------|-------------|
 | RAM | 8 GB | 16 GB |
-| Free disk | 10 GB (minimal bundle + model) | 35 GB (balanced bundle + model) |
+| Free disk | 10 GB (minimal bundle + model) | 30 GB (balanced bundle + model) |
 | CPU | Any x86_64 | More cores = faster inference |
 | GPU | Not required | CUDA GPU detected automatically |
 
@@ -111,7 +111,7 @@ A bundle is a curated set of ZIM files. Choose one:
 | Bundle | Contents | Disk (ZIMs only) | Good for |
 |--------|----------|-----------------|----------|
 | `minimal` | WikiMed + iFixit | ~4 GB | Low-disk test run |
-| `balanced` | Wikipedia (text) + WikiMed + iFixit + SuperUser | ~28 GB | Daily use |
+| `balanced` | Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask Ubuntu | ~23 GB | Daily use |
 | `comprehensive` | Full Wikipedia (images) + Gutenberg + Stack Exchange | ~330 GB | Large-disk machines |
 
 Download and verify:

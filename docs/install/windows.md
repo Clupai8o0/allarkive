@@ -175,7 +175,7 @@ sudo chown -R "$USER" /var/lib/allarkive
 | Bundle | Contents | Disk (ZIMs only) |
 |--------|----------|-----------------|
 | `minimal` | WikiMed + iFixit | ~4 GB |
-| `balanced` | Wikipedia (text) + WikiMed + iFixit + SuperUser | ~28 GB |
+| `balanced` | Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask Ubuntu | ~23 GB |
 | `comprehensive` | Full Wikipedia (images) + Gutenberg + Stack Exchange | ~330 GB |
 
 ---

@@ -1,26 +1,26 @@
 {
-  "_comment": "Balanced bundle — default for laptop installs. Includes English Wikipedia (text-only), medical reference, repair guides, classic literature, and technical Q&A. ZIM checksums must be filled in from the .sha256 files published alongside each download.",
+  "_comment": "Balanced bundle — default for laptop installs. All sizes verified from download.kiwix.org 2026-05. Wikipedia uses the 'mini' variant (full text, no images, ~12 GB) instead of 'nopic' (~48 GB).",
   "name": "balanced",
-  "description": "English Wikipedia (text only), WikiMed medical reference, iFixit repair guides, and SuperUser Q&A. ~28 GB ZIM total — fits comfortably on any modern laptop.",
+  "description": "Wikipedia (full text, mini format, 12 GB), WikiMed (1.4 GB), iFixit (3.3 GB), SuperUser (3.7 GB), Unix SE (1.2 GB), Ask Ubuntu (2.6 GB). ~24 GB ZIM total — all sizes verified from download.kiwix.org.",
   "version": "1.0",
   "hardware": {
-    "min_free_disk_gb": 30,
-    "recommended_free_disk_gb": 40,
+    "min_free_disk_gb": 25,
+    "recommended_free_disk_gb": 35,
     "min_ram_gb": 8,
-    "notes": "Disk estimate covers ZIM files only; add ~5 GB for the default AI model. For Project Gutenberg (en_all, ~200 GB), use the comprehensive bundle or add it manually."
+    "notes": "Disk estimate covers ZIM files only; add ~5 GB for the default AI model. wikipedia_en_all_mini has full article text with minimal styling — smaller than nopic (~48 GB) because it strips boilerplate, not content."
   },
   "model": {
     "name": "qwen2.5:7b",
-    "notes": "Default model for the balanced bundle. Good accuracy-to-size ratio; fits comfortably in 8 GB RAM. Chosen over Llama 3.1 8B and Mistral 7B for better instruction following and stronger multilingual capability."
+    "notes": "Default model for the balanced bundle. Good accuracy-to-size ratio; fits comfortably in 8 GB RAM."
   },
   "zims": [
     {
-      "name": "Wikipedia (English, text only)",
-      "filename": "wikipedia_en_all_nopic_2026-03.zim",
-      "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_nopic_2026-03.zim",
-      "sha256": "0d0ff0cff37953886edca65a1fd5809eb77c96346d85c0fdd7f34eac55a1996e",
-      "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_nopic_2026-03.zim.sha256",
-      "approx_size_gb": 22,
+      "name": "Wikipedia (English, mini — full text, minimal styling)",
+      "filename": "wikipedia_en_all_mini_2026-03.zim",
+      "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_mini_2026-03.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_mini_2026-03.zim.sha256",
+      "approx_size_gb": 12,
       "license": "CC-BY-SA 4.0",
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
     },
@@ -30,7 +30,7 @@
       "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim",
       "sha256": "6f67340a7cd7665bb57c27d2bbff97e26f2037477c9ea597345a118286820331",
       "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim.sha256",
-      "approx_size_gb": 0.5,
+      "approx_size_gb": 1.4,
       "license": "CC-BY-SA 4.0",
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
     },
@@ -40,7 +40,7 @@
       "url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim",
       "sha256": "9bb5f3408707fd0300c6ef47a425c3217187f144cd9154a928183816aa72eead",
       "sha256_url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim.sha256",
-      "approx_size_gb": 3,
+      "approx_size_gb": 3.3,
       "license": "CC-BY-NC-SA 3.0",
       "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
       "license_notes": "Non-commercial use only."
@@ -51,7 +51,27 @@
       "url": "https://download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-02.zim",
       "sha256": "",
       "sha256_url": "https://download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-02.zim.sha256",
-      "approx_size_gb": 2,
+      "approx_size_gb": 3.7,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "name": "Unix & Linux (Stack Exchange)",
+      "filename": "unix.stackexchange.com_en_all_2026-02.zim",
+      "url": "https://download.kiwix.org/zim/stack_exchange/unix.stackexchange.com_en_all_2026-02.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/stack_exchange/unix.stackexchange.com_en_all_2026-02.zim.sha256",
+      "approx_size_gb": 1.2,
+      "license": "CC-BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "name": "Ask Ubuntu (Stack Exchange)",
+      "filename": "askubuntu.com_en_all_2025-12.zim",
+      "url": "https://download.kiwix.org/zim/stack_exchange/askubuntu.com_en_all_2025-12.zim",
+      "sha256": "",
+      "sha256_url": "https://download.kiwix.org/zim/stack_exchange/askubuntu.com_en_all_2025-12.zim.sha256",
+      "approx_size_gb": 2.6,
       "license": "CC-BY-SA 4.0",
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
     }

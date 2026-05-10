@@ -32,7 +32,7 @@ The manual steps below cover the same actions in detail.
 | | Minimum | Recommended |
 |-|---------|-------------|
 | RAM | 8 GB | 16 GB |
-| Free disk | 10 GB (minimal bundle + model) | 35 GB (balanced bundle + model) |
+| Free disk | 10 GB (minimal bundle + model) | 30 GB (balanced bundle + model) |
 | CPU | Any x86_64 | More cores = faster inference |
 | GPU | Not required | CUDA GPU detected automatically |
 
@@ -139,7 +139,7 @@ Choose a bundle based on available disk space:
 | Bundle | Contents | Disk (ZIMs only) |
 |--------|----------|-----------------|
 | `minimal` | WikiMed + iFixit | ~4 GB |
-| `balanced` | Wikipedia (text) + WikiMed + iFixit + SuperUser | ~28 GB |
+| `balanced` | Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask Ubuntu | ~23 GB |
 | `comprehensive` | Full Wikipedia (images) + Gutenberg + Stack Exchange | ~330 GB |
 
 ```bash

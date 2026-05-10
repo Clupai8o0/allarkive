@@ -11,7 +11,7 @@ with AllArkive v0.1, their contents, sizes, and license obligations.
 | Bundle | Use case | ZIM disk | + model | Total |
 |--------|----------|----------|---------|-------|
 | `minimal` | Pi 4, low-disk machines, testing | ~4 GB | ~2–4 GB | ~6–8 GB |
-| `balanced` | Daily-use laptop (recommended) | ~28 GB | ~4 GB | ~32 GB |
+| `balanced` | Daily-use laptop (recommended) | ~23 GB | ~5 GB | ~28 GB |
 | `comprehensive` | Large-disk machines, full research | ~330 GB | ~4 GB | ~335 GB |
 
 All bundles run fully offline once installed. Updates require re-downloading
@@ -58,19 +58,25 @@ iFixit terms before bundling.
 
 ## The `balanced` bundle
 
-**Good for**: most laptop and server installs. A full English reference library
-that fits on a modern laptop.
+**Good for**: most laptop and server installs. Full English reference library
+under 30 GB — fits on any modern laptop.
 
-| Source | Type | Approx size | License |
-|--------|------|------------|---------|
-| Wikipedia (English, text only) | General encyclopaedia | ~22 GB | CC-BY-SA 4.0 |
+| Source | Type | Verified size | License |
+|--------|------|--------------|---------|
+| Wikipedia (English, mini — full text) | General encyclopaedia | 12 GB | CC-BY-SA 4.0 |
 | WikiMed — medical reference (English) | Medical reference wiki | ~500 MB | CC-BY-SA 4.0 |
-| iFixit — repair guides (English) | Repair and disassembly guides | ~3 GB | CC-BY-NC-SA 3.0 |
-| SuperUser (Stack Exchange) | General tech Q&A | ~2 GB | CC-BY-SA 4.0 |
+| iFixit — repair guides (English) | Repair and disassembly guides | 3.3 GB | CC-BY-NC-SA 3.0 |
+| SuperUser (Stack Exchange) | General tech Q&A | 3.7 GB | CC-BY-SA 4.0 |
+| Unix & Linux (Stack Exchange) | Unix/Linux Q&A | 1.2 GB | CC-BY-SA 4.0 |
+| Ask Ubuntu (Stack Exchange) | Ubuntu Q&A | 2.6 GB | CC-BY-SA 4.0 |
 
-**Total ZIM size**: ~28 GB
+**Total ZIM size**: ~23 GB  *(sizes verified from download.kiwix.org, 2026-05)*
 
-Project Gutenberg (`en_all`) is **not** in this bundle — the full corpus is
+The Wikipedia `mini` variant contains every article in full — it strips
+decorative templates and infobox styling, not content. It is substantially
+smaller than `nopic` (~48 GB) for this reason.
+
+Project Gutenberg (`en_all`, ~200 GB) is **not** in this bundle — the full corpus is
 ~200 GB. It is included in the `comprehensive` bundle. You can also add it
 manually as a custom ZIM (see the section below).
 

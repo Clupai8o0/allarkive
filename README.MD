@@ -26,9 +26,9 @@ This is **not** a survival kit, a prepper bunker, or a doomsday cache. It's a li
 
 ## What's in the default bundle (v0.1)
 
-The "balanced" bundle, recommended for most laptops (~28 GB ZIM total):
+The "balanced" bundle, recommended for most laptops (~23 GB ZIM total, ~28 GB with model):
 
-- **Wikipedia** (English, text-only) — ~22 GB
+- **Wikipedia** (English, mini — full text, minimal styling) — 12 GB
 - **WikiMed** — medical reference, for general lookups, **not** medical advice
 - **iFixit** — repair guides
 - **SuperUser** — general tech Q&A
@@ -50,7 +50,7 @@ cp compose/.env.example compose/.env
 Full guide with screenshots: [`docs/install/`](docs/install/).
 
 System requirements:
-- **Minimum**: 8 GB RAM, 35 GB disk, x86_64 or arm64
+- **Minimum**: 8 GB RAM, 30 GB disk, x86_64 or arm64
 - **Recommended**: 16 GB RAM, 50 GB SSD, modern CPU
 - **Pi text-only build**: Raspberry Pi 4 (4 GB+) with USB SSD
 

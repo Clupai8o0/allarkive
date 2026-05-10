@@ -93,14 +93,20 @@ done
 
 TOTAL_STEPS=7
 STEP=0
+BANNER_HEIGHT=10   # lines printed by print_banner; step box anchors here
 
-# ── Terminal colors ────────────────────────────────────────────────────────────
+# ── Terminal colors + TUI capability ──────────────────────────────────────────
 # $'...' embeds the literal ESC byte so plain echo works without -e.
+USE_TUI=false
 if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
     R=$'\033[0m';  B=$'\033[1m';   DIM=$'\033[2m'
     CY=$'\033[36m';  BCY=$'\033[96m'
     GR=$'\033[32m';  BGR=$'\033[92m'
     YL=$'\033[93m';  RD=$'\033[91m';  WH=$'\033[97m'
+    # Enable cursor positioning when tput is available
+    if command -v tput > /dev/null 2>&1 && tput cup 0 0 > /dev/null 2>&1; then
+        USE_TUI=true
+    fi
 else
     R=''; B=''; DIM=''; CY=''; BCY=''; GR=''; BGR=''; YL=''; RD=''; WH=''
 fi

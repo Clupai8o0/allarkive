@@ -1,13 +1,13 @@
 {
-  "_comment": "Minimal bundle — for Raspberry Pi and low-disk installs. Keeps ZIM total under 5 GB.",
+  "_comment": "Minimal bundle — for Raspberry Pi and low-disk installs. All sizes verified from download.kiwix.org 2026-05. Total ~4.7 GB ZIM.",
   "name": "minimal",
-  "description": "WikiMed medical reference and iFixit repair guides. Sized for Raspberry Pi with a USB SSD and limited free space.",
+  "description": "WikiMed medical reference (1.4 GB) and iFixit repair guides (3.3 GB). ~4.7 GB ZIM total — verified. Sized for Raspberry Pi with a USB SSD.",
   "version": "1.0",
   "hardware": {
-    "min_free_disk_gb": 4,
-    "recommended_free_disk_gb": 8,
+    "min_free_disk_gb": 7,
+    "recommended_free_disk_gb": 12,
     "min_ram_gb": 4,
-    "notes": "Disk estimate covers ZIM files only; add ~2-4 GB for a small AI model (e.g. qwen2.5:3b). Pi 4 with 4 GB RAM can run qwen2.5:3b; 8 GB RAM is recommended for the 7B model."
+    "notes": "ZIM total is ~4.7 GB (verified). Add ~2-4 GB for a small AI model (e.g. qwen2.5:3b). Pi 4 with 4 GB RAM can run qwen2.5:3b; 8 GB RAM is recommended for the 7B model."
   },
   "model": {
     "name": "qwen2.5:3b",
@@ -18,9 +18,9 @@
       "name": "WikiMed — medical reference (English)",
       "filename": "wikipedia_en_medicine_maxi_2026-04.zim",
       "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim",
-      "sha256": "",
+      "sha256": "6f67340a7cd7665bb57c27d2bbff97e26f2037477c9ea597345a118286820331",
       "sha256_url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_medicine_maxi_2026-04.zim.sha256",
-      "approx_size_gb": 0.5,
+      "approx_size_gb": 1.4,
       "license": "CC-BY-SA 4.0",
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
     },
@@ -28,9 +28,9 @@
       "name": "iFixit — repair guides (English)",
       "filename": "ifixit_en_all_2025-12.zim",
       "url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim",
-      "sha256": "",
+      "sha256": "9bb5f3408707fd0300c6ef47a425c3217187f144cd9154a928183816aa72eead",
       "sha256_url": "https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim.sha256",
-      "approx_size_gb": 3,
+      "approx_size_gb": 3.3,
       "license": "CC-BY-NC-SA 3.0",
       "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
       "license_notes": "Non-commercial use only."

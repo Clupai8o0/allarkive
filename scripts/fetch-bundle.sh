@@ -119,13 +119,27 @@ RETRY_DELAY=10  # seconds between retries
 _download_with_progress() {
     local url="$1"
     local part="$2"
-    python3 - "${url}" "${part}" <<'PYEOF'
+    local approx_gb="${3:-}"
+    python3 - "${url}" "${part}" "${approx_gb}" <<'PYEOF'
 import sys, os, subprocess, time
 
-url, part = sys.argv[1], sys.argv[2]
+url, part, approx_gb_str = sys.argv[1], sys.argv[2], sys.argv[3]
 
 BGR = '\033[92m'; CY = '\033[96m'; DIM = '\033[2m'
-YL  = '\033[93m'; WH  = '\033[97m'; R   = '\033[0m'
+YL  = '\033[93m'; RD  = '\033[91m'; WH  = '\033[97m'; R = '\033[0m'
+
+BAR_W = 36
+
+def human(n):
+    for unit, d in [('TB', 1<<40), ('GB', 1<<30), ('MB', 1<<20), ('KB', 1<<10)]:
+        if n >= d:
+            return f"{n/d:.1f} {unit}"
+    return f"{n} B"
+
+# Size guard thresholds
+approx_bytes = float(approx_gb_str) * (1 << 30) if approx_gb_str else 0
+WARN_FACTOR  = 1.2   # warn if actual > approx × 1.2
+ABORT_FACTOR = 1.5   # abort  if actual > approx × 1.5
 
 total = 0
 try:
@@ -137,19 +151,23 @@ try:
 except Exception:
     pass
 
+# ── Size guard ────────────────────────────────────────────────────────────────
+if approx_bytes and total > 0:
+    if total > approx_bytes * ABORT_FACTOR:
+        print(f"\n  {RD}✗  SIZE GUARD: aborting.{R}", flush=True)
+        print(f"  {RD}   Server reports {human(total)} — expected ~{human(approx_bytes)} (manifest).{R}", flush=True)
+        print(f"  {RD}   Actual size exceeds {ABORT_FACTOR:.0%} of the manifest value.{R}", flush=True)
+        print(f"  {RD}   Check the manifest URL and update approx_size_gb before retrying.{R}", flush=True)
+        sys.exit(3)
+    elif total > approx_bytes * WARN_FACTOR:
+        print(f"  {YL}⚠  SIZE WARN: server reports {human(total)}, manifest expected ~{human(approx_bytes)}.{R}", flush=True)
+        print(f"  {YL}   Continuing — update approx_size_gb in the manifest when done.{R}", flush=True)
+
 proc = subprocess.Popen(
     ['curl', '--fail', '--location', '--continue-at', '-',
      '--silent', '--no-progress-meter', '--output', part, url],
     stderr=subprocess.DEVNULL,
 )
-
-BAR_W = 36
-
-def human(n):
-    for unit, d in [('TB', 1<<40), ('GB', 1<<30), ('MB', 1<<20), ('KB', 1<<10)]:
-        if n >= d:
-            return f"{n/d:.1f} {unit}"
-    return f"{n} B"
 
 def draw(current, total, done=False):
     if total > 0:
@@ -190,7 +208,7 @@ mkdir -p "${DEST_DIR}"
 
 # ── Parse manifest with Python ────────────────────────────────────────────────
 
-# Emit TSV: filename \t url \t sha256_url \t expected_sha256
+# Emit TSV: filename \t url \t sha256_url \t expected_sha256 \t approx_size_gb
 ZIM_LIST="$(python3 - "${MANIFEST}" <<'PYEOF'
 import json, sys
 
@@ -203,10 +221,11 @@ for zim in data.get("zims", []):
     url          = zim.get("url", "")
     sha256_url   = zim.get("sha256_url", "")
     expected_sha = zim.get("sha256", "")
+    approx_gb    = zim.get("approx_size_gb", "")
     if not filename or not url:
         print(f"WARN: skipping ZIM entry with missing filename or url", file=sys.stderr)
         continue
-    print(f"{filename}\t{url}\t{sha256_url}\t{expected_sha}")
+    print(f"{filename}\t{url}\t{sha256_url}\t{expected_sha}\t{approx_gb}")
 PYEOF
 )"
 
@@ -226,6 +245,7 @@ download_and_verify() {
     local url="$2"
     local sha256_url="$3"
     local expected_sha="$4"
+    local approx_gb="${5:-}"
     local dest="${DEST_DIR}/${filename}"
     local part="${dest}.part"
 
@@ -265,7 +285,16 @@ download_and_verify() {
         fi
 
         # --continue-at - resumes from existing .part bytes; progress drawn by Python.
-        if _download_with_progress "${url}" "${part}"; then
+        local dl_rc=0
+        _download_with_progress "${url}" "${part}" "${approx_gb}" || dl_rc=$?
+
+        if [[ "${dl_rc}" -eq 3 ]]; then
+            # Size guard abort — do not retry, do not leave partial file.
+            echo "  ${RD}✗  download aborted by size guard for ${filename}${R}" >&2
+            rm -f "${part}"
+            FAIL=$((FAIL + 1))
+            return 1
+        elif [[ "${dl_rc}" -eq 0 ]]; then
             mv "${part}" "${dest}"
             break
         fi
@@ -336,8 +365,8 @@ verify_file() {
 }
 
 # Process each ZIM
-while IFS=$'\t' read -r filename url sha256_url expected_sha; do
-    download_and_verify "${filename}" "${url}" "${sha256_url}" "${expected_sha}" || true
+while IFS=$'\t' read -r filename url sha256_url expected_sha approx_gb; do
+    download_and_verify "${filename}" "${url}" "${sha256_url}" "${expected_sha}" "${approx_gb}" || true
 done <<< "${ZIM_LIST}"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
