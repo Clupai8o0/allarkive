@@ -231,9 +231,9 @@ for zim in data.get("zims", []):
     # Numbers and other placeholders are ignored — fall through to sha256_url.
     raw = str(zim.get("sha256", "") or "").strip().lower()
     expected_sha = raw if (len(raw) == 64 and all(c in "0123456789abcdef" for c in raw)) else ""
-    # Use \x01 (SOH) as separator — unlike tab, it is not IFS whitespace so
-    # bash read will not collapse consecutive delimiters and empty fields survive.
-    print(f"{filename}\x01{url}\x01{sha256_url}\x01{expected_sha}\x01{approx_gb}")
+    # Use | as separator — not IFS whitespace, so consecutive || preserves empty
+    # fields. Safe because URLs, hashes, and filenames never contain |.
+    print(f"{filename}|{url}|{sha256_url}|{expected_sha}|{approx_gb}")
 PYEOF
 )"
 
@@ -375,7 +375,7 @@ verify_file() {
 }
 
 # Process each ZIM
-while IFS=$'\x01' read -r filename url sha256_url expected_sha approx_gb; do
+while IFS='|' read -r filename url sha256_url expected_sha approx_gb; do
     download_and_verify "${filename}" "${url}" "${sha256_url}" "${expected_sha}" "${approx_gb}" || true
 done <<< "${ZIM_LIST}"
 
