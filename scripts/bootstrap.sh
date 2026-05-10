@@ -126,7 +126,8 @@ step() {
     local filled_bar='' empty_bar='' i=0
     while [[ $i -lt $filled ]];    do filled_bar+="█"; i=$((i+1)); done
     while [[ $i -lt $bar_width ]]; do empty_bar+="░"; i=$((i+1)); done
-    echo ""
+    printf '\033[2J\033[H'
+    print_banner
     echo "  ${CY}┌──────────────────────────────────────────────────────────────────${R}"
     echo "  ${CY}│${R}  ${B}▶  ${label}${R}  ${DIM}(${STEP}/${TOTAL_STEPS})${R}"
     echo "  ${CY}│${R}  ${BGR}${filled_bar}${DIM}${empty_bar}${R}  ${YL}${pct}%${R}"
