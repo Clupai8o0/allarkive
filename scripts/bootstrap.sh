@@ -249,6 +249,38 @@ open(path, 'w').write(''.join(f'{key}={val}\n' if l.startswith(key+'=') else l f
     fi
 }
 
+_port_free() {
+    python3 -c "
+import socket, sys
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+try:
+    s.bind(('127.0.0.1', int(sys.argv[1])))
+    s.close()
+    sys.exit(0)
+except OSError:
+    sys.exit(1)
+" "$1"
+}
+
+_resolve_port() {
+    # Usage: PORT=$(_resolve_port VARNAME DEFAULT)
+    # Reads current value from .env; bumps to next free port if in use; writes back.
+    local varname="$1" default="$2"
+    local preferred
+    preferred="$(grep -E "^${varname}=" "${ENV_FILE}" 2>/dev/null | cut -d= -f2- || true)"
+    preferred="${preferred:-${default}}"
+    local port="${preferred}"
+    while ! _port_free "${port}"; do
+        port=$((port + 1))
+    done
+    if [[ "${port}" != "${preferred}" ]]; then
+        warn "Port ${preferred} already in use — using ${port} for ${varname}."
+    fi
+    _env_set "${varname}" "${port}" "${ENV_FILE}"
+    printf '%s' "${port}"
+}
+
 # ── Banner ────────────────────────────────────────────────────────────────────
 
 print_banner
@@ -339,6 +371,15 @@ _env_set ALLARKIVE_MODELS_DIR "${MODELS_DIR}" "${ENV_FILE}"
 _env_set ALLARKIVE_INDEX_DIR  "${INDEX_DIR}"  "${ENV_FILE}"
 _env_set ALLARKIVE_WEBUI_DIR  "${WEBUI_DATA_DIR}" "${ENV_FILE}"
 info "Storage paths written to ${ENV_FILE}."
+
+# Detect port conflicts and auto-assign free alternatives.
+info "Checking ports..."
+LANDING_PORT="$(_resolve_port LANDING_PORT 8080)"
+KIWIX_PORT="$(_resolve_port   KIWIX_PORT   8081)"
+OLLAMA_PORT="$(_resolve_port  OLLAMA_PORT  11434)"
+WEBUI_PORT="$(_resolve_port   WEBUI_PORT   3000)"
+RAG_PORT="$(_resolve_port     RAG_PORT     8000)"
+info "Ports: landing=${LANDING_PORT}  kiwix=${KIWIX_PORT}  webui=${WEBUI_PORT}  rag=${RAG_PORT}  ollama=${OLLAMA_PORT}"
 
 # ── Step 4: Disk space check ──────────────────────────────────────────────────
 
