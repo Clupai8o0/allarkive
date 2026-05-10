@@ -3,7 +3,7 @@
 // All API calls go through the nginx proxy at /api/rag/,
 // which forwards to the RAG service at http://rag:8000/.
 const RAG_API = '/api/rag';
-const KIWIX_URL = 'http://localhost:8081';
+let KIWIX_URL = 'http://localhost:8081'; // updated from /status on boot
 
 let currentMode = 'search'; // 'search' | 'ai'
 let abortController = null;
@@ -185,6 +185,7 @@ async function loadStatus() {
         const res = await fetch(`${RAG_API}/status`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        if (data.kiwix_url) KIWIX_URL = data.kiwix_url;
         renderStatusLine(statusEl, data);
         renderArchivesTable(archivesEl, data);
     } catch {

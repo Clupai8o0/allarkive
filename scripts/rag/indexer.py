@@ -202,15 +202,10 @@ def _index_zim(
     chunks_done = 0
 
     with httpx.Client() as client:
-        for i in range(archive.entry_count):
+        for entry in archive:
             if articles_done >= max_articles:
                 log.info("  reached max_articles limit")
                 break
-
-            try:
-                entry = archive[i]
-            except Exception:
-                continue
 
             if entry.is_redirect:
                 continue

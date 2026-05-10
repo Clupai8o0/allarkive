@@ -218,6 +218,7 @@ def status() -> dict:
             )
     return {
         "binding": "localhost",
+        "kiwix_url": _KIWIX_PUBLIC_URL,
         "archives": archives,
         "archive_count": len(archives),
         "archive_total_gb": round(total_bytes / 1e9, 1),
