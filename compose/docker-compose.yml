@@ -33,7 +33,7 @@ services:
     ports:
       - "127.0.0.1:${KIWIX_PORT:-8081}:8080"
     volumes:
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/zim:/data:ro"
+      - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/ > /dev/null"]
@@ -51,7 +51,7 @@ services:
     ports:
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
     volumes:
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/models:/root/.ollama"
+      - "${ALLARKIVE_MODELS_DIR:-/var/lib/allarkive/models}:/root/.ollama"
     environment:
       - OLLAMA_HOST=0.0.0.0
     restart: unless-stopped
@@ -68,7 +68,7 @@ services:
     ports:
       - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
     volumes:
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/models:/root/.ollama"
+      - "${ALLARKIVE_MODELS_DIR:-/var/lib/allarkive/models}:/root/.ollama"
     environment:
       - OLLAMA_HOST=0.0.0.0
     deploy:
@@ -92,7 +92,7 @@ services:
     ports:
       - "127.0.0.1:${WEBUI_PORT:-3000}:8080"
     volumes:
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/data:/app/backend/data"
+      - "${ALLARKIVE_WEBUI_DIR:-/var/lib/allarkive/data}:/app/backend/data"
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in compose/.env (run: openssl rand -hex 32)}
@@ -137,8 +137,8 @@ services:
       - RAG_MAX_DISTANCE=${RAG_MAX_DISTANCE:-1.0}
       - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-5000}
     volumes:
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index"
-      - "${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/zim:/data:ro"
+      - "${ALLARKIVE_INDEX_DIR:-/var/lib/allarkive/index}:/index"
+      - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"
     depends_on:
       ollama:
         condition: service_healthy

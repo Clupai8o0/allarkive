@@ -3,9 +3,14 @@
 #
 # Usage:
 #   scripts/bootstrap.sh [--bundle <name>] [--model <name>] [--pi]
-#   scripts/bootstrap.sh                   # balanced bundle, default model
-#   scripts/bootstrap.sh --bundle minimal  # minimal bundle (Pi-friendly)
-#   scripts/bootstrap.sh --pi              # use docker-compose.pi.yml
+#   scripts/bootstrap.sh                              # balanced bundle, default model
+#   scripts/bootstrap.sh --bundle minimal             # minimal bundle (Pi-friendly)
+#   scripts/bootstrap.sh --pi                         # use docker-compose.pi.yml
+#   scripts/bootstrap.sh --zim-dir /Volumes/SSD/zim  # ZIMs on external disk
+#   scripts/bootstrap.sh --models-dir ~/big/models   # models elsewhere
+#
+# Storage paths passed via --zim-dir / --models-dir / --index-dir are saved to
+# ~/.config/allarkive/config.json and reused on future runs automatically.
 #
 # What it does:
 #   1. Checks prerequisites (Docker, disk space, .env file)
@@ -30,8 +35,16 @@ PI_MODE=false
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
 SKIP_BUNDLE=false
 
-# Override from environment if set.
-# On macOS, /var/lib/ is not user-writable; default to ~/allarkive-data instead.
+# Config file — persists per-subsystem storage paths between runs.
+ALLARKIVE_CONFIG_DIR="${XDG_CONFIG_HOME:-${HOME}/.config}/allarkive"
+ALLARKIVE_CONFIG="${ALLARKIVE_CONFIG_DIR}/config.json"
+
+# Per-subsystem dir overrides from CLI (empty = not given this run).
+ZIM_DIR_ARG=""
+MODELS_DIR_ARG=""
+INDEX_DIR_ARG=""
+
+# Data root: used as the fallback base when no per-subsystem dir is configured.
 if [[ -n "${ALLARKIVE_DATA_DIR:-}" ]]; then
     DATA_DIR="${ALLARKIVE_DATA_DIR}"
 elif [[ "$(uname -s)" == "Darwin" ]]; then
@@ -39,6 +52,7 @@ elif [[ "$(uname -s)" == "Darwin" ]]; then
 else
     DATA_DIR="/var/lib/allarkive"
 fi
+
 DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-qwen2.5:7b}"
 EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
@@ -46,56 +60,110 @@ EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
 usage() {
     cat >&2 <<EOF
-Usage: $0 [--bundle <name>] [--model <name>] [--pi] [--skip-bundle]
+Usage: $0 [options]
 
-  --bundle <name>   ZIM bundle to fetch: minimal, balanced, comprehensive
-                    (default: balanced)
-  --model <name>    Ollama model to pull (default: qwen2.5:7b)
-  --pi              Use docker-compose.pi.yml (Raspberry Pi target)
-  --skip-bundle     Start services without fetching ZIM files
-                    (use if you already fetched a bundle)
-  -h, --help        Show this message
+  --bundle <name>     ZIM bundle: minimal, balanced, comprehensive (default: balanced)
+  --model <name>      Ollama model to pull (default: qwen2.5:7b)
+  --pi                Use docker-compose.pi.yml (Raspberry Pi)
+  --skip-bundle       Skip ZIM fetch (use existing files)
+  --zim-dir <path>    Store ZIM files here — saved to config for future runs
+  --models-dir <path> Store Ollama models here — saved to config for future runs
+  --index-dir <path>  Store RAG index here — saved to config for future runs
+  -h, --help          Show this message
+
+Storage paths are persisted to ${ALLARKIVE_CONFIG_DIR}/config.json.
+Edit that file directly to change paths without re-running bootstrap.
 EOF
     exit 1
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --bundle)
-            BUNDLE="${2:?--bundle requires an argument}"
-            shift 2
-            ;;
-        --model)
-            DEFAULT_MODEL="${2:?--model requires an argument}"
-            shift 2
-            ;;
+        --bundle)      BUNDLE="${2:?--bundle requires an argument}"; shift 2 ;;
+        --model)       DEFAULT_MODEL="${2:?--model requires an argument}"; shift 2 ;;
         --pi)
             PI_MODE=true
             COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.pi.yml"
             DATA_DIR="${ALLARKIVE_DATA_DIR:-/mnt/ssd/allarkive}"
-            shift
-            ;;
-        --skip-bundle)
-            SKIP_BUNDLE=true
-            shift
-            ;;
-        -h|--help)
-            usage
-            ;;
-        *)
-            echo "ERROR: unknown argument: $1" >&2
-            usage
-            ;;
+            shift ;;
+        --skip-bundle) SKIP_BUNDLE=true; shift ;;
+        --zim-dir)     ZIM_DIR_ARG="${2:?--zim-dir requires an argument}"; shift 2 ;;
+        --models-dir)  MODELS_DIR_ARG="${2:?--models-dir requires an argument}"; shift 2 ;;
+        --index-dir)   INDEX_DIR_ARG="${2:?--index-dir requires an argument}"; shift 2 ;;
+        -h|--help)     usage ;;
+        *) echo "ERROR: unknown argument: $1" >&2; usage ;;
     esac
 done
+
+# ── Config file helpers ───────────────────────────────────────────────────────
+
+_cfg_get() {
+    # Prints the value for <key> from config.json, or empty string if absent.
+    local key="$1"
+    if [[ ! -f "${ALLARKIVE_CONFIG}" ]]; then
+        echo ""; return 0
+    fi
+    python3 - "${ALLARKIVE_CONFIG}" "${key}" <<'PYEOF'
+import json, sys, os
+try:
+    with open(sys.argv[1]) as f:
+        val = json.load(f).get(sys.argv[2]) or ""
+    print(os.path.expanduser(str(val)) if val else "")
+except Exception:
+    print("")
+PYEOF
+}
+
+_cfg_save() {
+    # Merge key=value pairs into config.json. Args: key val [key val ...]
+    mkdir -p "${ALLARKIVE_CONFIG_DIR}"
+    python3 - "${ALLARKIVE_CONFIG}" "$@" <<'PYEOF'
+import json, sys
+path, pairs = sys.argv[1], sys.argv[2:]
+try:
+    cfg = json.loads(open(path).read())
+except Exception:
+    cfg = {}
+for i in range(0, len(pairs) - 1, 2):
+    cfg[pairs[i]] = pairs[i + 1]
+with open(path, "w") as f:
+    json.dump(cfg, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
+# ── Resolve per-subsystem storage paths ──────────────────────────────────────
+# Priority: CLI arg → env var → config.json → DATA_DIR/subdir default.
+
+ZIM_DIR="${ZIM_DIR_ARG:-${ALLARKIVE_ZIM_DIR:-$(_cfg_get zim_dir)}}"
+ZIM_DIR="${ZIM_DIR:-${DATA_DIR}/zim}"
+
+MODELS_DIR="${MODELS_DIR_ARG:-${ALLARKIVE_MODELS_DIR:-$(_cfg_get models_dir)}}"
+MODELS_DIR="${MODELS_DIR:-${DATA_DIR}/models}"
+
+INDEX_DIR="${INDEX_DIR_ARG:-${ALLARKIVE_INDEX_DIR:-$(_cfg_get index_dir)}}"
+INDEX_DIR="${INDEX_DIR:-${DATA_DIR}/index}"
+
+WEBUI_DATA_DIR="${DATA_DIR}/data"
+
+# Persist any CLI-specified dirs to config for future runs.
+_SAVE_ARGS=()
+[[ -n "${ZIM_DIR_ARG}" ]]    && _SAVE_ARGS+=(zim_dir    "${ZIM_DIR}")
+[[ -n "${MODELS_DIR_ARG}" ]] && _SAVE_ARGS+=(models_dir "${MODELS_DIR}")
+[[ -n "${INDEX_DIR_ARG}" ]]  && _SAVE_ARGS+=(index_dir  "${INDEX_DIR}")
+if [[ "${#_SAVE_ARGS[@]}" -gt 0 ]]; then
+    _cfg_save "${_SAVE_ARGS[@]}"
+fi
 
 # ── Progress tracking ─────────────────────────────────────────────────────────
 
 TOTAL_STEPS=7
 STEP=0
-BANNER_HEIGHT=10   # lines printed by print_banner; step box anchors here
 
-# ── Terminal colors + TUI capability ──────────────────────────────────────────
+# Set in step 2; gates ZIM operations in steps 4 and 5.
+ZIM_DIR_OK=true
+
+# ── Terminal colors ────────────────────────────────────────────────────────────
 # $'...' embeds the literal ESC byte so plain echo works without -e.
 USE_TUI=false
 if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
@@ -103,7 +171,6 @@ if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
     CY=$'\033[36m';  BCY=$'\033[96m'
     GR=$'\033[32m';  BGR=$'\033[92m'
     YL=$'\033[93m';  RD=$'\033[91m';  WH=$'\033[97m'
-    # Enable cursor positioning when tput is available
     if command -v tput > /dev/null 2>&1 && tput cup 0 0 > /dev/null 2>&1; then
         USE_TUI=true
     fi
@@ -142,7 +209,8 @@ print_banner() {
     echo "  ${CY}║${R}  ${B}${WH}░▒▓  AllArkive  ▓▒░${R}   self-hosted knowledge ark"
     echo "  ${CY}║${R}"
     echo "  ${CY}║${R}  ${DIM}bundle : ${BUNDLE}${R}"
-    echo "  ${CY}║${R}  ${DIM}data   : ${DATA_DIR}${R}"
+    echo "  ${CY}║${R}  ${DIM}zim    : ${ZIM_DIR}${R}"
+    echo "  ${CY}║${R}  ${DIM}models : ${MODELS_DIR}${R}"
     echo "  ${CY}║${R}"
     echo "  ${CY}╚══════════════════════════════════════════════════════════════════╝${R}"
     echo ""
@@ -150,6 +218,35 @@ print_banner() {
 
 check_cmd() {
     command -v "$1" > /dev/null 2>&1 || die "Required command not found: $1"
+}
+
+check_dir_accessible() {
+    # Returns 0 if dir exists/is creatable and writable; 1 with warnings otherwise.
+    local dir="$1" label="$2"
+    if mkdir -p "${dir}" 2>/dev/null && [[ -w "${dir}" ]]; then
+        return 0
+    fi
+    warn "${label} directory is not accessible: ${dir}"
+    case "${dir}" in
+        /Volumes/*|/mnt/*|/media/*)
+            warn "This looks like an external disk path — is the disk mounted?" ;;
+    esac
+    warn "Config: ${ALLARKIVE_CONFIG}"
+    return 1
+}
+
+_env_set() {
+    # Set KEY=VALUE in an env file; updates in-place if key exists, appends if not.
+    local key="$1" val="$2" file="$3"
+    if grep -q "^${key}=" "${file}" 2>/dev/null; then
+        python3 -c "
+import sys; path, key, val = sys.argv[1], sys.argv[2], sys.argv[3]
+lines = open(path).readlines()
+open(path, 'w').write(''.join(f'{key}={val}\n' if l.startswith(key+'=') else l for l in lines))
+" "${file}" "${key}" "${val}"
+    else
+        printf '\n%s=%s\n' "${key}" "${val}" >> "${file}"
+    fi
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
@@ -166,7 +263,6 @@ check_cmd curl
 check_cmd sha256sum
 check_cmd python3
 
-# Docker Compose (plugin form)
 if ! docker compose version > /dev/null 2>&1; then
     die "Docker Compose plugin not found. Install Docker Engine 24+ with the Compose plugin."
 fi
@@ -176,7 +272,6 @@ COMPOSE_VERSION="$(docker compose version --short 2>/dev/null || echo "unknown")
 info "Docker Engine: ${DOCKER_VERSION}"
 info "Docker Compose: ${COMPOSE_VERSION}"
 
-# Check Docker daemon is running
 if ! docker info > /dev/null 2>&1; then
     die "Docker daemon is not running. Start it and retry."
 fi
@@ -184,11 +279,25 @@ fi
 # ── Step 2: Data directory setup ──────────────────────────────────────────────
 
 step "Creating data directories"
-info "Creating data directories under ${DATA_DIR}..."
-mkdir -p "${DATA_DIR}/zim" \
-         "${DATA_DIR}/models" \
-         "${DATA_DIR}/index" \
-         "${DATA_DIR}/data"
+
+# ZIM dir may be on an external disk — use a non-fatal check.
+if ! check_dir_accessible "${ZIM_DIR}" "ZIM"; then
+    ZIM_DIR_OK=false
+    warn "ZIM directory unavailable. Bundle fetch will be skipped this run."
+    warn "Mount the disk and re-run, or pass --skip-bundle to start without ZIMs."
+fi
+
+mkdir -p "${MODELS_DIR}" "${INDEX_DIR}" "${WEBUI_DATA_DIR}"
+
+if [[ "${ZIM_DIR_OK}" == true ]]; then
+    info "ZIM     : ${ZIM_DIR}"
+else
+    info "ZIM     : ${ZIM_DIR}  ${YL}(not accessible)${R}"
+fi
+info "Models  : ${MODELS_DIR}"
+info "Index   : ${INDEX_DIR}"
+info "WebUI   : ${WEBUI_DATA_DIR}"
+info "Config  : ${ALLARKIVE_CONFIG}"
 info "Directories OK."
 
 # ── Step 3: .env file ─────────────────────────────────────────────────────────
@@ -210,7 +319,6 @@ fi
 # Check WEBUI_SECRET_KEY is set (non-empty)
 WEBUI_SECRET_KEY="${WEBUI_SECRET_KEY:-}"
 if [[ -z "${WEBUI_SECRET_KEY}" ]]; then
-    # Try to read it from the .env file
     if grep -qE '^WEBUI_SECRET_KEY=.+' "${ENV_FILE}" 2>/dev/null; then
         WEBUI_SECRET_KEY="$(grep -E '^WEBUI_SECRET_KEY=' "${ENV_FILE}" | cut -d= -f2-)"
     fi
@@ -225,6 +333,13 @@ if [[ -z "${WEBUI_SECRET_KEY}" ]]; then
     die "WEBUI_SECRET_KEY is required."
 fi
 
+# Write resolved storage paths into .env so docker compose uses them.
+_env_set ALLARKIVE_ZIM_DIR    "${ZIM_DIR}"    "${ENV_FILE}"
+_env_set ALLARKIVE_MODELS_DIR "${MODELS_DIR}" "${ENV_FILE}"
+_env_set ALLARKIVE_INDEX_DIR  "${INDEX_DIR}"  "${ENV_FILE}"
+_env_set ALLARKIVE_WEBUI_DIR  "${WEBUI_DATA_DIR}" "${ENV_FILE}"
+info "Storage paths written to ${ENV_FILE}."
+
 # ── Step 4: Disk space check ──────────────────────────────────────────────────
 
 step "Checking disk space"
@@ -232,8 +347,6 @@ check_disk_space() {
     local required_gb="$1"
     local path="$2"
     local available_gb
-
-    # df --output=avail is not POSIX; use awk for portability
     available_gb="$(df -P "${path}" | awk 'NR==2 {print int($4 / 1048576)}')"
 
     if [[ "${available_gb}" -lt "${required_gb}" ]]; then
@@ -248,31 +361,38 @@ REQUIRED_GB="$(python3 - "${REPO_ROOT}/bundles/${BUNDLE}/manifest.json" <<'PYEOF
 import json, sys
 with open(sys.argv[1]) as f:
     data = json.load(f)
-hw = data.get("hardware", {})
-print(hw.get("min_free_disk_gb", 10))
+print(data.get("hardware", {}).get("min_free_disk_gb", 10))
 PYEOF
 )"
 
-check_disk_space "${REQUIRED_GB}" "${DATA_DIR}"
+if [[ "${ZIM_DIR_OK}" == true ]]; then
+    check_disk_space "${REQUIRED_GB}" "${ZIM_DIR}"
+else
+    info "Skipping ZIM disk space check — ZIM directory not accessible."
+fi
 
 # ── Step 5: Fetch bundle ───────────────────────────────────────────────────────
 
 step "Fetching bundle: ${BUNDLE}"
 if [[ "${SKIP_BUNDLE}" == false ]]; then
-    ZIM_COUNT="$(find "${DATA_DIR}/zim" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
-
-    if [[ "${ZIM_COUNT}" -gt 0 ]]; then
-        info "Found ${ZIM_COUNT} ZIM file(s) in ${DATA_DIR}/zim. Verifying..."
-        "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${DATA_DIR}/zim"
+    if [[ "${ZIM_DIR_OK}" == false ]]; then
+        warn "ZIM directory not accessible — skipping bundle fetch."
+        warn "Mount the disk and re-run to download ZIM files."
+        warn "Or use --skip-bundle to suppress this warning."
     else
-        info "No ZIM files found. Fetching bundle: ${BUNDLE}..."
-        "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${DATA_DIR}/zim"
+        ZIM_COUNT="$(find "${ZIM_DIR}" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
+        if [[ "${ZIM_COUNT}" -gt 0 ]]; then
+            info "Found ${ZIM_COUNT} ZIM file(s) in ${ZIM_DIR}. Verifying..."
+        else
+            info "No ZIM files found. Fetching bundle: ${BUNDLE}..."
+        fi
+        "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${ZIM_DIR}"
     fi
 else
     info "--skip-bundle set. Skipping ZIM download."
-    ZIM_COUNT="$(find "${DATA_DIR}/zim" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
-    if [[ "${ZIM_COUNT}" -eq 0 ]]; then
-        warn "No ZIM files found in ${DATA_DIR}/zim. kiwix-serve will fail to start."
+    ZIM_COUNT="$(find "${ZIM_DIR}" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
+    if [[ "${ZIM_DIR_OK}" == true ]] && [[ "${ZIM_COUNT}" -eq 0 ]]; then
+        warn "No ZIM files found in ${ZIM_DIR}. kiwix-serve will fail to start."
         warn "Fetch a bundle first: scripts/fetch-bundle.sh ${BUNDLE}"
     fi
 fi
@@ -324,7 +444,6 @@ info "Pulling model: ${DEFAULT_MODEL}"
 info "(This downloads model weights — may take several minutes.)"
 
 if curl -sf "${OLLAMA_URL}/api/version" > /dev/null 2>&1; then
-    # Use the Ollama pull API; stream progress to stdout
     curl -s "${OLLAMA_URL}/api/pull" \
          -H 'Content-Type: application/json' \
          -d "{\"name\": \"${DEFAULT_MODEL}\"}" \
@@ -427,7 +546,7 @@ WEBUI_PORT="${WEBUI_PORT:-3000}"
 OLLAMA_PORT="${OLLAMA_PORT:-11434}"
 RAG_PORT="${RAG_PORT:-8000}"
 
-ZIM_COUNT="$(find "${DATA_DIR}/zim" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
+ZIM_COUNT="$(find "${ZIM_DIR}" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
 
 echo ""
 echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
@@ -438,7 +557,9 @@ echo "  ${CY}║${R}  ${DIM}Chat     (WebUI)  ${R}${WH}http://127.0.0.1:${WEBUI_
 echo "  ${CY}║${R}  ${DIM}RAG      (API)    ${R}${WH}http://127.0.0.1:${RAG_PORT}${R}"
 echo "  ${CY}║${R}  ${DIM}Model    (Ollama) ${R}${WH}http://127.0.0.1:${OLLAMA_PORT}${R}"
 echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
-echo "  ${CY}║${R}  ${DIM}ZIM files       : ${ZIM_COUNT} file(s) in ${DATA_DIR}/zim${R}"
+echo "  ${CY}║${R}  ${DIM}ZIM files       : ${ZIM_COUNT} file(s)${R}"
+echo "  ${CY}║${R}  ${DIM}ZIM dir         : ${ZIM_DIR}${R}"
+echo "  ${CY}║${R}  ${DIM}Models dir      : ${MODELS_DIR}${R}"
 echo "  ${CY}║${R}  ${DIM}Chat model      : ${DEFAULT_MODEL}${R}"
 echo "  ${CY}║${R}  ${DIM}Embedding model : ${EMBED_MODEL}${R}"
 echo "  ${CY}║${R}  ${DIM}Network         : localhost only — nothing exposed externally${R}"
