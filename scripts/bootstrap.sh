@@ -58,6 +58,8 @@ EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
+KEEP_ENV=false
+
 usage() {
     cat >&2 <<EOF
 Usage: $0 [options]
@@ -66,6 +68,9 @@ Usage: $0 [options]
   --model <name>      Ollama model to pull (default: qwen2.5:7b)
   --pi                Use docker-compose.pi.yml (Raspberry Pi)
   --skip-bundle       Skip ZIM fetch (use existing files)
+  --keep-env          Use ports exactly as set in compose/.env — no auto-adjustment.
+                      Without this flag, ports reset to defaults (8080/8081/3000/…)
+                      on every run and only increment if those defaults are occupied.
   --zim-dir <path>    Store ZIM files here — saved to config for future runs
   --models-dir <path> Store Ollama models here — saved to config for future runs
   --index-dir <path>  Store RAG index here — saved to config for future runs
@@ -87,6 +92,7 @@ while [[ $# -gt 0 ]]; do
             DATA_DIR="${ALLARKIVE_DATA_DIR:-/mnt/ssd/allarkive}"
             shift ;;
         --skip-bundle) SKIP_BUNDLE=true; shift ;;
+        --keep-env)    KEEP_ENV=true; shift ;;
         --zim-dir)     ZIM_DIR_ARG="${2:?--zim-dir requires an argument}"; shift 2 ;;
         --models-dir)  MODELS_DIR_ARG="${2:?--models-dir requires an argument}"; shift 2 ;;
         --index-dir)   INDEX_DIR_ARG="${2:?--index-dir requires an argument}"; shift 2 ;;
@@ -280,12 +286,17 @@ _ASSIGNED_PORTS=()
 
 _resolve_port() {
     # Usage: PORT=$(_resolve_port VARNAME DEFAULT)
-    # Reads current value from .env; bumps to next free port if in use or already
-    # claimed by another service in this run; writes back.
+    # --keep-env: honour whatever is in .env, only bump on conflict.
+    # default:    always start from DEFAULT so ports reset to well-known values
+    #             on every run and only increment if those values are occupied.
     local varname="$1" default="$2"
     local preferred
-    preferred="$(grep -E "^${varname}=" "${ENV_FILE}" 2>/dev/null | cut -d= -f2- || true)"
-    preferred="${preferred:-${default}}"
+    if [[ "${KEEP_ENV}" == true ]]; then
+        preferred="$(grep -E "^${varname}=" "${ENV_FILE}" 2>/dev/null | cut -d= -f2- || true)"
+        preferred="${preferred:-${default}}"
+    else
+        preferred="${default}"
+    fi
     local port="${preferred}"
     _already_assigned() {
         local p="$1" a
