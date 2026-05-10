@@ -217,14 +217,18 @@ with open(manifest_path) as f:
     data = json.load(f)
 
 for zim in data.get("zims", []):
-    filename     = zim.get("filename", "")
-    url          = zim.get("url", "")
-    sha256_url   = zim.get("sha256_url", "")
-    expected_sha = zim.get("sha256", "")
-    approx_gb    = zim.get("approx_size_gb", "")
+    filename   = zim.get("filename", "")
+    url        = zim.get("url", "")
+    sha256_url = zim.get("sha256_url", "")
+    approx_gb  = zim.get("approx_size_gb", "")
     if not filename or not url:
         print(f"WARN: skipping ZIM entry with missing filename or url", file=sys.stderr)
         continue
+    # Only treat sha256 as valid if it's a 64-char hex string.
+    # Numbers and other placeholders are silently ignored so we fall through
+    # to the live sha256_url fetch instead of comparing against garbage.
+    raw = str(zim.get("sha256", "") or "").strip().lower()
+    expected_sha = raw if (len(raw) == 64 and all(c in "0123456789abcdef" for c in raw)) else ""
     print(f"{filename}\t{url}\t{sha256_url}\t{expected_sha}\t{approx_gb}")
 PYEOF
 )"
@@ -262,8 +266,10 @@ download_and_verify() {
             SKIP=$((SKIP + 1))
             return 0
         else
-            echo "  ${YL}⚠${R}  checksum mismatch — re-downloading."
-            rm -f "${dest}"
+            warn "Checksum mismatch for existing ${filename} — keeping file."
+            warn "If you suspect corruption, delete it and re-run to re-download."
+            FAIL=$((FAIL + 1))
+            return 1
         fi
     fi
 
@@ -315,9 +321,9 @@ download_and_verify() {
         echo "  ${BGR}✓${R}  verified OK."
         PASS=$((PASS + 1))
     else
-        echo "  ${RD}✗  checksum verification failed for ${filename}${R}" >&2
-        echo "  ${DIM}·  removing corrupt file: ${dest}${R}" >&2
-        rm -f "${dest}"
+        warn "Checksum mismatch for ${filename} — file kept at ${dest}"
+        warn "Verify manually: sha256sum '${dest}'"
+        warn "If the file is corrupt, delete it and re-run to resume."
         FAIL=$((FAIL + 1))
         return 1
     fi
