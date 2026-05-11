@@ -162,8 +162,7 @@ On first run, Docker does two things before services start:
 1. **Builds the RAG image from source** (`scripts/rag/`) — 2–4 minutes.
 2. **Pulls the remaining images** (kiwix-serve, Ollama, Open WebUI, nginx).
 
-Subsequent starts skip both and are fast. On first run, Ollama also downloads
-the default model (~4 GB) in the background.
+Subsequent starts skip both and are fast.
 
 Watch startup logs in a separate window:
 
@@ -171,9 +170,7 @@ Watch startup logs in a separate window:
 docker compose logs -f
 ```
 
-Wait for all containers to show `healthy` before proceeding.
-
-### Checking service health
+Wait for all containers to show `healthy` before proceeding:
 
 ```bash
 docker compose ps
@@ -189,17 +186,41 @@ docker compose logs ollama
 
 ---
 
-## Step 6: Index the archive
+## Step 6: Pull AI models
+
+Two models are needed — the chat model and the embedding model. Pull them
+before indexing:
 
 ```bash
-docker compose exec rag python indexer.py
+# Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text
 ```
 
-The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
-the compose file — no extra arguments needed. To force a full rebuild:
+Both pulls resume automatically if interrupted. If you changed the default
+model in `compose/.env`, substitute it above.
+
+---
+
+## Step 7: Index the archive
 
 ```bash
-docker compose exec rag python indexer.py --force
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434
+```
+
+To force a full rebuild:
+
+```bash
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force
 ```
 
 Indexing time: roughly 10–30 minutes for the balanced bundle on a typical
@@ -207,13 +228,23 @@ server CPU. The index persists across restarts.
 
 ---
 
-## Step 7: Verify
+## Step 8: Verify
 
 With an SSH tunnel open (see above), visit `http://localhost:8080`. Confirm:
 
 1. Status line shows archive size and model name.
 2. Searching an archive returns results.
 3. Asking the AI returns an answer with numbered citations.
+
+---
+
+## What bootstrap.sh does
+
+`bootstrap.sh` covers steps 1–8 automatically: creates directories, resolves
+storage paths, fetches and verifies ZIMs, writes paths to `compose/.env`,
+detects port conflicts and auto-assigns alternatives, starts the stack, pulls
+both models, and runs the indexer. The manual steps above are the exact
+equivalent — useful when you need full control or want to debug a specific step.
 
 ---
 

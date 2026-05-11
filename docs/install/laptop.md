@@ -154,8 +154,7 @@ docker compose ps
 ```
 
 Typically 2–5 minutes on first run (excluding model download), less than a
-minute on subsequent starts. On first run, Ollama also downloads the default
-model (~4 GB for `qwen2.5:7b`) in the background.
+minute on subsequent starts.
 
 ### GPU acceleration (optional)
 
@@ -167,21 +166,44 @@ docker compose --profile gpu up -d
 
 ---
 
-## Step 6: Index the archive
+## Step 6: Pull AI models
+
+Two models are needed — the chat model (for answering questions) and the
+embedding model (for indexing and search). Pull them before indexing:
+
+```bash
+# Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text
+```
+
+If you chose a different model in `compose/.env`, substitute it here.
+Both pulls resume automatically if interrupted.
+
+---
+
+## Step 7: Index the archive
 
 The RAG pipeline indexes your ZIM files so the AI can search them. Trigger
 it manually so you can watch the output:
 
 ```bash
-docker compose exec rag python indexer.py
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434
 ```
 
-The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
-the compose file, so no extra arguments are needed. To force a full rebuild
-of an existing index:
+To force a full rebuild of an existing index:
 
 ```bash
-docker compose exec rag python indexer.py --force
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force
 ```
 
 Indexing time depends on the bundle and hardware. The balanced bundle takes
@@ -190,7 +212,7 @@ you only need to re-index if you add or change ZIM files.
 
 ---
 
-## Step 7: Open the landing page
+## Step 8: Open the landing page
 
 Open `http://localhost:8080` in a browser.
 
@@ -331,22 +353,23 @@ Stop whatever is using that port, or change AllArkive's port in `compose/.env`.
 ## What is next
 
 Once the stack is running:
-- Sham should follow this guide on Laptop 2 from scratch, without asking Sam.
-  Every snag becomes an issue.
-- Run a 20-question smoke test against the RAG layer (see Milestone 4 task in
-  `TODO.md`).
-- When both laptops pass, mark this guide v1 in the `[Unreleased]` section of
-  `CHANGELOG.md`.
-
-For LAN access (sharing the archive with other devices on your network),
-see `docs/deployment/lan-access.md`.
+- Ask the AI a question and check that the numbered citations link back to
+  the archive. If the answer says "no sources found," re-index and confirm
+  the models are pulled.
+- Try the full-text search mode to browse ZIM files directly via Kiwix.
+- To share the archive with other devices on your network, see
+  [`docs/deployment/lan-access.md`](../deployment/lan-access.md).
 
 ---
 
-## Appendix: manual install (reference only)
+## What bootstrap.sh does
 
-The original Milestone 2 notes on installing Ollama, Kiwix, and Open WebUI
-by hand live in git history as `docs/install/laptop.md` at the commit just
-before this file was rewritten. Consult that if you want to understand what
-`bootstrap.sh` does step by step, or if you need to install on a machine
-where Docker is not available.
+If you used `bootstrap.sh --bundle balanced`, it ran steps 1–8 automatically:
+created directories, fetched and verified ZIMs, wrote resolved paths to
+`compose/.env`, detected and avoided port conflicts, started the stack,
+pulled both models, and ran the indexer. Paths chosen during bootstrap are
+saved to `~/.config/allarkive/config.json` and reused on future runs.
+
+The manual steps above are the exact equivalent, useful when you want more
+control, need to debug a specific step, or are running on a machine where
+Docker is not already set up.

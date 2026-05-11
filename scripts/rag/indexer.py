@@ -18,6 +18,7 @@ import argparse
 import logging
 import math
 import os
+import random
 import re
 import sqlite3
 import struct
@@ -53,6 +54,21 @@ def _parse_args() -> argparse.Namespace:
         "--max-articles",
         type=int,
         default=int(os.environ.get("RAG_MAX_ARTICLES", _MAX_ARTICLES_DEFAULT)),
+        help="Article cap applied to every ZIM. 0 = unlimited.",
+    )
+    p.add_argument(
+        "--large-zim-gb",
+        type=float,
+        default=float(os.environ.get("RAG_LARGE_ZIM_GB", "0")),
+        help="ZIMs at or above this size (GB) are treated as 'large'. "
+             "0 = disabled (all ZIMs use --max-articles).",
+    )
+    p.add_argument(
+        "--large-max-articles",
+        type=int,
+        default=int(os.environ.get("RAG_LARGE_MAX_ARTICLES", "0")),
+        help="Article cap for large ZIMs. 0 = unlimited. "
+             "Only used when --large-zim-gb > 0.",
     )
     p.add_argument(
         "--force",
@@ -175,6 +191,21 @@ def _pack(v: list[float]) -> bytes:
 
 # ── Per-ZIM indexing ─────────────────────────────────────────────────────────
 
+def _effective_limit(
+    zim_path: Path,
+    max_articles: int,
+    large_zim_gb: float,
+    large_max_articles: int,
+) -> int:
+    """Return the article limit for this ZIM. 0 means unlimited."""
+    if large_zim_gb > 0:
+        size_gb = zim_path.stat().st_size / 1e9
+        if size_gb >= large_zim_gb:
+            return large_max_articles  # 0 = unlimited for large ZIMs too
+        return 0  # small ZIM: unlimited
+    return max_articles
+
+
 def _index_zim(
     zim_path: Path,
     conn: sqlite3.Connection,
@@ -182,6 +213,8 @@ def _index_zim(
     embed_model: str,
     chunk_size: int,
     max_articles: int,
+    large_zim_gb: float,
+    large_max_articles: int,
     force: bool,
 ) -> None:
     zim_name = zim_path.stem
@@ -191,22 +224,32 @@ def _index_zim(
         log.info("skip %s (unchanged)", zim_path.name)
         return
 
-    log.info("indexing %s ...", zim_path.name)
+    limit = _effective_limit(zim_path, max_articles, large_zim_gb, large_max_articles)
+    size_gb = round(zim_path.stat().st_size / 1e9, 1)
+    limit_str = str(limit) if limit > 0 else "unlimited"
+    log.info("indexing %s  (%.1f GB, limit=%s) ...", zim_path.name, size_gb, limit_str)
+
     if force:
         _drop_zim(conn, zim_name)
 
     archive = Archive(str(zim_path))
-    log.info("  %d entries in archive (max_articles=%d)", archive.entry_count, max_articles)
+    log.info("  %d entries in archive", archive.entry_count)
 
     articles_done = 0
     chunks_done = 0
 
+    # Shuffle entry IDs so any article cap samples evenly across the ZIM
+    # instead of clustering on the first letters of the alphabet.
+    entry_ids = list(range(archive.all_entry_count))
+    random.shuffle(entry_ids)
+
     with httpx.Client() as client:
-        for entry in archive:
-            if articles_done >= max_articles:
-                log.info("  reached max_articles limit")
+        for i in entry_ids:
+            if limit > 0 and articles_done >= limit:
+                log.info("  reached article limit (%d)", limit)
                 break
 
+            entry = archive._get_entry_by_id(i)
             if entry.is_redirect:
                 continue
 
@@ -255,7 +298,8 @@ def _index_zim(
         [zim_name, mtime, articles_done],
     )
     conn.commit()
-    log.info("done: %s → %d articles, %d chunks", zim_path.name, articles_done, chunks_done)
+    log.info("done: %s → %d articles, %d chunks (limit was %s)",
+             zim_path.name, articles_done, chunks_done, limit_str)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -306,6 +350,12 @@ def main() -> None:
         sys.exit(0)
 
     log.info("found %d ZIM file(s)", len(zim_files))
+    if args.large_zim_gb > 0:
+        log.info(
+            "size threshold: %.1f GB — ZIMs below → unlimited, above → %s articles",
+            args.large_zim_gb,
+            args.large_max_articles if args.large_max_articles > 0 else "unlimited",
+        )
     for zf in zim_files:
         _index_zim(
             zim_path=zf,
@@ -314,6 +364,8 @@ def main() -> None:
             embed_model=args.embed_model,
             chunk_size=args.chunk_size,
             max_articles=args.max_articles,
+            large_zim_gb=args.large_zim_gb,
+            large_max_articles=args.large_max_articles,
             force=args.force,
         )
 

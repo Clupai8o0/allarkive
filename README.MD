@@ -47,14 +47,44 @@ cp compose/.env.example compose/.env
 ./scripts/bootstrap.sh
 ```
 
-Full guide with screenshots: [`docs/install/`](docs/install/).
-
 System requirements:
 - **Minimum**: 8 GB RAM, 30 GB disk, x86_64 or arm64
 - **Recommended**: 16 GB RAM, 50 GB SSD, modern CPU
 - **Pi text-only build**: Raspberry Pi 4 (4 GB+) with USB SSD
 
 After install, open `http://localhost:8080` for the landing page.
+
+## Documentation
+
+Pick your starting point:
+
+| I want to… | Read this |
+|---|---|
+| Install on Linux (laptop or desktop) | [`docs/install/laptop.md`](docs/install/laptop.md) |
+| Install on macOS | [`docs/install/macos.md`](docs/install/macos.md) |
+| Install on Windows (WSL2) | [`docs/install/windows.md`](docs/install/windows.md) |
+| Install on a headless server | [`docs/install/server.md`](docs/install/server.md) |
+| Run on a Raspberry Pi (full stack) | [`docs/deployment/pi-text-only.md`](docs/deployment/pi-text-only.md) |
+| Run a Pi as a dedicated archive node | [`docs/deployment/pi-archive-only.md`](docs/deployment/pi-archive-only.md) |
+| Split the archive and AI across two machines | [`docs/deployment/split.md`](docs/deployment/split.md) |
+| Enable LAN access for other devices | [`docs/deployment/lan-access.md`](docs/deployment/lan-access.md) |
+| Choose a content bundle | [`docs/bundles/README.md`](docs/bundles/README.md) |
+| Understand how it works | [`docs/ARCHITECTURE.MD`](docs/ARCHITECTURE.MD) |
+| Understand what it protects against | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) |
+| Contribute | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| See what's planned | [`ROADMAP.md`](ROADMAP.md) |
+| See all docs | [`DOCS.md`](DOCS.md) |
+
+## Scripts
+
+| Script | What it does |
+|--------|-------------|
+| `scripts/bootstrap.sh` | First-run setup. Checks prerequisites, creates data directories, fetches a bundle, starts the Docker Compose stack, pulls both AI models, and runs the RAG indexer. Idempotent — safe to re-run. Accepts `--bundle`, `--pi`, `--zim-dir`, `--models-dir`, and other flags. |
+| `scripts/fetch-bundle.sh` | Downloads a named bundle (`minimal`, `balanced`, or `comprehensive`). Verifies every ZIM file against its SHA-256 checksum and stops on any failure. Resumes interrupted downloads. |
+| `scripts/teardown.sh` | Stops the Docker Compose stack. Mirrors `bootstrap.sh`'s compose-file selection — pass `--pi` or `--pi-archive` to stop the matching stack. Does not delete data. |
+| `scripts/cleanup.sh` | Stops the stack and optionally removes images (`--images`), data directories (`--data`), or both (`--all`). Prompts before any destructive step. |
+
+The `scripts/rag/` directory contains the RAG pipeline that runs inside Docker: `indexer.py` (ZIM → vector index), `server.py` (OpenAI-compatible API), `prompt.py` (citation-enforcing system prompt), and `citations.py` (post-process `[N]` markers into links). These are not meant to be run directly — the Compose stack manages them.
 
 ## Architecture
 

@@ -92,14 +92,12 @@ Internal-ish, but kept in the public repo because the talk is part of the launch
 
 ## Status of each doc
 
-Some docs in this index don't exist yet. As we build them, we update this table:
-
 | Doc | Status |
 |---|---|
 | `README.md` | ✅ written |
 | `CLAUDE.md` | ✅ written |
-| `LICENSE` | ⬜ to add (AGPL-3.0 full text) |
-| `CHANGELOG.md` | ✅ written (initial) |
+| `LICENSE` | ✅ AGPL-3.0 full text |
+| `CHANGELOG.md` | ✅ written (living doc) |
 | `CONTRIBUTING.md` | ✅ written |
 | `CODE_OF_CONDUCT.md` | ✅ written |
 | `SECURITY.md` | ✅ written |
@@ -107,27 +105,22 @@ Some docs in this index don't exist yet. As we build them, we update this table:
 | `ROADMAP.md` | ✅ written |
 | `TODO.md` | ✅ written (living doc) |
 | `DOCS.md` | ✅ this file |
-| `docs/ARCHITECTURE.md` | ✅ written |
-| `docs/DESIGN.md` | ✅ written |
+| `docs/ARCHITECTURE.MD` | ✅ written |
+| `docs/DESIGN.MD` | ✅ written |
 | `docs/THREAT_MODEL.md` | ✅ written |
-| `docs/install/laptop.md` | ⬜ to write (Milestone 2) |
-| `docs/install/server.md` | ⬜ to write |
-| `docs/install/macos.md` | ⬜ to write |
-| `docs/install/windows.md` | ⬜ to write |
-| `docs/bundles/*` | ⬜ to write |
-| `docs/deployment/*` | ⬜ to write (Milestone 6/7) |
+| `docs/install/laptop.md` | ✅ written |
+| `docs/install/server.md` | ✅ written |
+| `docs/install/macos.md` | ✅ written |
+| `docs/install/windows.md` | ✅ written |
+| `docs/bundles/README.md` | ✅ written |
+| `docs/deployment/laptop.md` | ⬜ to write (single-machine default; laptop.md install guide covers it) |
+| `docs/deployment/pi-text-only.md` | ✅ written |
+| `docs/deployment/pi-archive-only.md` | ✅ written |
+| `docs/deployment/split.md` | ✅ written |
+| `docs/deployment/lan-access.md` | ✅ written |
 | `docs/security/*` | ⬜ to write |
 | `docs/ops/*` | ⬜ to write |
-| `docs/talk/*` | ⬜ to write (separately, alongside slide prep) |
-
-## Recommended placement
-
-When the repo is built, the docs split is:
-- **Root-level** for the standard OSS files GitHub recognises (`README`, `LICENSE`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `SECURITY`, `CHANGELOG`, `GOVERNANCE`).
-- **Root-level** for the working docs an agent reads first (`CLAUDE.md`, `TODO.md`, `ROADMAP.md`, `DOCS.md`).
-- **`docs/`** for everything else (`ARCHITECTURE.md`, `DESIGN.md`, `THREAT_MODEL.md`, install guides, bundle docs, deployment patterns, security details, ops, talk).
-
-The flat delivery in the initial drop has all docs at one level for convenience. Move `ARCHITECTURE.md`, `DESIGN.md`, and `THREAT_MODEL.md` into `docs/` when committing.
+| `docs/talk/*` | ⬜ to write (alongside slide prep) |
 
 ## Updating this index
 

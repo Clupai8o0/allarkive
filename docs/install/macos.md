@@ -172,22 +172,47 @@ Wait for all containers to report healthy:
 docker compose ps
 ```
 
-On first run also expect Ollama to download the default model (~4 GB) in
-the background. Total first-run time: 5–15 minutes depending on network.
+Total first-run time: 5–15 minutes depending on network.
 
 ---
 
-## Step 6: Index the archive
+## Step 6: Pull AI models
+
+Two models are needed — the chat model and the embedding model used by the
+RAG indexer. Pull them before indexing:
 
 ```bash
-docker compose exec rag python indexer.py
+# Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text
 ```
 
-The container already has `ZIM_DIR`, `INDEX_DIR`, and `OLLAMA_URL` set via
-the compose file — no extra arguments needed. To force a full rebuild:
+Both pulls resume automatically if interrupted.
+
+**Apple Silicon note**: Ollama detects Metal automatically. No extra config
+needed — inference will already be using GPU acceleration.
+
+---
+
+## Step 7: Index the archive
 
 ```bash
-docker compose exec rag python indexer.py --force
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434
+```
+
+To force a full rebuild of an existing index:
+
+```bash
+docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force
 ```
 
 Indexing time is roughly 10–30 minutes for the balanced bundle. The index
@@ -195,7 +220,7 @@ persists in `$ALLARKIVE_DATA_DIR/index/` across restarts.
 
 ---
 
-## Step 7: Open the landing page
+## Step 8: Open the landing page
 
 Visit `http://localhost:8080` in your browser.
 
@@ -209,10 +234,20 @@ and an AI question to verify citations are working.
 Ollama detects Apple Silicon automatically and uses Metal for GPU acceleration.
 Model inference is significantly faster than on CPU. No extra configuration needed.
 
-The Docker images are built for `linux/amd64` by default. Docker Desktop on
-Apple Silicon runs them under Rosetta emulation with minimal performance penalty
-for the services that do not run models (Kiwix, Open WebUI, landing page).
-Ollama runs natively.
+The Docker images are built as multi-arch manifests (`linux/amd64` + `linux/arm64`).
+Docker Desktop on Apple Silicon runs the native arm64 images — no Rosetta
+emulation for any service, including Kiwix and Open WebUI.
+
+---
+
+## What bootstrap.sh does on macOS
+
+`bootstrap.sh` on macOS automatically uses `~/allarkive-data` as the data
+directory (avoids `/var/lib/` permission issues), saves paths to
+`~/.config/allarkive/config.json` for future runs, detects port conflicts
+and auto-assigns alternatives, and pulls both the chat model and embedding
+model before running the indexer. The manual steps above are the exact
+equivalent.
 
 ---
 
