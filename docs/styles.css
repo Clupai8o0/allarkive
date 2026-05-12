@@ -1,0 +1,221 @@
+/* AllArkive public landing page — system fonts only, no external assets */
+
+:root {
+    --bg:          #fafaf8;
+    --bg-surface:  #f2f1ef;
+    --text:        #1a1a1a;
+    --text-muted:  #5a5a5a;
+    --accent:      #3d5a80;
+    --border:      #d4d4d0;
+    --code-bg:     #eeece8;
+    --radius:      4px;
+    --font-body:   system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    --font-mono:   ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:          #141414;
+        --bg-surface:  #1e1e1e;
+        --text:        #e0e0e0;
+        --text-muted:  #888888;
+        --accent:      #7fa3d6;
+        --border:      #333333;
+        --code-bg:     #252525;
+    }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+a:hover { text-decoration: none; }
+
+code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius);
+}
+
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+pre.ascii code {
+    font-size: 0.78rem;
+    white-space: pre;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+header {
+    padding: 2rem 0 1.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+}
+
+.header-top {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.wordmark-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.wordmark-version {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.section-nav {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.section-nav a {
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    background: var(--bg);
+    white-space: nowrap;
+    transition: border-color 0.1s, background 0.1s;
+}
+
+.section-nav a:hover {
+    background: var(--bg-surface);
+    border-color: var(--accent);
+}
+
+.tagline {
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.55;
+    max-width: 60ch;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+section {
+    margin-bottom: 2.75rem;
+}
+
+h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.005em;
+}
+
+h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+p {
+    margin-bottom: 0.75rem;
+    max-width: 65ch;
+}
+
+ul, ol {
+    padding-left: 1.4rem;
+    margin-bottom: 0.75rem;
+    max-width: 65ch;
+}
+
+li {
+    margin-bottom: 0.35rem;
+}
+
+.numbered {
+    list-style: decimal;
+}
+
+.doc-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.doc-list li {
+    padding: 0.15rem 0;
+}
+
+.muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0 2.25rem;
+    margin-top: 1.5rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+footer p { max-width: none; }
+
+.footer-meta { margin-top: 0.35rem; }
+
+/* ── Narrow screens ───────────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+    body { padding: 0 1rem; }
+    .wordmark-name { font-size: 1.25rem; }
+    .tagline { font-size: 1rem; }
+    h2 { font-size: 1.05rem; }
+}

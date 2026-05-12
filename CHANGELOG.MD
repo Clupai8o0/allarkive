@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `docs/index.html`, `docs/styles.css`, `docs/.nojekyll` — public-facing
+  landing page intended to be served by GitHub Pages from `main`/`docs`.
+  Short project explanation, install snippet, links to the hosted docs.
+  Distinct from the local landing page at `landing/`, which remains the
+  in-stack entry point.
 - `bundles/minimal/LICENSE.md`, `bundles/balanced/LICENSE.md`,
   `bundles/comprehensive/LICENSE.md` — per-bundle license summaries listing
   each ZIM's source, license, and attribution as required by CLAUDE.md.

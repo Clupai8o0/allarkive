@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllArkive — offline knowledge ark with a local AI</title>
+    <meta name="description" content="A self-hostable, offline knowledge archive plus a local LLM with citations. Runs on a laptop, server, or Raspberry Pi. AGPL-3.0.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <div class="header-top">
+        <div class="wordmark">
+            <span class="wordmark-name">AllArkive</span>
+            <span class="wordmark-version">v0.1 — alpha</span>
+        </div>
+        <nav class="section-nav" aria-label="Page sections">
+            <a href="#what">What this is</a>
+            <a href="#why">Why</a>
+            <a href="#install">Install</a>
+            <a href="#docs">Docs</a>
+        </nav>
+    </div>
+    <p class="tagline">
+        A self-hostable, offline knowledge ark — Wikipedia, repair guides, books, and a local AI that can search them, all running on your own hardware.
+    </p>
+</header>
+
+<main>
+
+    <section id="what">
+        <h2>What this is</h2>
+        <p>AllArkive bundles three things that already exist into something one person can install in an afternoon.</p>
+        <ol class="numbered">
+            <li><strong>An offline knowledge archive</strong> — Wikipedia, Stack Exchange, Project Gutenberg, iFixit, and more, packaged as <a href="https://kiwix.org">Kiwix</a> ZIM files.</li>
+            <li><strong>A local AI</strong> — an open-weight LLM via <a href="https://ollama.com">Ollama</a> and <a href="https://openwebui.com">Open WebUI</a>, running entirely on your machine. No cloud calls.</li>
+            <li><strong>A retrieval pipeline</strong> — RAG that lets the AI answer questions using the local archive, with citations back to the source.</li>
+        </ol>
+        <p>Run it on a laptop, a home server, or a Raspberry Pi. Use it as a private research assistant. Keep it as a fallback for when the open web gets worse.</p>
+    </section>
+
+    <section id="why">
+        <h2>Why</h2>
+        <p>The infrastructure of shared knowledge is more centralised, more surveilled, and more hostile to users than it has ever been. The tools to run a useful piece of it on cheap hardware already exist — they just hadn't been packaged together. We packaged them.</p>
+        <p>This is not a survival kit, a prepper bunker, or a doomsday cache. It's a library and a search tool, built on open weights and open content, that runs on your own machine. The framing is <strong>censorship resistance, privacy, and educational access</strong>.</p>
+    </section>
+
+    <section id="bundle">
+        <h2>What's in the default bundle</h2>
+        <p>The <code>balanced</code> bundle, recommended for most laptops — roughly 23 GB of ZIM data plus a 5 GB model.</p>
+        <ul>
+            <li><strong>Wikipedia</strong> (English, text-only) — about 12 GB</li>
+            <li><strong>WikiMed</strong> — medical reference, for general lookups, not medical advice</li>
+            <li><strong>iFixit</strong> — repair guides</li>
+            <li><strong>SuperUser</strong> — general tech Q&amp;A</li>
+            <li><strong>Project Gutenberg</strong> — a public-domain book selection</li>
+        </ul>
+        <p>Smaller (<code>minimal</code>) and larger (<code>comprehensive</code>) bundles are documented in the <a href="https://github.com/allarkive/allarkive/tree/main/docs/bundles">bundle docs</a>.</p>
+    </section>
+
+    <section id="install">
+        <h2>Install</h2>
+        <pre><code>git clone https://github.com/allarkive/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+./scripts/bootstrap.sh</code></pre>
+        <p class="muted">After install, open <code>http://localhost:8080</code> for the local landing page.</p>
+
+        <h3>System requirements</h3>
+        <ul>
+            <li><strong>Minimum:</strong> 8 GB RAM, 30 GB disk, x86_64 or arm64</li>
+            <li><strong>Recommended:</strong> 16 GB RAM, 50 GB SSD, modern CPU</li>
+            <li><strong>Pi text-only build:</strong> Raspberry Pi 4 (4 GB+) with a USB SSD</li>
+        </ul>
+    </section>
+
+    <section id="architecture">
+        <h2>Architecture</h2>
+        <p>Three layers, each replaceable.</p>
+        <pre class="ascii"><code>┌──────────────────────────────────────────┐
+│  Glue: landing page, docker-compose,     │
+│  bootstrap, RAG pipeline, docs           │
+├──────────────────────────────────────────┤
+│  Local AI: Ollama + Open WebUI + RAG     │
+├──────────────────────────────────────────┤
+│  Archive: Kiwix serving ZIM files        │
+└──────────────────────────────────────────┘</code></pre>
+        <p>Full breakdown in <a href="https://github.com/allarkive/allarkive/blob/main/docs/ARCHITECTURE.MD">the architecture doc</a>.</p>
+    </section>
+
+    <section id="docs">
+        <h2>Documentation</h2>
+        <p>Pick your starting point. All docs are rendered by GitHub.</p>
+
+        <h3>Read first</h3>
+        <ul class="doc-list">
+            <li><a href="https://github.com/allarkive/allarkive#readme">README</a> — one-line pitch, install snippet, license</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/ARCHITECTURE.MD">Architecture</a> — three-layer design, components, data flow</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/THREAT_MODEL.md">Threat model</a> — what this does and does not protect against</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/ROADMAP.MD">Roadmap</a> — what's in v0.1, what's deferred</li>
+        </ul>
+
+        <h3>Install</h3>
+        <ul class="doc-list">
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/laptop.md">Laptop or desktop (Linux)</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/macos.md">macOS</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/windows.md">Windows (WSL2)</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/server.md">Headless server</a></li>
+        </ul>
+
+        <h3>Deployment patterns</h3>
+        <ul class="doc-list">
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/pi-text-only.md">Raspberry Pi (full stack)</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/pi-archive-only.md">Raspberry Pi as a dedicated archive node</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/split.md">Split AI and archive across two machines</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/lan-access.md">Opt-in LAN access</a></li>
+        </ul>
+
+        <h3>Contributing and governance</h3>
+        <ul class="doc-list">
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/CONTRIBUTING.MD">Contributing</a> — DCO sign-off, PR checklist</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/CODE_OF_CONDUCT.MD">Code of conduct</a></li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/GOVERNANCE.MD">Governance</a> — how decisions get made</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/SECURITY.MD">Security</a> — how to report a vulnerability</li>
+            <li><a href="https://github.com/allarkive/allarkive/blob/main/DOCS.MD">Full doc index</a></li>
+        </ul>
+    </section>
+
+    <section id="security">
+        <h2>Security and honesty</h2>
+        <ul>
+            <li><strong>Default-local binding.</strong> Nothing listens on the public internet unless you opt in.</li>
+            <li><strong>No telemetry.</strong> Anywhere. Ever.</li>
+            <li><strong>Pinned dependencies.</strong> Docker images pinned by digest. ZIM files verified by checksum.</li>
+            <li><strong>Signed releases.</strong> Verify the artefacts you download.</li>
+            <li><strong>Honest disclaimers.</strong> The AI can be wrong. RAG with citations makes its output checkable, not infallible.</li>
+        </ul>
+    </section>
+
+    <section id="status">
+        <h2>Status</h2>
+        <p>v0.1 is alpha. First public release lands alongside our <a href="https://bsidesmelbourne.com">BSides Melbourne</a> talk in May 2026.</p>
+        <p>Co-built by Sam and Sham. Standing on the shoulders of <a href="https://kiwix.org">Kiwix</a>, <a href="https://ollama.com">Ollama</a>, <a href="https://openwebui.com">Open WebUI</a>, and the people who maintain the open archives we bundle.</p>
+    </section>
+
+</main>
+
+<footer>
+    <p>AllArkive is a research and reference tool. It is not a substitute for professional medical, legal, or safety advice.</p>
+    <p class="footer-meta">
+        Glue code AGPL-3.0 &middot;
+        <a href="https://github.com/allarkive/allarkive">source on GitHub</a> &middot;
+        <a href="https://codeberg.org/allarkive/allarkive">mirror on Codeberg</a>
+    </p>
+</footer>
+
+</body>
+</html>

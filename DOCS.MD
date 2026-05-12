@@ -35,6 +35,14 @@ If you're **evaluating the project's trustworthiness**, read `THREAT_MODEL.md`, 
 | `docs/DESIGN.md` | Tone, voice, UX principles, landing page direction, naming conventions, required disclaimer text. |
 | `docs/THREAT_MODEL.md` | What the project does and does not protect against. Disclaimers. |
 
+### Public web landing page
+
+| File | Purpose |
+|---|---|
+| `docs/index.html` | Public-facing landing page served by GitHub Pages from `main`/`docs`. Short project explanation plus links to the hosted docs. |
+| `docs/styles.css` | Styles for the public landing page. System fonts only, no external assets. |
+| `docs/.nojekyll` | Tells GitHub Pages to skip Jekyll and serve the static HTML directly. |
+
 ### Install guides (`docs/install/`)
 
 | File | Purpose |
