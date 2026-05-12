@@ -646,6 +646,31 @@ RAG_PORT="${RAG_PORT:-8000}"
 
 ZIM_COUNT="$(find "${ZIM_DIR}" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l)"
 
+# Pull chunk counts per ZIM straight from index.db so the user can see whether
+# every archive actually made it into the vector store (a fresh user hitting
+# "no sources found" usually means an unindexed or empty-coverage ZIM).
+_index_coverage_lines() {
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec -T rag \
+        python3 -c "
+import sqlite3
+from pathlib import Path
+p = '/index/index.db'
+if not Path(p).exists():
+    print('  (index not built yet)')
+else:
+    rows = sqlite3.connect(p).execute(
+        'SELECT zim_name, COUNT(*) FROM chunks GROUP BY zim_name ORDER BY zim_name'
+    ).fetchall()
+    if not rows:
+        print('  (index empty)')
+    else:
+        total = sum(n for _, n in rows)
+        for name, n in rows:
+            print(f'  {name[:44]:<44s} {n:>8,d} chunks')
+        print(f'  {\"TOTAL\":<44s} {total:>8,d} chunks')
+" 2>/dev/null
+}
+
 echo ""
 echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
 echo "  ${CY}║${R}  ${BGR}✓${R}  ${B}${WH}AllArkive is running${R}"
@@ -674,6 +699,12 @@ echo "  ${CY}║${R}  ${DIM}Models dir      : ${MODELS_DIR}${R}"
 echo "  ${CY}║${R}  ${DIM}Chat model      : ${DEFAULT_MODEL}${R}"
 echo "  ${CY}║${R}  ${DIM}Embedding model : ${EMBED_MODEL}${R}"
 echo "  ${CY}║${R}  ${DIM}Network         : localhost only — nothing exposed externally${R}"
+echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
+echo "  ${CY}║${R}  ${DIM}Knowledge indexed (chunks per archive):${R}"
+while IFS= read -r line; do
+    [[ -z "${line}" ]] && continue
+    echo "  ${CY}║${R}  ${DIM}${line}${R}"
+done < <(_index_coverage_lines)
 echo "  ${CY}╠══════════════════════════════════════════════════════════════════╣${R}"
 echo "  ${CY}║${R}  Select ${WH}allarkive-rag${R} in Open WebUI to query with citations."
 echo "  ${CY}║${R}  Re-index after adding ZIMs:"
