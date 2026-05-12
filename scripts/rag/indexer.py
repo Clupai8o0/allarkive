@@ -276,15 +276,34 @@ def _index_zim(
                     log.warning("  embed failed %s chunk %d: %s", entry.path, idx, exc)
                     continue
 
-                cur = conn.execute(
-                    "INSERT INTO chunks(zim_name,article_path,chunk_idx,title,text)"
-                    " VALUES(?,?,?,?,?)",
-                    [zim_name, entry.path, idx, title, piece],
-                )
-                conn.execute(
-                    "INSERT INTO chunk_embeddings(chunk_id,embedding) VALUES(?,?)",
-                    [cur.lastrowid, emb_bytes],
-                )
+                # Drop vectors sqlite-vec will reject (wrong length, zero
+                # magnitude, NaN/inf). A single bad vector used to crash the
+                # whole indexer with "could not write vector blob".
+                if (
+                    not emb
+                    or len(emb) * 4 != len(emb_bytes)
+                    or not all(math.isfinite(x) for x in emb)
+                    or math.fsum(x * x for x in emb) <= 0
+                ):
+                    log.warning("  skip %s chunk %d: degenerate embedding",
+                                entry.path, idx)
+                    continue
+
+                try:
+                    cur = conn.execute(
+                        "INSERT INTO chunks(zim_name,article_path,chunk_idx,title,text)"
+                        " VALUES(?,?,?,?,?)",
+                        [zim_name, entry.path, idx, title, piece],
+                    )
+                    conn.execute(
+                        "INSERT INTO chunk_embeddings(chunk_id,embedding) VALUES(?,?)",
+                        [cur.lastrowid, emb_bytes],
+                    )
+                except sqlite3.OperationalError as exc:
+                    log.warning("  sqlite-vec rejected %s chunk %d: %s — skipping",
+                                entry.path, idx, exc)
+                    conn.rollback()
+                    continue
                 chunks_done += 1
 
             articles_done += 1

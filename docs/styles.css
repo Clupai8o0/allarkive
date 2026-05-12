@@ -568,21 +568,29 @@ body.doc-page {
 
 .copy-btn {
     position: absolute;
-    top: 0.45rem;
-    right: 0.45rem;
-    font: inherit;
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 0.25rem 0.55rem;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    margin: 0;
     background: var(--bg);
-    color: var(--text);
+    color: var(--text-muted);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.12s ease-out, background 0.12s, color 0.12s;
+    line-height: 0;
+    opacity: 0.55;
+    transition: opacity 0.12s ease-out, color 0.12s, background 0.12s, border-color 0.12s, transform 0.08s;
     z-index: 2;
+}
+
+.copy-btn svg {
+    display: block;
+    pointer-events: none;
 }
 
 .doc-content pre:hover .copy-btn,
@@ -592,12 +600,23 @@ body.doc-page {
 }
 
 .copy-btn:hover {
-    background: var(--accent);
+    color: var(--text);
+    border-color: var(--text);
+}
+
+.copy-btn:active {
+    transform: scale(0.94);
+}
+
+.copy-btn.is-copied {
+    opacity: 1;
     color: var(--bg);
+    background: var(--accent);
     border-color: var(--accent);
 }
 
 .copy-btn.is-error {
+    opacity: 1;
     color: #b44;
     border-color: #b44;
 }
