@@ -8,7 +8,9 @@ or 24.04 LTS), using the docker-compose stack. For macOS see
 `docs/install/macos.md`. For Windows see `docs/install/windows.md`.
 
 **Time estimate**: 15–30 minutes setup, then waiting for downloads (depends
-on your internet connection and which bundle you choose).
+on your internet connection and which bundle you choose). After the stack
+starts, RAG indexing runs in the background — **expect several hours for the
+balanced bundle on CPU**. See *Indexing takes hours* below.
 
 ---
 
@@ -31,6 +33,28 @@ nano compose/.env
 
 The manual steps below are equivalent — follow them if you want more control
 or need to debug a specific step.
+
+### Indexing takes hours — leave it running
+
+When `bootstrap.sh` finishes, the **RAG indexer keeps running** in the
+`rag` container, embedding every ZIM chunk through your local Ollama. On CPU
+this is the slowest part of setup:
+
+- **minimal bundle**: 10–30 minutes
+- **balanced bundle**: several hours
+- **comprehensive bundle**: tens of hours, plan overnight
+
+The indexer is **resumable and idempotent** — you can close the terminal,
+suspend the laptop, or reboot, and re-running `bootstrap.sh` (or
+`docker compose exec rag python indexer.py`) picks up where it left off.
+
+Kiwix browsing at `http://localhost:8081` works **immediately**. RAG answers
+in Open WebUI improve as coverage grows — "no sources found" early on is
+expected for topics not yet indexed. Watch progress:
+
+```bash
+docker compose -f compose/docker-compose.yml logs -f rag
+```
 
 ---
 

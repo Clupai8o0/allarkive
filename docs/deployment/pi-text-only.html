@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry Pi (full stack) — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Raspberry Pi (full stack).">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="../install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="../install/macos.html">macOS</a></li>
+<li><a href="../install/windows.html">Windows (WSL2)</a></li>
+<li><a href="../install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="pi-text-only.html" aria-current="page">Raspberry Pi (full stack)</a></li>
+<li><a href="pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="split.html">Split across two machines</a></li>
+<li><a href="lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Deployment</span> / <span>Raspberry Pi (full stack)</span></p>
+            <article class="doc-content">
+<h1 id="deployment-raspberry-pi-text-only-stack-pattern-b">Deployment:
+Raspberry Pi text-only stack (pattern B)</h1>
+<p>This guide runs the full AllArkive stack—kiwix-serve, Ollama, the RAG
+service, Open WebUI, and the landing page—on a Raspberry Pi 4 or Pi 5
+using a USB SSD for storage. The "text-only" label means the recommended
+bundle (<code>minimal</code>) uses text-only ZIM archives; the AI and
+RAG layers are present and fully functional.</p>
+<p><strong>Time estimate</strong>: two to four hours, mostly downloading
+images and model weights.</p>
+<hr />
+<h2 id="hardware-requirements">Hardware requirements</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Board</td>
+<td>Raspberry Pi 4 (4 GB RAM)</td>
+<td>Pi 4 (8 GB) or Pi 5 (8 GB)</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>USB SSD, 32 GB free</td>
+<td>USB SSD, 64 GB+</td>
+</tr>
+<tr>
+<td>Power</td>
+<td>Official 5 V / 3 A adapter</td>
+<td>Official 5 V / 5 A (Pi 5)</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Ethernet or Wi-Fi</td>
+<td>Ethernet for downloads</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Do not use an SD card for AllArkive data.</strong> SD cards
+fail under the sustained random-write load of model inference and vector
+indexing. Boot from SD, store everything under <code>/mnt/ssd</code> on
+the USB SSD.</p>
+<h3 id="ram-guidance-by-model">RAM guidance by model</h3>
+<table>
+<thead>
+<tr>
+<th>Pi RAM</th>
+<th>Recommended chat model</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 GB</td>
+<td><code>qwen2.5:1.5b</code></td>
+<td>Default. Leaves ~1.5 GB headroom.</td>
+</tr>
+<tr>
+<td>8 GB</td>
+<td><code>qwen2.5:3b</code> or <code>phi3.5:3.8b</code></td>
+<td>Better answers, still fits.</td>
+</tr>
+<tr>
+<td>8 GB (Pi 5)</td>
+<td><code>qwen2.5:7b</code></td>
+<td>Works with <code>OLLAMA_MEMORY_LIMIT=6G</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-1-image-the-os">Step 1: Image the OS</h2>
+<p>Download <strong>Raspberry Pi OS Lite (64-bit)</strong> from
+<code>https://www.raspberrypi.com/software/operating-systems/</code> —
+choose the "Lite" variant (no desktop). Bookworm (Debian 12) or
+later.</p>
+<p>Flash it with Raspberry Pi Imager. Before writing, click the gear
+icon and:</p>
+<ul>
+<li>Set a hostname (<code>allarkive-pi</code> works)</li>
+<li>Enable SSH</li>
+<li>Set a username and password</li>
+<li>Configure Wi-Fi if you are not using Ethernet</li>
+</ul>
+<p>Boot the Pi, confirm SSH access:</p>
+<pre class="bash"><code>ssh pi@allarkive-pi.local</code></pre>
+<p>Update the system:</p>
+<pre class="bash"><code>sudo apt update &amp;&amp; sudo apt full-upgrade -y
+sudo reboot</code></pre>
+<hr />
+<h2 id="step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</h2>
+<p>Identify the SSD device:</p>
+<pre class="bash"><code>lsblk</code></pre>
+<p>Look for a disk (<code>sda</code>, <code>sdb</code>, etc.) without a
+partition listed in <code>MOUNTPOINTS</code>. Your SSD is typically
+<code>/dev/sda</code> with a partition at <code>/dev/sda1</code>.</p>
+<p>If the SSD is new and has no partition, format it:</p>
+<pre class="bash"><code>sudo fdisk /dev/sda   # create a new GPT partition table and one partition
+sudo mkfs.ext4 /dev/sda1</code></pre>
+<p>Mount it:</p>
+<pre class="bash"><code>sudo mkdir -p /mnt/ssd
+sudo mount /dev/sda1 /mnt/ssd</code></pre>
+<p>Make the mount survive reboots. Add to <code>/etc/fstab</code>:</p>
+<pre class="bash"><code># Get the UUID of the partition
+sudo blkid /dev/sda1</code></pre>
+<p>Add a line to <code>/etc/fstab</code> (replace <code>YOUR-UUID</code>
+with the value from <code>blkid</code>):</p>
+<pre><code>UUID=YOUR-UUID  /mnt/ssd  ext4  defaults,noatime  0  2</code></pre>
+<p>Verify:</p>
+<pre class="bash"><code>sudo mount -a
+df -h /mnt/ssd</code></pre>
+<p>Expected: <code>/mnt/ssd</code> mounted with available space matching
+your SSD size.</p>
+<hr />
+<h2 id="step-3-install-docker">Step 3: Install Docker</h2>
+<pre class="bash"><code>curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker &quot;$USER&quot;
+newgrp docker</code></pre>
+<p>Verify:</p>
+<pre class="bash"><code>docker version
+docker compose version</code></pre>
+<p>Expected: Docker Engine 24+ and Compose 2.x.</p>
+<hr />
+<h2 id="step-4-clone-the-repository">Step 4: Clone the repository</h2>
+<pre class="bash"><code>sudo mkdir -p /mnt/ssd/allarkive-repo
+sudo chown &quot;$USER&quot; /mnt/ssd/allarkive-repo
+git clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo
+cd /mnt/ssd/allarkive-repo</code></pre>
+<hr />
+<h2 id="step-5-configure-the-environment">Step 5: Configure the
+environment</h2>
+<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<p>Edit <code>compose/.env</code>:</p>
+<pre class="bash"><code>nano compose/.env</code></pre>
+<p>Required changes:</p>
+<pre><code># Generate a secret key:
+#   openssl rand -hex 32
+WEBUI_SECRET_KEY=&lt;paste the output here&gt;
+
+# Point all data at the USB SSD
+ALLARKIVE_DATA_DIR=/mnt/ssd/allarkive
+
+# Set the smaller Pi model
+OLLAMA_DEFAULT_MODEL=qwen2.5:1.5b
+CHAT_MODEL=qwen2.5:1.5b
+
+# Tune RAM limit to your board (4G for 4 GB Pi, 6G for 8 GB Pi)
+OLLAMA_MEMORY_LIMIT=4G</code></pre>
+<hr />
+<h2 id="step-6-run-bootstrap">Step 6: Run bootstrap</h2>
+<pre class="bash"><code>scripts/bootstrap.sh --pi --bundle minimal</code></pre>
+<p>This will:</p>
+<ol type="1">
+<li>Check prerequisites (Docker, disk space)</li>
+<li>Create data directories under <code>/mnt/ssd/allarkive</code></li>
+<li>Download the <code>minimal</code> bundle ZIMs (~3.5 GB) and verify
+checksums</li>
+<li>Start the Compose stack
+(<code>compose/docker-compose.pi.yml</code>)</li>
+<li>Pull <code>qwen2.5:1.5b</code> (~900 MB) and
+<code>nomic-embed-text</code> (~270 MB) into Ollama</li>
+<li>Run the RAG indexer over the downloaded ZIMs</li>
+</ol>
+<p><strong>Wall-clock time</strong>: 30–90 minutes for download + image
+build on a reasonable connection, depending on Pi generation. After
+that, the <strong>RAG indexer keeps running in the background</strong> —
+on a Pi 4 expect roughly <strong>1–3 hours for the minimal
+bundle</strong>, longer for balanced. Leave it running: the indexer is
+resumable and idempotent, and Kiwix browsing at
+<code>http://&lt;pi-ip&gt;:8081</code> works immediately. RAG answers in
+Open WebUI improve as coverage grows — "no sources found" early on is
+expected for topics not yet indexed. Watch progress:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml logs -f rag</code></pre>
+<h3 id="if-the-indexer-ooms-during-first-run">If the indexer OOMs during
+first run</h3>
+<p>The Pi 4 with 4 GB RAM can struggle to run Ollama and the indexer at
+the same time. If the indexer crashes, run it after Ollama is idle:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml exec rag \
+  python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434</code></pre>
+<hr />
+<h2 id="step-7-smoke-test">Step 7: Smoke test</h2>
+<p>From the Pi (or any machine on the same network with the right port
+forwarded):</p>
+<pre class="bash"><code># Check the landing page
+curl -s http://127.0.0.1:8080/ | grep -o &#39;&lt;title&gt;[^&lt;]*&lt;/title&gt;&#39;
+
+# Check kiwix is serving
+curl -sf http://127.0.0.1:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix OK&quot;
+
+# Check Ollama
+curl -s http://127.0.0.1:11434/api/version
+
+# Check RAG health
+curl -s http://127.0.0.1:8000/health</code></pre>
+<p>Open <code>http://127.0.0.1:8080</code> in a browser (or forward the
+port via SSH):</p>
+<pre class="bash"><code>ssh -L 8080:127.0.0.1:8080 pi@allarkive-pi.local</code></pre>
+<p>Then open <code>http://127.0.0.1:8080</code> on your laptop.</p>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Bound to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Landing page</td>
+<td>8080</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>RAG service</td>
+<td>8000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Open WebUI</td>
+<td>3000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td>11434</td>
+<td>127.0.0.1</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing is exposed to the LAN by default. See
+<code>docs/deployment/lan-access.md</code> for the opt-in remote-access
+path.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="docker-daemon-not-running-after-reboot">Docker daemon not
+running after reboot</h3>
+<pre class="bash"><code>sudo systemctl enable docker
+sudo systemctl start docker</code></pre>
+<h3 id="ollama-oom-killed">Ollama OOM-killed</h3>
+<p>Reduce <code>OLLAMA_MEMORY_LIMIT</code> in <code>compose/.env</code>
+and restart:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml restart ollama</code></pre>
+<p>Or switch to a smaller model (<code>qwen2.5:1.5b</code> →
+<code>llama3.2:1b</code> at ~600 MB).</p>
+<h3 id="zim-download-stalls">ZIM download stalls</h3>
+<p><code>fetch-bundle.sh</code> uses <code>wget --continue</code>.
+Re-run the script; it resumes from where it left off:</p>
+<pre class="bash"><code>scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<h3 id="kiwix-exits-immediately-no-zim-files-found">Kiwix exits
+immediately ("no ZIM files found")</h3>
+<p>Confirm ZIM files exist and the path is correct:</p>
+<pre class="bash"><code>ls -lh /mnt/ssd/allarkive/zim/*.zim</code></pre>
+<p>If empty, fetch the bundle before starting the stack.</p>
+<h3 id="rag-indexer-is-slow">RAG indexer is slow</h3>
+<p>Pi 4 with 4 GB RAM processes roughly 5–15 articles per second during
+embedding. For the minimal bundle (~400 MB of text), expect 15–30
+minutes. Use <code>RAG_MAX_ARTICLES</code> in <code>.env</code> to cap
+indexing time during testing:</p>
+<pre><code>RAG_MAX_ARTICLES=500</code></pre>
+<h3 id="port-already-bound">Port already bound</h3>
+<pre class="bash"><code>ss -tlnp | grep 8080</code></pre>
+<p>Find the PID and stop the conflicting process, or change
+<code>LANDING_PORT</code> in <code>compose/.env</code>.</p>
+<h3 id="check-all-service-logs">Check all service logs</h3>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml logs -f</code></pre>
+<hr />
+<h2 id="updating">Updating</h2>
+<p>To pull new images and restart:</p>
+<pre class="bash"><code>cd /mnt/ssd/allarkive-repo
+git pull
+docker compose -f compose/docker-compose.pi.yml pull
+docker compose -f compose/docker-compose.pi.yml up -d</code></pre>
+<p>Re-index after adding new ZIM files:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml exec rag \
+  python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434</code></pre>
+<hr />
+<h2 id="what-is-next">What is next</h2>
+<ul>
+<li>To run a Pi as a dedicated archive node (no AI), see
+<code>docs/deployment/pi-archive-only.md</code>.</li>
+<li>To connect this Pi to a remote Kiwix archive node, see
+<code>docs/deployment/split.md</code>.</li>
+<li>To expose the stack to the LAN, see
+<code>docs/deployment/lan-access.md</code>.</li>
+</ul>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/deployment/pi-text-only.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/deployment/pi-text-only.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#hardware-requirements">Hardware requirements</a></li>
+<li class="toc-h3"><a href="#ram-guidance-by-model">RAM guidance by model</a></li>
+<li class="toc-h2"><a href="#step-1-image-the-os">Step 1: Image the OS</a></li>
+<li class="toc-h2"><a href="#step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</a></li>
+<li class="toc-h2"><a href="#step-3-install-docker">Step 3: Install Docker</a></li>
+<li class="toc-h2"><a href="#step-4-clone-the-repository">Step 4: Clone the repository</a></li>
+<li class="toc-h2"><a href="#step-5-configure-the-environment">Step 5: Configure the
+environment</a></li>
+<li class="toc-h2"><a href="#step-6-run-bootstrap">Step 6: Run bootstrap</a></li>
+<li class="toc-h3"><a href="#if-the-indexer-ooms-during-first-run">If the indexer OOMs during
+first run</a></li>
+<li class="toc-h2"><a href="#step-7-smoke-test">Step 7: Smoke test</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#docker-daemon-not-running-after-reboot">Docker daemon not
+running after reboot</a></li>
+<li class="toc-h3"><a href="#ollama-oom-killed">Ollama OOM-killed</a></li>
+<li class="toc-h3"><a href="#zim-download-stalls">ZIM download stalls</a></li>
+<li class="toc-h3"><a href="#kiwix-exits-immediately-no-zim-files-found">Kiwix exits
+immediately (&quot;no ZIM files found&quot;)</a></li>
+<li class="toc-h3"><a href="#rag-indexer-is-slow">RAG indexer is slow</a></li>
+<li class="toc-h3"><a href="#port-already-bound">Port already bound</a></li>
+<li class="toc-h3"><a href="#check-all-service-logs">Check all service logs</a></li>
+<li class="toc-h2"><a href="#updating">Updating</a></li>
+<li class="toc-h2"><a href="#what-is-next">What is next</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

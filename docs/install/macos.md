@@ -4,7 +4,10 @@ This guide installs AllArkive on macOS using Docker Desktop and the
 docker-compose stack. Tested on macOS 13 (Ventura) and 14 (Sonoma) on
 both Intel and Apple Silicon.
 
-**Time estimate**: 15–30 minutes setup, then waiting for downloads.
+**Time estimate**: 15–30 minutes setup, then waiting for downloads. After
+the stack starts, RAG indexing runs in the background — **expect several
+hours for the balanced bundle on CPU** (much faster if Ollama is using your
+Apple Silicon GPU via Metal). See *Indexing takes hours* below.
 
 ---
 
@@ -23,6 +26,28 @@ On macOS, `bootstrap.sh` automatically uses `~/allarkive-data` as the data
 directory (avoids the `/var/lib/` permission issue). No extra config needed.
 
 The manual steps below are equivalent — follow them for more control.
+
+### Indexing takes hours — leave it running
+
+When `bootstrap.sh` finishes, the **RAG indexer keeps running** in the
+`rag` container, embedding every ZIM chunk through Ollama. Realistic times
+on a modern Mac:
+
+- **minimal bundle**: 10–20 minutes
+- **balanced bundle**: 2–6 hours (Apple Silicon, Metal-accelerated)
+- **comprehensive bundle**: overnight
+
+The indexer is **resumable and idempotent** — close the lid, sleep the
+Mac, or reboot, and re-running `bootstrap.sh` (or
+`docker compose exec rag python indexer.py`) picks up where it left off.
+
+Kiwix browsing at `http://localhost:8081` works **immediately**. RAG answers
+improve as coverage grows — "no sources found" early on is expected for
+topics not yet indexed. Watch progress:
+
+```bash
+docker compose -f compose/docker-compose.yml logs -f rag
+```
 
 ---
 

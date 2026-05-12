@@ -178,7 +178,11 @@ See `ROADMAP.md` for full list. Headlines:
 - **Vector DB**: sqlite-vec. Embedded SQLite extension — no extra service, no daemon, no port.
   Index lives at `$ALLARKIVE_DATA_DIR/index/index.db`.
 - **Embedding model**: `nomic-embed-text` via Ollama (768 dimensions). Pulled alongside the
-  chat model by `bootstrap.sh`. Runs fully offline once downloaded.
+  chat model by `bootstrap.sh`. Runs fully offline once downloaded. **Indexing is the slowest
+  part of bootstrap**: every ZIM chunk is embedded through Ollama, which on CPU runs at
+  roughly 5–15 chunks/sec. For the balanced bundle this is several hours; the indexer is
+  resumable and idempotent, so it's intended to run in the background after bootstrap returns.
+  Kiwix browsing works immediately; RAG answers improve as index coverage grows.
 - **RAG integration with Open WebUI**: the RAG service exposes an OpenAI-compatible API on
   port 8000. Open WebUI is configured via `OPENAI_API_BASE_URLS` to show `allarkive-rag` as
   a selectable model alongside native Ollama models.

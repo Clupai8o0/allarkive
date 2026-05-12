@@ -56,16 +56,18 @@
             <li><strong>SuperUser</strong> — general tech Q&amp;A</li>
             <li><strong>Project Gutenberg</strong> — a public-domain book selection</li>
         </ul>
-        <p>Smaller (<code>minimal</code>) and larger (<code>comprehensive</code>) bundles are documented in the <a href="https://github.com/allarkive/allarkive/tree/main/docs/bundles">bundle docs</a>.</p>
+        <p>Smaller (<code>minimal</code>) and larger (<code>comprehensive</code>) bundles are documented in the <a href="bundles/index.html">bundle docs</a>.</p>
     </section>
 
     <section id="install">
         <h2>Install</h2>
-        <pre><code>git clone https://github.com/allarkive/allarkive.git
+        <pre><code>git clone https://github.com/clupai8o0/allarkive.git
 cd allarkive
 cp compose/.env.example compose/.env
 ./scripts/bootstrap.sh</code></pre>
         <p class="muted">After install, open <code>http://localhost:8080</code> for the local landing page.</p>
+
+        <p class="muted"><strong>Heads-up:</strong> after the stack starts, the RAG indexer keeps running in the background, embedding every ZIM chunk through your local Ollama. On CPU expect <strong>several hours for the balanced bundle</strong>, less for minimal. Leave it running — it's resumable and idempotent. Kiwix browsing at <code>http://localhost:8081</code> works immediately; RAG answers improve as coverage grows.</p>
 
         <h3>System requirements</h3>
         <ul>
@@ -86,44 +88,44 @@ cp compose/.env.example compose/.env
 ├──────────────────────────────────────────┤
 │  Archive: Kiwix serving ZIM files        │
 └──────────────────────────────────────────┘</code></pre>
-        <p>Full breakdown in <a href="https://github.com/allarkive/allarkive/blob/main/docs/ARCHITECTURE.MD">the architecture doc</a>.</p>
+        <p>Full breakdown in <a href="architecture.html">the architecture doc</a>.</p>
     </section>
 
     <section id="docs">
         <h2>Documentation</h2>
-        <p>Pick your starting point. All docs are rendered by GitHub.</p>
+        <p>Pick your starting point. Each doc has its own page with a sidebar and on-page table of contents.</p>
 
         <h3>Read first</h3>
         <ul class="doc-list">
-            <li><a href="https://github.com/allarkive/allarkive#readme">README</a> — one-line pitch, install snippet, license</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/ARCHITECTURE.MD">Architecture</a> — three-layer design, components, data flow</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/THREAT_MODEL.md">Threat model</a> — what this does and does not protect against</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/ROADMAP.MD">Roadmap</a> — what's in v0.1, what's deferred</li>
+            <li><a href="readme.html">README</a> — one-line pitch, install snippet, license</li>
+            <li><a href="architecture.html">Architecture</a> — three-layer design, components, data flow</li>
+            <li><a href="threat-model.html">Threat model</a> — what this does and does not protect against</li>
+            <li><a href="roadmap.html">Roadmap</a> — what's in v0.1, what's deferred</li>
         </ul>
 
         <h3>Install</h3>
         <ul class="doc-list">
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/laptop.md">Laptop or desktop (Linux)</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/macos.md">macOS</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/windows.md">Windows (WSL2)</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/install/server.md">Headless server</a></li>
+            <li><a href="install/laptop.html">Laptop or desktop (Linux)</a></li>
+            <li><a href="install/macos.html">macOS</a></li>
+            <li><a href="install/windows.html">Windows (WSL2)</a></li>
+            <li><a href="install/server.html">Headless server</a></li>
         </ul>
 
         <h3>Deployment patterns</h3>
         <ul class="doc-list">
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/pi-text-only.md">Raspberry Pi (full stack)</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/pi-archive-only.md">Raspberry Pi as a dedicated archive node</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/split.md">Split AI and archive across two machines</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/docs/deployment/lan-access.md">Opt-in LAN access</a></li>
+            <li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+            <li><a href="deployment/pi-archive-only.html">Raspberry Pi as a dedicated archive node</a></li>
+            <li><a href="deployment/split.html">Split AI and archive across two machines</a></li>
+            <li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
         </ul>
 
         <h3>Contributing and governance</h3>
         <ul class="doc-list">
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/CONTRIBUTING.MD">Contributing</a> — DCO sign-off, PR checklist</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/CODE_OF_CONDUCT.MD">Code of conduct</a></li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/GOVERNANCE.MD">Governance</a> — how decisions get made</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/SECURITY.MD">Security</a> — how to report a vulnerability</li>
-            <li><a href="https://github.com/allarkive/allarkive/blob/main/DOCS.MD">Full doc index</a></li>
+            <li><a href="contributing.html">Contributing</a> — DCO sign-off, PR checklist</li>
+            <li><a href="code-of-conduct.html">Code of conduct</a></li>
+            <li><a href="governance.html">Governance</a> — how decisions get made</li>
+            <li><a href="security.html">Security</a> — how to report a vulnerability</li>
+            <li><a href="docs-index.html">Full doc index</a></li>
         </ul>
     </section>
 
@@ -150,7 +152,7 @@ cp compose/.env.example compose/.env
     <p>AllArkive is a research and reference tool. It is not a substitute for professional medical, legal, or safety advice.</p>
     <p class="footer-meta">
         Glue code AGPL-3.0 &middot;
-        <a href="https://github.com/allarkive/allarkive">source on GitHub</a> &middot;
+        <a href="https://github.com/clupai8o0/allarkive">source on GitHub</a> &middot;
         <a href="https://codeberg.org/allarkive/allarkive">mirror on Codeberg</a>
     </p>
 </footer>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: macOS.">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="macos.html" aria-current="page">macOS</a></li>
+<li><a href="windows.html">Windows (WSL2)</a></li>
+<li><a href="server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="../deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="../deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="../deployment/split.html">Split across two machines</a></li>
+<li><a href="../deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Install</span> / <span>macOS</span></p>
+            <article class="doc-content">
+<h1 id="installing-allarkive-on-macos">Installing AllArkive on
+macOS</h1>
+<p>This guide installs AllArkive on macOS using Docker Desktop and the
+docker-compose stack. Tested on macOS 13 (Ventura) and 14 (Sonoma) on
+both Intel and Apple Silicon.</p>
+<p><strong>Time estimate</strong>: 15–30 minutes setup, then waiting for
+downloads. After the stack starts, RAG indexing runs in the background —
+<strong>expect several hours for the balanced bundle on CPU</strong>
+(much faster if Ollama is using your Apple Silicon GPU via Metal). See
+<em>Indexing takes hours</em> below.</p>
+<hr />
+<h2 id="quick-start-automated">Quick start (automated)</h2>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+./scripts/bootstrap.sh --bundle balanced</code></pre>
+<p>On macOS, <code>bootstrap.sh</code> automatically uses
+<code>~/allarkive-data</code> as the data directory (avoids the
+<code>/var/lib/</code> permission issue). No extra config needed.</p>
+<p>The manual steps below are equivalent — follow them for more
+control.</p>
+<h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</h3>
+<p>When <code>bootstrap.sh</code> finishes, the <strong>RAG indexer
+keeps running</strong> in the <code>rag</code> container, embedding
+every ZIM chunk through Ollama. Realistic times on a modern Mac:</p>
+<ul>
+<li><strong>minimal bundle</strong>: 10–20 minutes</li>
+<li><strong>balanced bundle</strong>: 2–6 hours (Apple Silicon,
+Metal-accelerated)</li>
+<li><strong>comprehensive bundle</strong>: overnight</li>
+</ul>
+<p>The indexer is <strong>resumable and idempotent</strong> — close the
+lid, sleep the Mac, or reboot, and re-running <code>bootstrap.sh</code>
+(or <code>docker compose exec rag python indexer.py</code>) picks up
+where it left off.</p>
+<p>Kiwix browsing at <code>http://localhost:8081</code> works
+<strong>immediately</strong>. RAG answers improve as coverage grows —
+"no sources found" early on is expected for topics not yet indexed.
+Watch progress:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="hardware">Hardware</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAM</td>
+<td>8 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>Free disk</td>
+<td>10 GB (minimal bundle + model)</td>
+<td>30 GB (balanced bundle + model)</td>
+</tr>
+</tbody>
+</table>
+<p>Apple Silicon (M1/M2/M3/M4) is supported. Ollama runs models natively
+on Apple Silicon via Metal — no NVIDIA GPU needed.</p>
+<h3 id="software">Software</h3>
+<ul>
+<li><p><strong>Docker Desktop for Mac</strong> (version 4.20 or later).
+Download from
+<code>https://www.docker.com/products/docker-desktop/</code>.</p>
+<p>After installing, open Docker Desktop and confirm it is running (the
+whale icon appears in the menu bar). Verify in a terminal:</p>
+<pre class="bash"><code>docker compose version</code></pre></li>
+<li><p><strong>Homebrew</strong> (optional but useful for
+<code>git</code>, <code>openssl</code>):</p>
+<pre class="bash"><code>/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;</code></pre>
+<p>Or use the Xcode command-line tools:</p>
+<pre class="bash"><code>xcode-select --install</code></pre></li>
+</ul>
+<hr />
+<h2 id="step-1-clone-the-repository">Step 1: Clone the repository</h2>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive</code></pre>
+<hr />
+<h2 id="step-2-set-up-configuration">Step 2: Set up configuration</h2>
+<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<p>Generate a secret key:</p>
+<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<p>Open <code>compose/.env</code> in your editor and paste the result
+into <code>WEBUI_SECRET_KEY=</code>.</p>
+<h3 id="data-directory-on-macos">Data directory on macOS</h3>
+<p>The default data directory is <code>/var/lib/allarkive</code>. On
+macOS you will need to either create this path or use a directory under
+your home folder.</p>
+<p><strong>Option A — Use your home directory (simplest):</strong></p>
+<p>Set in <code>compose/.env</code>:</p>
+<pre class="bash"><code>ALLARKIVE_DATA_DIR=/Users/YOUR_USERNAME/allarkive-data</code></pre>
+<p>Then create it:</p>
+<pre class="bash"><code>mkdir -p ~/allarkive-data/{zim,index,models,data}</code></pre>
+<p><strong>Option B — Use <code>/var/lib/allarkive</code> (matches Linux
+docs):</strong></p>
+<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
+sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<hr />
+<h2 id="step-3-docker-desktop-resource-limits">Step 3: Docker Desktop
+resource limits</h2>
+<p>By default, Docker Desktop allocates 50% of CPU and 50% of RAM. For
+the <code>balanced</code> bundle with <code>qwen2.5:7b</code>, allocate
+at least 8 GB RAM to Docker.</p>
+<p>Open <strong>Docker Desktop → Settings → Resources</strong> and
+set:</p>
+<ul>
+<li>Memory: 10 GB (or more if you have it)</li>
+<li>CPUs: at least 4</li>
+</ul>
+<p>Click <strong>Apply &amp; Restart</strong>.</p>
+<hr />
+<h2 id="step-4-fetch-a-bundle">Step 4: Fetch a bundle</h2>
+<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<p>The script downloads ZIM files to
+<code>$ALLARKIVE_DATA_DIR/zim/</code> and verifies checksums. A failed
+checksum stops the script — do not proceed if this happens.</p>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Contents</th>
+<th>Disk (ZIMs only)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minimal</code></td>
+<td>WikiMed + iFixit</td>
+<td>~4 GB</td>
+</tr>
+<tr>
+<td><code>balanced</code></td>
+<td>Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask
+Ubuntu</td>
+<td>~23 GB</td>
+</tr>
+<tr>
+<td><code>comprehensive</code></td>
+<td>Full Wikipedia (images) + Gutenberg + Stack Exchange</td>
+<td>~330 GB</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-5-start-the-stack">Step 5: Start the stack</h2>
+<pre class="bash"><code>cd compose/
+docker compose up -d</code></pre>
+<p>On first run, Docker does two things before services start:</p>
+<ol type="1">
+<li><strong>Builds the RAG image from source</strong>
+(<code>scripts/rag/</code>) — 2–4 minutes.</li>
+<li><strong>Pulls the remaining images</strong> (kiwix-serve, Ollama,
+Open WebUI, nginx).</li>
+</ol>
+<p>Subsequent starts skip both steps and are fast.</p>
+<p>Watch progress:</p>
+<pre class="bash"><code>docker compose logs -f</code></pre>
+<p>Wait for all containers to report healthy:</p>
+<pre class="bash"><code>docker compose ps</code></pre>
+<p>Total first-run time: 5–15 minutes depending on network.</p>
+<hr />
+<h2 id="step-6-pull-ai-models">Step 6: Pull AI models</h2>
+<p>Two models are needed — the chat model and the embedding model used
+by the RAG indexer. Pull them before indexing:</p>
+<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<p>Both pulls resume automatically if interrupted.</p>
+<p><strong>Apple Silicon note</strong>: Ollama detects Metal
+automatically. No extra config needed — inference will already be using
+GPU acceleration.</p>
+<hr />
+<h2 id="step-7-index-the-archive">Step 7: Index the archive</h2>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434</code></pre>
+<p>To force a full rebuild of an existing index:</p>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force</code></pre>
+<p>Indexing time is roughly 10–30 minutes for the balanced bundle. The
+index persists in <code>$ALLARKIVE_DATA_DIR/index/</code> across
+restarts.</p>
+<hr />
+<h2 id="step-8-open-the-landing-page">Step 8: Open the landing page</h2>
+<p>Visit <code>http://localhost:8080</code> in your browser.</p>
+<p>Confirm the status line shows your archive size and model name. Test
+a search and an AI question to verify citations are working.</p>
+<hr />
+<h2 id="apple-silicon-notes">Apple Silicon notes</h2>
+<p>Ollama detects Apple Silicon automatically and uses Metal for GPU
+acceleration. Model inference is significantly faster than on CPU. No
+extra configuration needed.</p>
+<p>The Docker images are built as multi-arch manifests
+(<code>linux/amd64</code> + <code>linux/arm64</code>). Docker Desktop on
+Apple Silicon runs the native arm64 images — no Rosetta emulation for
+any service, including Kiwix and Open WebUI.</p>
+<hr />
+<h2 id="what-bootstrapsh-does-on-macos">What bootstrap.sh does on
+macOS</h2>
+<p><code>bootstrap.sh</code> on macOS automatically uses
+<code>~/allarkive-data</code> as the data directory (avoids
+<code>/var/lib/</code> permission issues), saves paths to
+<code>~/.config/allarkive/config.json</code> for future runs, detects
+port conflicts and auto-assigns alternatives, and pulls both the chat
+model and embedding model before running the indexer. The manual steps
+above are the exact equivalent.</p>
+<hr />
+<h2 id="cleanup-and-uninstall">Cleanup and uninstall</h2>
+<p>Use <code>scripts/cleanup.sh</code>. Nothing is deleted unless you
+explicitly ask.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it removes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./scripts/cleanup.sh</code></td>
+<td>Stops and removes containers only. Data and images kept.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --images</code></td>
+<td>Also removes Docker images (re-pulled on next start).</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --data</code></td>
+<td>Also deletes <code>~/allarkive-data</code>: ZIMs, models, RAG index,
+Open WebUI DB. <strong>Irreversible.</strong> Prompts before
+deleting.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --all</code></td>
+<td><code>--images</code> + <code>--data</code>. Full wipe. Prompts
+before deleting.</td>
+</tr>
+</tbody>
+</table>
+<p>After a full wipe, start fresh with
+<code>./scripts/bootstrap.sh --bundle balanced</code>.</p>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Bound to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Landing page</td>
+<td>8080</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Open WebUI</td>
+<td>3000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td>11434</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>RAG service</td>
+<td>8000</td>
+<td>127.0.0.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="docker-desktop-is-not-running">Docker Desktop is not
+running</h3>
+<p>Click the whale icon in the menu bar and wait for it to show
+"Running". Then retry <code>docker compose up -d</code>.</p>
+<h3 id="rag-image-build-fails">RAG image build fails</h3>
+<p>The RAG image is built from <code>scripts/rag/</code> on first run.
+If it fails:</p>
+<ul>
+<li>Check you have internet access during build (downloads Python
+packages)</li>
+<li>Check Docker Desktop has enough disk (Settings → Resources → Disk
+image size)</li>
+</ul>
+<p>To retry:
+<code>docker compose build rag &amp;&amp; docker compose up -d</code></p>
+<h3
+id="bind-address-already-in-use-on-port-8080"><code>bind: address already in use</code>
+on port 8080</h3>
+<p>Port 8080 is commonly used by dev servers. Change
+<code>LANDING_PORT=8082</code> (or any free port) in
+<code>compose/.env</code> and restart.</p>
+<h3 id="model-inference-is-very-slow">Model inference is very slow</h3>
+<p>Check Docker Desktop memory allocation (see Step 3). Also check that
+Docker Desktop is not competing with other memory-heavy apps. On Apple
+Silicon, make sure Rosetta is not running the Ollama container (it
+should not be, but you can verify with
+<code>docker inspect allarkive-ollama-1 | grep -i platform</code>).</p>
+<h3 id="kiwix-volumes-not-mounting">Kiwix volumes not mounting</h3>
+<p>On macOS, Docker Desktop must have permission to access the directory
+you set as <code>ALLARKIVE_DATA_DIR</code>. Go to <strong>Docker Desktop
+→ Settings → Resources → File sharing</strong> and add the parent
+directory of your data path.</p>
+<h3 id="webui_secret_key-error"><code>WEBUI_SECRET_KEY</code> error</h3>
+<p>Open <code>compose/.env</code> and confirm
+<code>WEBUI_SECRET_KEY=</code> is set to a 64-character hex string. If
+missing, generate one: <code>openssl rand -hex 32</code>.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/install/macos.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/install/macos.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#quick-start-automated">Quick start (automated)</a></li>
+<li class="toc-h3"><a href="#indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</a></li>
+<li class="toc-h2"><a href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3"><a href="#hardware">Hardware</a></li>
+<li class="toc-h3"><a href="#software">Software</a></li>
+<li class="toc-h2"><a href="#step-1-clone-the-repository">Step 1: Clone the repository</a></li>
+<li class="toc-h2"><a href="#step-2-set-up-configuration">Step 2: Set up configuration</a></li>
+<li class="toc-h3"><a href="#data-directory-on-macos">Data directory on macOS</a></li>
+<li class="toc-h2"><a href="#step-3-docker-desktop-resource-limits">Step 3: Docker Desktop
+resource limits</a></li>
+<li class="toc-h2"><a href="#step-4-fetch-a-bundle">Step 4: Fetch a bundle</a></li>
+<li class="toc-h2"><a href="#step-5-start-the-stack">Step 5: Start the stack</a></li>
+<li class="toc-h2"><a href="#step-6-pull-ai-models">Step 6: Pull AI models</a></li>
+<li class="toc-h2"><a href="#step-7-index-the-archive">Step 7: Index the archive</a></li>
+<li class="toc-h2"><a href="#step-8-open-the-landing-page">Step 8: Open the landing page</a></li>
+<li class="toc-h2"><a href="#apple-silicon-notes">Apple Silicon notes</a></li>
+<li class="toc-h2"><a href="#what-bootstrapsh-does-on-macos">What bootstrap.sh does on
+macOS</a></li>
+<li class="toc-h2"><a href="#cleanup-and-uninstall">Cleanup and uninstall</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#docker-desktop-is-not-running">Docker Desktop is not
+running</a></li>
+<li class="toc-h3"><a href="#rag-image-build-fails">RAG image build fails</a></li>
+<li class="toc-h3"><a href="#bind-address-already-in-use-on-port-8080">bind: address already in use
+on port 8080</a></li>
+<li class="toc-h3"><a href="#model-inference-is-very-slow">Model inference is very slow</a></li>
+<li class="toc-h3"><a href="#kiwix-volumes-not-mounting">Kiwix volumes not mounting</a></li>
+<li class="toc-h3"><a href="#webui_secret_key-error">WEBUI_SECRET_KEY error</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

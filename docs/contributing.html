@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributing — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Contributing.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html" aria-current="page">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Community</span> / <span>Contributing</span></p>
+            <article class="doc-content">
+<h1 id="contributing">CONTRIBUTING</h1>
+<p>Thanks for thinking about contributing. AllArkive is a small project
+— two maintainers and the people we can convince to help. Pull requests,
+issues, bundle proposals, install-guide rewrites, translations, and "I
+tried this and it didn't work" reports are all welcome.</p>
+<h2 id="before-you-start">Before you start</h2>
+<ol type="1">
+<li>Read <a href="readme.html"><code>README.md</code></a>, <a
+href="architecture.html"><code>ARCHITECTURE.md</code></a>, and <a
+href="roadmap.html"><code>ROADMAP.md</code></a>. The project has firm
+scope boundaries for v0.1.</li>
+<li>Check <a href="TODO.md"><code>TODO.md</code></a> for current work
+and open issues for what others are doing.</li>
+<li>Read <a
+href="code-of-conduct.html"><code>CODE_OF_CONDUCT.md</code></a>. It
+applies to every interaction in issues, PRs, and discussions.</li>
+</ol>
+<h2 id="ways-to-contribute">Ways to contribute</h2>
+<p>You don't need to write code.</p>
+<h3 id="code">Code</h3>
+<ul>
+<li>Bug fixes</li>
+<li>Improvements to the install guides</li>
+<li>RAG pipeline improvements</li>
+<li>Better default model selection logic</li>
+<li>Cross-platform install guides we don't yet have</li>
+</ul>
+<h3 id="content--curation">Content / curation</h3>
+<ul>
+<li>Bundle proposals — a focused archive for a topic, language, or
+region</li>
+<li>Bundle audits — verify what's actually in a default bundle, flag
+licensing issues</li>
+<li>Translations of the README and landing page</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>Walkthroughs and tutorials</li>
+<li>Better screenshots</li>
+<li>Fixing things that confused you when you tried to install</li>
+</ul>
+<h3 id="reporting">Reporting</h3>
+<ul>
+<li>"I tried to install this and X went wrong" is a valid
+contribution</li>
+<li>Reproduction steps and your OS / hardware help a lot</li>
+</ul>
+<h2 id="how-to-propose-a-change">How to propose a change</h2>
+<h3 id="for-small-things-typos-doc-fixes-obvious-bugs">For small things
+(typos, doc fixes, obvious bugs)</h3>
+<p>Open a PR directly. We'll review.</p>
+<h3 id="for-anything-else">For anything else</h3>
+<p>Open an issue first. Describe the problem, not the solution. We'll
+discuss whether and how before you sink time into a PR.</p>
+<h3 id="for-new-bundles">For new bundles</h3>
+<p>Use the <strong>Bundle Proposal</strong> issue template. Include:</p>
+<ul>
+<li>What's in the bundle</li>
+<li>Why it's useful and to whom</li>
+<li>Total size</li>
+<li>Source URLs and SHA-256 checksums for each ZIM</li>
+<li>License of each item</li>
+<li>Whether you're offering to maintain it</li>
+</ul>
+<p>Bundles that aren't compatible with our default-license posture (no
+proprietary content, no incompatible licenses) won't be merged into the
+defaults but can live as user-curated.</p>
+<h2 id="development-setup">Development setup</h2>
+<pre class="bash"><code>git clone https://github.com/allarkive/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+./scripts/bootstrap.sh</code></pre>
+<p>Linters and checks:</p>
+<pre class="bash"><code># Markdown
+npx markdownlint-cli2 &quot;**/*.md&quot;
+# Shell
+shellcheck scripts/**/*.sh
+# Compose
+docker compose -f compose/docker-compose.yml config
+# Python (RAG)
+ruff check scripts/rag/
+ruff format --check scripts/rag/</code></pre>
+<p>CI runs all of the above.</p>
+<h2 id="branch-and-commit-conventions">Branch and commit
+conventions</h2>
+<ul>
+<li>Branch from <code>dev</code>, not <code>main</code>.</li>
+<li>Branch names: <code>feat/&lt;short-name&gt;</code>,
+<code>fix/&lt;short-name&gt;</code>,
+<code>docs/&lt;short-name&gt;</code>.</li>
+<li>Commits: <a href="https://www.conventionalcommits.org/">Conventional
+Commits</a>, imperative mood, present tense.</li>
+</ul>
+<pre><code>feat(rag): add citation-aware retrieval over ZIM index
+fix(compose): bind ollama to 127.0.0.1 by default
+docs(install): add Pi text-only walkthrough</code></pre>
+<h2 id="sign-off-dco">Sign-off (DCO)</h2>
+<p>Every commit must include a <code>Signed-off-by</code> line. We use
+the <a href="https://developercertificate.org/">Developer Certificate of
+Origin</a> instead of a CLA.</p>
+<pre class="bash"><code>git commit -s -m &quot;feat(rag): your message&quot;</code></pre>
+<p>This adds:
+<code>Signed-off-by: Your Name &lt;your.email@example.com&gt;</code> and
+asserts you have the right to submit the contribution under the
+project's license.</p>
+<h2 id="pull-request-checklist">Pull request checklist</h2>
+<p>Your PR is ready for review when:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />Branch is rebased on the latest
+<code>dev</code>.</label></li>
+<li><label><input type="checkbox" />All commits are signed off
+(DCO).</label></li>
+<li><label><input type="checkbox" />CI is green (lint, shellcheck,
+compose validation, RAG tests if applicable).</label></li>
+<li><label><input type="checkbox" />Docs updated in the same PR for any
+user-visible change.</label></li>
+<li><label><input type="checkbox" /><code>CHANGELOG.md</code> updated
+under <code>[Unreleased]</code>.</label></li>
+<li><label><input type="checkbox" />No secrets, personal data, or
+floating image tags in the diff.</label></li>
+<li><label><input type="checkbox" />You've tested locally (note your OS
+and what you ran in the PR description).</label></li>
+</ul>
+<h2 id="review-process">Review process</h2>
+<ul>
+<li>A maintainer (Sam or Sham, for v0.x) reviews your PR.</li>
+<li>We aim for a first response within a week. Often faster, sometimes
+slower.</li>
+<li>We may ask for changes. We may close PRs that drift outside scope,
+with a reason.</li>
+<li>Once approved, we squash-merge to <code>dev</code>. Releases promote
+<code>dev</code> to <code>main</code>.</li>
+</ul>
+<h2 id="scope-discipline">Scope discipline</h2>
+<p>If your change adds a feature outside <a
+href="roadmap.html"><code>ROADMAP.md</code></a> v0.1 scope, we will ask
+you to either:</p>
+<ol type="1">
+<li>Close the PR and open an issue with a <code>roadmap</code> label
+proposing it for v0.2+, or</li>
+<li>Trim the PR to the in-scope subset.</li>
+</ol>
+<p>This isn't because we don't like the idea. It's because scope creep
+is the most common way small open-source projects die.</p>
+<h2 id="what-we-wont-accept">What we won't accept</h2>
+<ul>
+<li>Telemetry of any kind.</li>
+<li>Default-on remote access.</li>
+<li>Floating image tags.</li>
+<li>Bundled content with an unclear or incompatible license.</li>
+<li>Code that depends on a third-party cloud service at runtime.</li>
+<li>Anything that erases the disclaimers on the chat surface.</li>
+<li>Hostility, condescension, or harassment in PRs or issues — see <a
+href="code-of-conduct.html"><code>CODE_OF_CONDUCT.md</code></a>.</li>
+</ul>
+<h2 id="maintainers">Maintainers</h2>
+<p>Current maintainers:</p>
+<ul>
+<li>Sam <em>(GitHub handle TBD)</em></li>
+<li>Sham <em>(GitHub handle TBD)</em></li>
+</ul>
+<p>We expect to add more maintainers as the project grows. See <a
+href="governance.html"><code>GOVERNANCE.md</code></a>.</p>
+<h2 id="licensing">Licensing</h2>
+<p>By contributing, you agree that your contributions will be licensed
+under the same license as the rest of the project (AGPL-3.0 for glue
+code, or the original license for any third-party content you
+bundle).</p>
+<h3 id="why-agpl-30">Why AGPL-3.0</h3>
+<p>We chose AGPL-3.0 over MIT or Apache-2.0 because AllArkive is
+infrastructure: if someone forks the glue code, improves it, and runs it
+as a service, those improvements should come back to the project. The
+Affero clause closes the "SaaS loophole" that standard GPL leaves open.
+MIT would have been simpler to adopt, but the project's value is in the
+network effect of a shared, auditable codebase—not in maximum corporate
+adoption—so the copyleft cost is worth paying. Bundled content (ZIM
+archives, model weights) keeps its own license; AGPL-3.0 covers only the
+glue code in this repository. This decision was made jointly by Sam and
+Sham and recorded in <code>CLAUDE.md</code> as a locked decision;
+relitigate it by opening an issue, not a PR.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>CONTRIBUTING.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/CONTRIBUTING.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#before-you-start">Before you start</a></li>
+<li class="toc-h2"><a href="#ways-to-contribute">Ways to contribute</a></li>
+<li class="toc-h3"><a href="#code">Code</a></li>
+<li class="toc-h3"><a href="#content--curation">Content / curation</a></li>
+<li class="toc-h3"><a href="#documentation">Documentation</a></li>
+<li class="toc-h3"><a href="#reporting">Reporting</a></li>
+<li class="toc-h2"><a href="#how-to-propose-a-change">How to propose a change</a></li>
+<li class="toc-h3"><a href="#for-small-things-typos-doc-fixes-obvious-bugs">For small things
+(typos, doc fixes, obvious bugs)</a></li>
+<li class="toc-h3"><a href="#for-anything-else">For anything else</a></li>
+<li class="toc-h3"><a href="#for-new-bundles">For new bundles</a></li>
+<li class="toc-h2"><a href="#development-setup">Development setup</a></li>
+<li class="toc-h2"><a href="#branch-and-commit-conventions">Branch and commit
+conventions</a></li>
+<li class="toc-h2"><a href="#sign-off-dco">Sign-off (DCO)</a></li>
+<li class="toc-h2"><a href="#pull-request-checklist">Pull request checklist</a></li>
+<li class="toc-h2"><a href="#review-process">Review process</a></li>
+<li class="toc-h2"><a href="#scope-discipline">Scope discipline</a></li>
+<li class="toc-h2"><a href="#what-we-wont-accept">What we won&#x27;t accept</a></li>
+<li class="toc-h2"><a href="#maintainers">Maintainers</a></li>
+<li class="toc-h2"><a href="#licensing">Licensing</a></li>
+<li class="toc-h3"><a href="#why-agpl-30">Why AGPL-3.0</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

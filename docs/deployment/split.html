@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split across two machines — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Split across two machines.">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="../install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="../install/macos.html">macOS</a></li>
+<li><a href="../install/windows.html">Windows (WSL2)</a></li>
+<li><a href="../install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="split.html" aria-current="page">Split across two machines</a></li>
+<li><a href="lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Deployment</span> / <span>Split across two machines</span></p>
+            <article class="doc-content">
+<h1
+id="deployment-split-topology-ai-on-laptop-archive-on-pi">Deployment:
+split topology (AI on laptop, archive on Pi)</h1>
+<p>In a split deployment, one machine runs the AI layer (Ollama + RAG)
+and a separate machine runs the archive layer (kiwix-serve). The RAG
+service on the AI node fetches articles from the archive node over the
+LAN, then passes retrieved passages to Ollama.</p>
+<pre><code>┌─────────────────────────────┐         ┌──────────────────────────┐
+│  Laptop (AI node)           │         │  Pi (archive node)       │
+│                             │         │                          │
+│  Ollama (port 11434)        │         │  kiwix-serve (port 8081) │
+│  RAG service (port 8000)    │◄────────│                          │
+│  Open WebUI (port 3000)     │  LAN    │  USB SSD: ZIM files      │
+│  Landing page (port 8080)   │         │                          │
+└─────────────────────────────┘         └──────────────────────────┘</code></pre>
+<p>Use this pattern when:</p>
+<ul>
+<li>Your laptop does not have enough storage for large ZIM bundles.</li>
+<li>You want a low-power, always-on archive node and a laptop that joins
+when needed.</li>
+<li>You are testing the Pi archive node (pattern C) alongside the full
+AI stack.</li>
+</ul>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Before starting, complete the setup for each node:</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Guide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Archive node (Pi)</td>
+<td><code>docs/deployment/pi-archive-only.md</code></td>
+</tr>
+<tr>
+<td>AI node (laptop)</td>
+<td><code>docs/install/laptop.md</code> + <code>docs/deployment/</code>
+or standard docker-compose</td>
+</tr>
+</tbody>
+</table>
+<p>The archive node must have:</p>
+<ul>
+<li>kiwix-serve running and reachable on the LAN (i.e., bound to
+<code>0.0.0.0</code>, not just <code>127.0.0.1</code> — see the
+"Enabling LAN access" section in
+<code>docs/deployment/pi-archive-only.md</code>)</li>
+<li>ZIM files downloaded and confirmed working</li>
+</ul>
+<p>The AI node must have:</p>
+<ul>
+<li>AllArkive cloned and configured</li>
+<li><code>compose/.env</code> filled in</li>
+</ul>
+<hr />
+<h2 id="step-1-find-the-archive-nodes-ip-address">Step 1: Find the
+archive node's IP address</h2>
+<p>On the Pi:</p>
+<pre class="bash"><code>ip -4 addr show | grep inet</code></pre>
+<p>Look for the LAN IP (typically <code>192.168.x.x</code> or
+<code>10.x.x.x</code>). Note it.</p>
+<p>Alternatively, use the hostname if mDNS is working:</p>
+<pre class="bash"><code>ping -c 1 allarkive-archive.local</code></pre>
+<p>Use whichever address resolves reliably. For a home network, mDNS
+hostnames are convenient but can be flaky—a static DHCP lease or fixed
+IP is more stable.</p>
+<hr />
+<h2 id="step-2-confirm-kiwix-is-reachable-from-the-laptop">Step 2:
+Confirm kiwix is reachable from the laptop</h2>
+<p>From the laptop:</p>
+<pre class="bash"><code>curl -sf http://&lt;ARCHIVE-NODE-IP&gt;:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix reachable&quot;</code></pre>
+<p>If this fails:</p>
+<ul>
+<li>Check that <code>KIWIX_BIND=0.0.0.0</code> in the Pi's
+<code>compose/.env</code>.</li>
+<li>Check that the Pi's firewall allows port 8081 from the laptop's
+IP.</li>
+<li>Check that both machines are on the same LAN segment.</li>
+</ul>
+<hr />
+<h2 id="step-3-configure-the-ai-node">Step 3: Configure the AI node</h2>
+<p>On the laptop, edit <code>compose/.env</code>:</p>
+<pre><code># Point the RAG service at the Pi&#39;s kiwix-serve instead of localhost
+KIWIX_PUBLIC_URL=http://&lt;ARCHIVE-NODE-IP&gt;:8081</code></pre>
+<p>This variable controls two things:</p>
+<ol type="1">
+<li>The URL the RAG service uses to fetch article text for
+retrieval.</li>
+<li>The base URL embedded in citation links returned to the user.</li>
+</ol>
+<p>If the Pi has a stable hostname:</p>
+<pre><code>KIWIX_PUBLIC_URL=http://allarkive-archive.local:8081</code></pre>
+<hr />
+<h2 id="step-4-update-the-rag-service-configuration">Step 4: Update the
+RAG service configuration</h2>
+<p>The RAG service reads ZIM files directly for indexing (mounting the
+local <code>/data</code> volume) <strong>and</strong> talks to
+kiwix-serve for citation link generation. In a split deployment, the AI
+node does not have ZIM files locally—the archive is on the Pi.</p>
+<h3 id="option-a-mount-the-pis-ssd-over-the-network-nfs">Option A: Mount
+the Pi's SSD over the network (NFS)</h3>
+<p>Export the ZIM directory from the Pi and mount it on the laptop. This
+lets the indexer read ZIM content directly.</p>
+<p>On the Pi:</p>
+<pre class="bash"><code>sudo apt install -y nfs-kernel-server</code></pre>
+<p>Add to <code>/etc/exports</code>:</p>
+<pre><code>/mnt/ssd/allarkive/zim  &lt;LAPTOP-IP&gt;(ro,sync,no_subtree_check)</code></pre>
+<pre class="bash"><code>sudo exportfs -ra</code></pre>
+<p>On the laptop:</p>
+<pre class="bash"><code>sudo apt install -y nfs-common
+sudo mkdir -p /mnt/archive-zim
+sudo mount &lt;ARCHIVE-NODE-IP&gt;:/mnt/ssd/allarkive/zim /mnt/archive-zim</code></pre>
+<p>Make it persistent in <code>/etc/fstab</code>:</p>
+<pre><code>&lt;ARCHIVE-NODE-IP&gt;:/mnt/ssd/allarkive/zim  /mnt/archive-zim  nfs  ro,_netdev  0  0</code></pre>
+<p>Set <code>ZIM_DIR</code> in <code>compose/.env</code> to
+<code>/mnt/archive-zim</code>, and update the RAG service volume in
+<code>compose/docker-compose.yml</code>:</p>
+<pre class="yaml"><code>rag:
+  volumes:
+    - &quot;/mnt/archive-zim:/data:ro&quot;
+    - &quot;${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index&quot;</code></pre>
+<h3
+id="option-b-pre-build-the-index-on-the-pi-and-copy-it-to-the-laptop">Option
+B: Pre-build the index on the Pi and copy it to the laptop</h3>
+<p>Index the ZIMs on the Pi (or any machine with local ZIM access), then
+copy the resulting <code>index.db</code> to the laptop's index
+directory.</p>
+<pre class="bash"><code># On the Pi (or a machine with the ZIMs):
+docker run --rm \
+  -v /mnt/ssd/allarkive/zim:/data:ro \
+  -v /tmp/index:/index \
+  -e OLLAMA_URL=http://&lt;OLLAMA-IP&gt;:11434 \
+  allarkive-rag:0.1.0 \
+  python indexer.py --zim-dir /data --index-dir /index
+
+# Copy the index to the laptop:
+scp /tmp/index/index.db laptop:/var/lib/allarkive/index/index.db</code></pre>
+<p>This avoids the NFS dependency. The index only needs to be rebuilt
+when ZIM content changes.</p>
+<hr />
+<h2 id="step-5-start-the-ai-node">Step 5: Start the AI node</h2>
+<pre class="bash"><code>docker compose -f compose/docker-compose.yml --env-file compose/.env up -d</code></pre>
+<p>The RAG service will now generate citation links pointing at the Pi's
+kiwix-serve.</p>
+<hr />
+<h2 id="step-6-smoke-test-the-split-stack">Step 6: Smoke test the split
+stack</h2>
+<p>From the laptop, test that a RAG query returns citations with the
+archive node's IP:</p>
+<pre class="bash"><code>curl -s http://127.0.0.1:8000/v1/chat/completions \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;model&quot;: &quot;allarkive-rag&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is Wikipedia?&quot;}]}&#39; \
+  | python3 -m json.tool | grep kiwix</code></pre>
+<p>Expected: citation URLs containing the Pi's IP or hostname.</p>
+<p>Open <code>http://127.0.0.1:8080</code> (landing page) in a browser,
+run a chat query, and click a citation. It should load an article from
+the Pi's kiwix-serve.</p>
+<hr />
+<h2 id="network-topology-notes">Network topology notes</h2>
+<h3 id="static-ip-or-dhcp-reservation">Static IP or DHCP
+reservation</h3>
+<p>For reliable operation, give the archive Pi a static IP (via your
+router's DHCP reservation feature). If the Pi's IP changes, the citation
+links break and the RAG service cannot reach kiwix. Update
+<code>KIWIX_PUBLIC_URL</code> in <code>compose/.env</code> whenever the
+Pi's IP changes.</p>
+<h3 id="firewall-pi">Firewall (Pi)</h3>
+<p>Allow kiwix access from the laptop only:</p>
+<pre class="bash"><code>sudo ufw allow from &lt;LAPTOP-IP&gt; to any port 8081</code></pre>
+<p>Do not open port 8081 to the public internet.</p>
+<h3 id="latency">Latency</h3>
+<p>The RAG service fetches article text from kiwix over the LAN during
+indexing. On a Gigabit home network this is fast enough to be
+imperceptible. On Wi-Fi, indexing a large bundle may take longer—use
+Ethernet on the Pi if possible.</p>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<table>
+<thead>
+<tr>
+<th>Machine</th>
+<th>Service</th>
+<th>Port</th>
+<th>Bound to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Laptop (AI node)</td>
+<td>Landing page</td>
+<td>8080</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Laptop (AI node)</td>
+<td>RAG service</td>
+<td>8000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Laptop (AI node)</td>
+<td>Open WebUI</td>
+<td>3000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Laptop (AI node)</td>
+<td>Ollama</td>
+<td>11434</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Pi (archive node)</td>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>0.0.0.0 (LAN)</td>
+</tr>
+</tbody>
+</table>
+<p>The Pi's kiwix port is the only service exposed beyond the local
+machine, and only to the LAN, not the public internet.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="citations-load-a-connection-refused-page">Citations load a
+"connection refused" page</h3>
+<p>The citation URL contains the Pi's IP from when the index was built.
+If the Pi's IP has changed:</p>
+<ol type="1">
+<li>Update <code>KIWIX_PUBLIC_URL</code> in the laptop's
+<code>compose/.env</code>.</li>
+<li>Re-run the RAG indexer to rebuild citation URLs:</li>
+</ol>
+<pre class="bash"><code>docker compose exec rag python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434 --force</code></pre>
+<h3 id="rag-returns-no-sources-found-for-everything">RAG returns "no
+sources found" for everything</h3>
+<p>Check that kiwix is reachable from inside the RAG container:</p>
+<pre class="bash"><code>docker compose exec rag curl -sf http://&lt;ARCHIVE-NODE-IP&gt;:8081/ &gt; /dev/null &amp;&amp; echo &quot;OK&quot;</code></pre>
+<p>If this fails, kiwix is not accessible on the LAN. Review the Pi's
+firewall and the <code>KIWIX_BIND</code> setting.</p>
+<h3 id="nfs-mount-disappears-after-reboot">NFS mount disappears after
+reboot</h3>
+<p>Check <code>/etc/fstab</code> on the laptop and that the
+<code>_netdev</code> option is present. Ensure the Pi is up before the
+laptop tries to mount:</p>
+<pre class="bash"><code>sudo systemctl enable nfs-client.target</code></pre>
+<h3 id="index-is-stale-after-zim-update">Index is stale after ZIM
+update</h3>
+<p>Re-run the indexer after adding or replacing ZIM files:</p>
+<pre class="bash"><code>docker compose exec rag python indexer.py --zim-dir /data --index-dir /index</code></pre>
+<hr />
+<h2 id="what-is-next">What is next</h2>
+<ul>
+<li>For opt-in LAN access to the landing page and WebUI, see
+<code>docs/deployment/lan-access.md</code>.</li>
+<li>For the Pi text-only (all-in-one) pattern, see
+<code>docs/deployment/pi-text-only.md</code>.</li>
+</ul>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/deployment/split.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/deployment/split.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2"><a href="#step-1-find-the-archive-nodes-ip-address">Step 1: Find the
+archive node&#x27;s IP address</a></li>
+<li class="toc-h2"><a href="#step-2-confirm-kiwix-is-reachable-from-the-laptop">Step 2:
+Confirm kiwix is reachable from the laptop</a></li>
+<li class="toc-h2"><a href="#step-3-configure-the-ai-node">Step 3: Configure the AI node</a></li>
+<li class="toc-h2"><a href="#step-4-update-the-rag-service-configuration">Step 4: Update the
+RAG service configuration</a></li>
+<li class="toc-h3"><a href="#option-a-mount-the-pis-ssd-over-the-network-nfs">Option A: Mount
+the Pi&#x27;s SSD over the network (NFS)</a></li>
+<li class="toc-h3"><a href="#option-b-pre-build-the-index-on-the-pi-and-copy-it-to-the-laptop">Option
+B: Pre-build the index on the Pi and copy it to the laptop</a></li>
+<li class="toc-h2"><a href="#step-5-start-the-ai-node">Step 5: Start the AI node</a></li>
+<li class="toc-h2"><a href="#step-6-smoke-test-the-split-stack">Step 6: Smoke test the split
+stack</a></li>
+<li class="toc-h2"><a href="#network-topology-notes">Network topology notes</a></li>
+<li class="toc-h3"><a href="#static-ip-or-dhcp-reservation">Static IP or DHCP
+reservation</a></li>
+<li class="toc-h3"><a href="#firewall-pi">Firewall (Pi)</a></li>
+<li class="toc-h3"><a href="#latency">Latency</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#citations-load-a-connection-refused-page">Citations load a
+&quot;connection refused&quot; page</a></li>
+<li class="toc-h3"><a href="#rag-returns-no-sources-found-for-everything">RAG returns &quot;no
+sources found&quot; for everything</a></li>
+<li class="toc-h3"><a href="#nfs-mount-disappears-after-reboot">NFS mount disappears after
+reboot</a></li>
+<li class="toc-h3"><a href="#index-is-stale-after-zim-update">Index is stale after ZIM
+update</a></li>
+<li class="toc-h2"><a href="#what-is-next">What is next</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat model — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Threat model.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html" aria-current="page">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Threat model</span></p>
+            <article class="doc-content">
+<h1 id="threat_modelmd">THREAT_MODEL.md</h1>
+<p>What AllArkive does and does not protect against. This page exists
+because every claim a project makes about resilience needs to be
+checkable.</p>
+<p>If you're trying to figure out whether to trust AllArkive for a
+specific use, read this end to end.</p>
+<h2 id="what-this-project-is">What this project is</h2>
+<p>AllArkive is:</p>
+<ul>
+<li>A local copy of curated open knowledge archives.</li>
+<li>A local AI that searches and summarises that knowledge.</li>
+<li>A glue layer that makes the above installable in one command.</li>
+</ul>
+<p>AllArkive is <strong>not</strong>:</p>
+<ul>
+<li>A medical tool, legal tool, or survival tool.</li>
+<li>A secure messenger, anonymous network, or surveillance-resistant
+comms layer.</li>
+<li>A replacement for the open internet.</li>
+<li>A replacement for a doctor, lawyer, electrician, or any other
+professional.</li>
+<li>A guaranteed-correct source of information.</li>
+</ul>
+<h2 id="disclaimers">Disclaimers</h2>
+<blockquote>
+<p><strong>The AI can be wrong.</strong> RAG with citations makes its
+output checkable, not infallible. Read the citations.</p>
+</blockquote>
+<blockquote>
+<p><strong>Not professional advice.</strong> AllArkive is a research and
+reference tool. It is not a substitute for professional medical, legal,
+or safety advice. If a question matters, talk to a qualified human.</p>
+</blockquote>
+<blockquote>
+<p><strong>Bundled content can be wrong, outdated, biased, or
+offensive.</strong> Wikipedia and Project Gutenberg contain material
+that is unpleasant, incorrect, or stale. They are also part of the
+historical record. We don't filter by default. You can choose what to
+bundle.</p>
+</blockquote>
+<h2 id="threats-we-protect-against-partly">Threats we protect against
+(partly)</h2>
+<h3 id="loss-of-internet-access-for-a-single-user">Loss of internet
+access for a single user</h3>
+<p><strong>Protects against</strong>: ISP outage, household connectivity
+loss, travelling without reliable internet, working in a remote
+location. <strong>How</strong>: every layer functions offline once
+installed. The archive doesn't need the internet. The model doesn't call
+out. The RAG pipeline runs on localhost. <strong>Caveats</strong>: the
+archive is a snapshot. The longer your install runs without an update,
+the staler your copy becomes.</p>
+<h3 id="cloud-service-rug-pulls">Cloud-service rug-pulls</h3>
+<p><strong>Protects against</strong>: a SaaS shutting down, changing
+pricing, removing features, or losing your data. <strong>How</strong>:
+nothing depends on a third-party cloud at runtime. Your archive, your
+model, your data, your machine. <strong>Caveats</strong>: upstream
+open-source projects (Kiwix, Ollama, Open WebUI) could shift. Our
+pinning and the AGPL license make forks viable, but a fork is still
+work.</p>
+<h3 id="censorship-of-specific-sources">Censorship of specific
+sources</h3>
+<p><strong>Protects against</strong>: country-level or ISP-level blocks
+on Wikipedia, Stack Exchange, etc. <strong>How</strong>: once the ZIM is
+on your disk, no one can block your access to it.
+<strong>Caveats</strong>: you have to acquire the ZIM in the first
+place, which requires either an unblocked connection at install time or
+a sneakernet copy from someone who has one. We don't currently document
+sneakernet workflows; that's a v0.2 candidate.</p>
+<h3 id="surveillance-by-third-parties-of-your-queries">Surveillance by
+third parties of your queries</h3>
+<p><strong>Protects against</strong>: search engines, LLM providers, or
+analytics platforms logging what you read and ask. <strong>How</strong>:
+nothing leaves your machine. No telemetry. Default network binding is
+<code>127.0.0.1</code>. <strong>Caveats</strong>: if you opt in to LAN
+or remote access, your network operator can see traffic to the host. If
+your machine is compromised, all bets are off.</p>
+<h3 id="local-machine-privacy">Local-machine privacy</h3>
+<p><strong>Protects against</strong>: queries and chat history living on
+someone else's server. <strong>How</strong>: chat history is local (Open
+WebUI's sqlite, on your disk). You can wipe it.
+<strong>Caveats</strong>: it's a regular sqlite file. If your disk is
+unencrypted, anyone with physical access to the machine can read it. Use
+full-disk encryption.</p>
+<h2 id="threats-we-do-not-protect-against">Threats we do NOT protect
+against</h2>
+<h3 id="a-targeted-attacker-with-code-execution-on-your-machine">A
+targeted attacker with code execution on your machine</h3>
+<p>If someone has a shell on your box, AllArkive can't help you. Our
+threat model assumes the host is trusted. Use OS-level hardening,
+full-disk encryption, and reasonable update hygiene.</p>
+<h3 id="hallucinations-and-confidently-wrong-answers">Hallucinations and
+confidently wrong answers</h3>
+<p>We mitigate this with required citations and a "no sources found"
+path. We do not eliminate it. Open-weight models still hallucinate. The
+user must check the citations. We say so loudly in the UI; we cannot
+enforce it.</p>
+<h3 id="poisoned-content-in-custom-bundles">Poisoned content in custom
+bundles</h3>
+<p>If you add a third-party ZIM that contains hidden adversarial content
+(prompt-injection text, deliberately wrong information), your local AI
+may be manipulated. The default bundle pulls from sources we trust at
+the project level. Custom bundles are your responsibility. See the
+"Supply chain" section below.</p>
+<h3 id="supply-chain-attacks-on-the-bundle-pipeline">Supply-chain
+attacks on the bundle pipeline</h3>
+<p>If an upstream ZIM mirror is compromised between us pinning a
+checksum and you downloading, our checksum verification will fail.
+<strong>If you bypass checksum verification, you accept the
+risk.</strong></p>
+<h3 id="trusting-the-project-itself">Trusting the project itself</h3>
+<p>Running our installer means running our code with your user
+permissions. Mitigations:</p>
+<ul>
+<li>Open source and AGPL-3.0 licensed. You can read every line.</li>
+<li>Signed releases and signed git tags.</li>
+<li>Aspiration: reproducible builds.</li>
+<li>Independent install on a second machine by a second person is part
+of our release process.</li>
+</ul>
+<p>If you don't trust us, don't install. Or read the source first. Or
+wait for someone else to verify the release.</p>
+<h3
+id="your-isp-or-network-operator-seeing-that-youre-using-allarkive">Your
+ISP or network operator seeing that you're using AllArkive</h3>
+<p>The project doesn't add any obfuscation. Local-only deployments don't
+generate any external traffic at runtime, but installation and updates
+do (image pulls, ZIM downloads, model downloads). Use a VPN if your
+network operator caring about that is a concern.</p>
+<h3 id="physical-seizure-of-your-hardware">Physical seizure of your
+hardware</h3>
+<p>If your machine is taken and decrypted, everything you've stored is
+readable. We don't ship anti-forensic features. Use disk encryption.
+Have a plan.</p>
+<h3 id="legal-exposure-for-the-content-in-your-archive">Legal exposure
+for the content in your archive</h3>
+<p>Some content in the bundles we ship may be illegal in some
+jurisdictions. We curate from sources with established legal standing in
+most places (Wikipedia, Project Gutenberg, etc.) but we are not lawyers
+and this is not legal advice. <strong>You are responsible for what you
+possess and serve from your machine.</strong></p>
+<h2 id="build-learnings-updated-during-v01-development">Build learnings
+(updated during v0.1 development)</h2>
+<p>Things we learned while building that informed or changed our
+understanding of the threat surface:</p>
+<h3 id="open-webui-ships-with-authentication-disabled-by-default">Open
+WebUI ships with authentication disabled by default</h3>
+<p>The default config (<code>WEBUI_AUTH=false</code>) means no login is
+required to use the chat interface. This is the right default for a
+single-user localhost install — adding a login screen adds friction with
+no security benefit when the host is already trusted. <strong>If you
+enable LAN access, enable authentication before exposing the
+port.</strong> See <code>docs/deployment/lan-access.md</code>.</p>
+<h3 id="the-rag-no-sources-found-path-is-enforced-at-the-api-level">The
+RAG "no sources found" path is enforced at the API level</h3>
+<p>The RAG service returns a structured error response when retrieval
+finds nothing relevant, rather than passing a bare query to the model.
+The model is not asked to answer without sources. This is a defence
+against the model hallucinating plausible-sounding citations, but it
+does not protect against the model generating wrong answers when it does
+have sources — the sources only prove the passage existed, not that it
+is correct.</p>
+<h3
+id="inter-service-communication-goes-over-a-docker-bridge-network">Inter-service
+communication goes over a Docker bridge network</h3>
+<p>Kiwix, Ollama, Open WebUI, and the RAG service communicate over a
+Docker-managed bridge network. From outside Docker, only the published
+ports (<code>127.0.0.1:PORT</code>) are reachable. Ollama's API is
+published to the host for debugging convenience but would ideally remain
+internal-only in a future hardened build.</p>
+<h3 id="the-rag-api-key-is-not-a-security-boundary">The RAG API key is
+not a security boundary</h3>
+<p><code>RAG_API_KEY</code> in <code>compose/.env</code> (default:
+<code>allarkive</code>) is used to satisfy Open WebUI's requirement for
+an API key when configuring an external OpenAI-compatible endpoint. It
+is not a meaningful secret — anyone who can reach
+<code>127.0.0.1:8000</code> can call the RAG API regardless. Don't treat
+it as authentication.</p>
+<h3 id="image-tags-are-not-yet-pinned-to-digests">Image tags are not yet
+pinned to digests</h3>
+<p>The compose files pin image versions (e.g. <code>kiwix:3.8.2</code>)
+but not digests. Digest pinning is documented in the compose file as a
+required step before production use. Until digests are pinned, a
+compromised or replaced upstream image with the same tag could be pulled
+silently on <code>docker compose pull</code>. Pin digests before any
+deployment that matters.</p>
+<h3 id="ifixit-content-is-cc-by-nc-sa--not-for-commercial-use">iFixit
+content is CC-BY-NC-SA — not for commercial use</h3>
+<p>The default <code>minimal</code> and <code>balanced</code> bundles
+include iFixit repair guides, which are licensed CC-BY-NC-SA 3.0.
+Non-commercial use is permitted; commercial deployment is not. This is a
+legal exposure, not a security one, but it is worth knowing before
+deploying in a commercial context.</p>
+<h2 id="default-security-posture">Default security posture</h2>
+<p>Out of the box:</p>
+<ul>
+<li>All services bind to <code>127.0.0.1</code> only.</li>
+<li>No service is exposed to the LAN or the internet.</li>
+<li>No telemetry, no analytics, no external CDN.</li>
+<li>No login screen on the local landing page (it's localhost — anyone
+with shell access already has more power than the login screen).</li>
+<li>Open WebUI has no login screen by default
+(<code>WEBUI_AUTH=false</code>) — same reasoning as above; enable it if
+you expose the port to the LAN.</li>
+<li>No outbound network calls at runtime once installed.</li>
+</ul>
+<p>If you change any of these, you're choosing a different posture.
+Document your reasoning to your future self.</p>
+<h2 id="reporting-a-vulnerability">Reporting a vulnerability</h2>
+<p>See <code>SECURITY.md</code>.</p>
+<h2 id="reviewing-this-document">Reviewing this document</h2>
+<p>We update <code>THREAT_MODEL.md</code> when:</p>
+<ul>
+<li>We learn something during a build that changes our understanding of
+a threat.</li>
+<li>A user reports a scenario we hadn't considered.</li>
+<li>A new release changes the default posture.</li>
+</ul>
+<p>If something in this doc feels wrong or incomplete, open an issue
+with the <code>threat-model</code> label.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/THREAT_MODEL.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/THREAT_MODEL.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#what-this-project-is">What this project is</a></li>
+<li class="toc-h2"><a href="#disclaimers">Disclaimers</a></li>
+<li class="toc-h2"><a href="#threats-we-protect-against-partly">Threats we protect against
+(partly)</a></li>
+<li class="toc-h3"><a href="#loss-of-internet-access-for-a-single-user">Loss of internet
+access for a single user</a></li>
+<li class="toc-h3"><a href="#cloud-service-rug-pulls">Cloud-service rug-pulls</a></li>
+<li class="toc-h3"><a href="#censorship-of-specific-sources">Censorship of specific
+sources</a></li>
+<li class="toc-h3"><a href="#surveillance-by-third-parties-of-your-queries">Surveillance by
+third parties of your queries</a></li>
+<li class="toc-h3"><a href="#local-machine-privacy">Local-machine privacy</a></li>
+<li class="toc-h2"><a href="#threats-we-do-not-protect-against">Threats we do NOT protect
+against</a></li>
+<li class="toc-h3"><a href="#a-targeted-attacker-with-code-execution-on-your-machine">A
+targeted attacker with code execution on your machine</a></li>
+<li class="toc-h3"><a href="#hallucinations-and-confidently-wrong-answers">Hallucinations and
+confidently wrong answers</a></li>
+<li class="toc-h3"><a href="#poisoned-content-in-custom-bundles">Poisoned content in custom
+bundles</a></li>
+<li class="toc-h3"><a href="#supply-chain-attacks-on-the-bundle-pipeline">Supply-chain
+attacks on the bundle pipeline</a></li>
+<li class="toc-h3"><a href="#trusting-the-project-itself">Trusting the project itself</a></li>
+<li class="toc-h3"><a href="#your-isp-or-network-operator-seeing-that-youre-using-allarkive">Your
+ISP or network operator seeing that you&#x27;re using AllArkive</a></li>
+<li class="toc-h3"><a href="#physical-seizure-of-your-hardware">Physical seizure of your
+hardware</a></li>
+<li class="toc-h3"><a href="#legal-exposure-for-the-content-in-your-archive">Legal exposure
+for the content in your archive</a></li>
+<li class="toc-h2"><a href="#build-learnings-updated-during-v01-development">Build learnings
+(updated during v0.1 development)</a></li>
+<li class="toc-h3"><a href="#open-webui-ships-with-authentication-disabled-by-default">Open
+WebUI ships with authentication disabled by default</a></li>
+<li class="toc-h3"><a href="#the-rag-no-sources-found-path-is-enforced-at-the-api-level">The
+RAG &quot;no sources found&quot; path is enforced at the API level</a></li>
+<li class="toc-h3"><a href="#inter-service-communication-goes-over-a-docker-bridge-network">Inter-service
+communication goes over a Docker bridge network</a></li>
+<li class="toc-h3"><a href="#the-rag-api-key-is-not-a-security-boundary">The RAG API key is
+not a security boundary</a></li>
+<li class="toc-h3"><a href="#image-tags-are-not-yet-pinned-to-digests">Image tags are not yet
+pinned to digests</a></li>
+<li class="toc-h3"><a href="#ifixit-content-is-cc-by-nc-sa--not-for-commercial-use">iFixit
+content is CC-BY-NC-SA — not for commercial use</a></li>
+<li class="toc-h2"><a href="#default-security-posture">Default security posture</a></li>
+<li class="toc-h2"><a href="#reporting-a-vulnerability">Reporting a vulnerability</a></li>
+<li class="toc-h2"><a href="#reviewing-this-document">Reviewing this document</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

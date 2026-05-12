@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Design.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html" aria-current="page">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Design</span></p>
+            <article class="doc-content">
+<h1 id="designmd">DESIGN.md</h1>
+<p>How AllArkive looks, sounds, and behaves. Applies to the landing
+page, the README, the docs site, error messages, and anything else a
+user reads.</p>
+<h2 id="tone">Tone</h2>
+<p><strong>Dry, practical, resilience-framed. Not
+apocalypse-coded.</strong></p>
+<p>The project sits on a real problem — centralisation, surveillance,
+censorship, AI slop in search results. We name those problems plainly.
+We don't dramatise them, and we don't tip into prepper or doomsday
+energy.</p>
+<h3 id="yes">Yes</h3>
+<ul>
+<li>"An offline research assistant that runs on your own hardware."</li>
+<li>"Useful when your internet is fine. More useful when it isn't."</li>
+<li>"Censorship resistance, privacy, and educational access."</li>
+<li>"RAG with citations is checkable, not infallible."</li>
+</ul>
+<h3 id="no">No</h3>
+<ul>
+<li>"Survive the collapse of the internet."</li>
+<li>"Your most valuable asset after food and water." <em>(yes, this is
+in the planning notes — it doesn't ship)</em></li>
+<li>"When the grid goes down…"</li>
+<li>Bunker, prepper, doomsday, apocalypse, end times, SHTF, last line of
+defence.</li>
+<li>"Civilization-in-a-box" as a public tagline. (Internal shorthand
+only. The public framing is library + research assistant.)</li>
+</ul>
+<h3 id="voice-rules">Voice rules</h3>
+<ul>
+<li>Plain words over jargon. "Local AI" not "edge inference."</li>
+<li>Short sentences. Long sentences for emphasis only.</li>
+<li>Em dashes without spaces: <code>word—word</code>.</li>
+<li>No exclamation marks. No emoji in the README, landing page, or any
+error message.</li>
+<li>"We" is correct (Sam and Sham co-built this). Don't write copy that
+reads as a single founder.</li>
+<li>Never claim more than RAG can deliver. The model can be wrong. Say
+so.</li>
+</ul>
+<h2 id="what-we-never-market-this-as">What we never market this as</h2>
+<ul>
+<li>Medical advice</li>
+<li>Legal advice</li>
+<li>Survival or emergency-preparedness advice</li>
+<li>A replacement for the internet</li>
+<li>A replacement for a doctor, lawyer, or expert</li>
+</ul>
+<p>If a user wants to use it for those things, that's their call. We
+don't pitch it that way.</p>
+<h2 id="landing-page-direction">Landing page direction</h2>
+<p>The landing page (<code>landing/</code>) is the local entry point at
+<code>http://localhost:8080</code>. It is <strong>not</strong> marketing
+— it is a working tool the user sees every time they open the
+project.</p>
+<h3 id="layout-single-page-three-sections">Layout (single page, three
+sections)</h3>
+<ol type="1">
+<li><p><strong>Header</strong></p>
+<ul>
+<li>Project name and version</li>
+<li>Three buttons: <strong>Search the archive</strong>, <strong>Chat
+with the AI</strong>, <strong>Manage what's installed</strong></li>
+<li>One-line status: "Archive: 4 sources / 47 GB. Model: qwen2.5:7b.
+RAG: ready."</li>
+</ul></li>
+<li><p><strong>Search and chat</strong></p>
+<ul>
+<li>Single search box with a toggle: <code>Search archive</code> |
+<code>Ask AI</code></li>
+<li>"Ask AI" responses always show numbered citations linking back to
+the archive viewer</li>
+<li>A persistent disclaimer line under the chat: <em>"Responses can be
+wrong. Check the citations."</em></li>
+</ul></li>
+<li><p><strong>Manage</strong></p>
+<ul>
+<li>List of installed bundles with size, last updated, and a "verify
+checksums" button</li>
+<li>"Add bundle" → links to docs</li>
+<li>"Remove bundle" with confirmation</li>
+</ul></li>
+</ol>
+<h3 id="visual-direction">Visual direction</h3>
+<ul>
+<li><strong>Minimal.</strong> White or near-white background, dark text,
+one accent colour. No hero images, no stock photography, no
+illustrations of bunkers or globes.</li>
+<li><strong>Information-dense in a calm way.</strong> Like a library
+catalogue, not like a SaaS landing page.</li>
+<li><strong>Monospace for technical bits.</strong> Sans-serif for body.
+Both system fonts — no web fonts, no external assets.</li>
+<li><strong>Static HTML + a tiny bit of vanilla JS.</strong> No build
+step. No framework. Anyone should be able to read the source and
+understand what it does.</li>
+<li><strong>Dark mode</strong> via <code>prefers-color-scheme</code>.
+Same restraint.</li>
+</ul>
+<h3 id="what-the-landing-page-must-not-do">What the landing page must
+not do</h3>
+<ul>
+<li>No telemetry of any kind.</li>
+<li>No external CDN. Every asset bundled and served from
+<code>localhost:8080</code>.</li>
+<li>No analytics. No "rate this response." (User feedback is welcome via
+GitHub issues.)</li>
+<li>No login screen by default — it's <code>localhost</code>.</li>
+</ul>
+<h2 id="ux-principles">UX principles</h2>
+<ol type="1">
+<li><strong>Sources before output.</strong> When the AI answers,
+citations render with the answer, not after a delay. If retrieval found
+nothing, say "no sources found" rather than letting the model
+guess.</li>
+<li><strong>One way to do each thing.</strong> v0.1 is not the place for
+power-user toggles. The advanced surface lives in config files for
+now.</li>
+<li><strong>Failure messages are honest.</strong> "Ollama is not
+running" not "Something went wrong."</li>
+<li><strong>Default-local is visible.</strong> The status line shows
+"binding: localhost only" so the user knows nothing is exposed.</li>
+<li><strong>The user owns their data.</strong> No "cloud sync," no
+"share to community." Export to plain files; that's it for v0.1.</li>
+</ol>
+<h2 id="naming">Naming</h2>
+<ul>
+<li><strong>Project</strong>: AllArkive (one word, two capitals: A and
+A).</li>
+<li><strong>Components</strong> in code and docs:
+<ul>
+<li><code>archive</code> — the Kiwix layer</li>
+<li><code>ai</code> — the Ollama + Open WebUI layer</li>
+<li><code>rag</code> — the retrieval pipeline</li>
+<li><code>landing</code> — the local landing page</li>
+<li><code>bundles</code> — curated sets of ZIMs (<code>minimal</code>,
+<code>balanced</code>, <code>comprehensive</code>)</li>
+</ul></li>
+<li><strong>Don't</strong> invent cute internal names for components.
+Boring names age better.</li>
+</ul>
+<h2 id="disclaimers--required-text">Disclaimers — required text</h2>
+<p>These appear verbatim in the locations listed.</p>
+<h3 id="in-the-chat-ui-persistent-under-the-input">In the chat UI,
+persistent under the input</h3>
+<blockquote>
+<p>Responses can be wrong. Check the citations.</p>
+</blockquote>
+<h3 id="on-the-landing-page-footer">On the landing page footer</h3>
+<blockquote>
+<p>AllArkive is a research and reference tool. It is not a substitute
+for professional medical, legal, or safety advice.</p>
+</blockquote>
+<h3 id="in-the-readme-in-the-whats-in-the-default-bundle-section">In the
+README, in the "What's in the default bundle" section</h3>
+<blockquote>
+<p>The AI can be wrong. RAG with citations makes its output checkable,
+not infallible. Not a substitute for professional medical, legal, or
+safety advice.</p>
+</blockquote>
+<h3 id="on-threat_modelmd">On <code>THREAT_MODEL.md</code></h3>
+<p>The full honesty page. See that doc.</p>
+<h2 id="copy-patterns">Copy patterns</h2>
+<h3 id="buttons">Buttons</h3>
+<p>Verb-first, two words max where possible.</p>
+<ul>
+<li>"Install bundle" not "Click here to install a bundle"</li>
+<li>"Verify checksums" not "Run checksum verification"</li>
+<li>"Open archive" not "Launch the archive viewer"</li>
+</ul>
+<h3 id="headings-in-docs">Headings in docs</h3>
+<p>Sentence case. No title case.</p>
+<ul>
+<li>✅ "How retrieval works"</li>
+<li>❌ "How Retrieval Works"</li>
+</ul>
+<h3 id="links">Links</h3>
+<p>Inline, descriptive. Never "click here."</p>
+<ul>
+<li>✅ "See the <a href="docs/install/">install guide</a>."</li>
+<li>❌ "Click <a href="docs/install/">here</a> for the install
+guide."</li>
+</ul>
+<h2 id="what-this-section-is-not">What this section is not</h2>
+<p>This is a tone-and-UX style guide, not a brand book. We don't have
+logos, illustrations, or marketing collateral, and v0.1 doesn't need
+them. If we add them later, they go in <code>docs/brand.md</code> and
+follow the same restraint as everything else.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/DESIGN.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/DESIGN.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#tone">Tone</a></li>
+<li class="toc-h3"><a href="#yes">Yes</a></li>
+<li class="toc-h3"><a href="#no">No</a></li>
+<li class="toc-h3"><a href="#voice-rules">Voice rules</a></li>
+<li class="toc-h2"><a href="#what-we-never-market-this-as">What we never market this as</a></li>
+<li class="toc-h2"><a href="#landing-page-direction">Landing page direction</a></li>
+<li class="toc-h3"><a href="#layout-single-page-three-sections">Layout (single page, three
+sections)</a></li>
+<li class="toc-h3"><a href="#visual-direction">Visual direction</a></li>
+<li class="toc-h3"><a href="#what-the-landing-page-must-not-do">What the landing page must
+not do</a></li>
+<li class="toc-h2"><a href="#ux-principles">UX principles</a></li>
+<li class="toc-h2"><a href="#naming">Naming</a></li>
+<li class="toc-h2"><a href="#disclaimers--required-text">Disclaimers — required text</a></li>
+<li class="toc-h3"><a href="#in-the-chat-ui-persistent-under-the-input">In the chat UI,
+persistent under the input</a></li>
+<li class="toc-h3"><a href="#on-the-landing-page-footer">On the landing page footer</a></li>
+<li class="toc-h3"><a href="#in-the-readme-in-the-whats-in-the-default-bundle-section">In the
+README, in the &quot;What&#x27;s in the default bundle&quot; section</a></li>
+<li class="toc-h3"><a href="#on-threat_modelmd">On THREAT_MODEL.md</a></li>
+<li class="toc-h2"><a href="#copy-patterns">Copy patterns</a></li>
+<li class="toc-h3"><a href="#buttons">Buttons</a></li>
+<li class="toc-h3"><a href="#headings-in-docs">Headings in docs</a></li>
+<li class="toc-h3"><a href="#links">Links</a></li>
+<li class="toc-h2"><a href="#what-this-section-is-not">What this section is not</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

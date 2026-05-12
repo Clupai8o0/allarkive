@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop / desktop (Linux) — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Laptop / desktop (Linux).">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="laptop.html" aria-current="page">Laptop / desktop (Linux)</a></li>
+<li><a href="macos.html">macOS</a></li>
+<li><a href="windows.html">Windows (WSL2)</a></li>
+<li><a href="server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="../deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="../deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="../deployment/split.html">Split across two machines</a></li>
+<li><a href="../deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Install</span> / <span>Laptop / desktop (Linux)</span></p>
+            <article class="doc-content">
+<h1 id="installing-allarkive-on-a-laptop">Installing AllArkive on a
+laptop</h1>
+<blockquote>
+<p><strong>Status</strong>: v1 — docker-compose install path. The
+manual-install notes from Milestone 2 are preserved in the appendix for
+reference.</p>
+</blockquote>
+<p>This guide installs AllArkive on a laptop running Linux (Ubuntu 22.04
+LTS or 24.04 LTS), using the docker-compose stack. For macOS see
+<code>docs/install/macos.md</code>. For Windows see
+<code>docs/install/windows.md</code>.</p>
+<p><strong>Time estimate</strong>: 15–30 minutes setup, then waiting for
+downloads (depends on your internet connection and which bundle you
+choose). After the stack starts, RAG indexing runs in the background —
+<strong>expect several hours for the balanced bundle on CPU</strong>.
+See <em>Indexing takes hours</em> below.</p>
+<hr />
+<h2 id="quick-start-automated">Quick start (automated)</h2>
+<p>If you just want everything running with one command, use
+<code>bootstrap.sh</code>. It handles directory creation, bundle
+download, image build, model pull, and indexing automatically:</p>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+# Generate and paste a secret key:
+openssl rand -hex 32  # copy this output into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+# Then run everything:
+./scripts/bootstrap.sh --bundle balanced</code></pre>
+<p>The manual steps below are equivalent — follow them if you want more
+control or need to debug a specific step.</p>
+<h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</h3>
+<p>When <code>bootstrap.sh</code> finishes, the <strong>RAG indexer
+keeps running</strong> in the <code>rag</code> container, embedding
+every ZIM chunk through your local Ollama. On CPU this is the slowest
+part of setup:</p>
+<ul>
+<li><strong>minimal bundle</strong>: 10–30 minutes</li>
+<li><strong>balanced bundle</strong>: several hours</li>
+<li><strong>comprehensive bundle</strong>: tens of hours, plan
+overnight</li>
+</ul>
+<p>The indexer is <strong>resumable and idempotent</strong> — you can
+close the terminal, suspend the laptop, or reboot, and re-running
+<code>bootstrap.sh</code> (or
+<code>docker compose exec rag python indexer.py</code>) picks up where
+it left off.</p>
+<p>Kiwix browsing at <code>http://localhost:8081</code> works
+<strong>immediately</strong>. RAG answers in Open WebUI improve as
+coverage grows — "no sources found" early on is expected for topics not
+yet indexed. Watch progress:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="hardware">Hardware</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAM</td>
+<td>8 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>Free disk</td>
+<td>10 GB (minimal bundle + model)</td>
+<td>30 GB (balanced bundle + model)</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>Any x86_64</td>
+<td>More cores = faster inference</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>Not required</td>
+<td>CUDA GPU detected automatically</td>
+</tr>
+</tbody>
+</table>
+<h3 id="software">Software</h3>
+<ul>
+<li><p><strong>Docker Engine 24+</strong> with the Compose plugin. Test
+with:</p>
+<pre class="bash"><code>docker compose version</code></pre>
+<p>If missing, install from the <a
+href="https://docs.docker.com/engine/install/">official Docker docs</a>.
+Do <strong>not</strong> use the distro-packaged <code>docker.io</code> —
+it may be too old.</p></li>
+<li><p><code>curl</code>, <code>git</code>, <code>openssl</code>
+(standard on most Ubuntu installs)</p></li>
+</ul>
+<hr />
+<h2 id="step-1-clone-the-repository">Step 1: Clone the repository</h2>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive</code></pre>
+<hr />
+<h2 id="step-2-set-up-configuration">Step 2: Set up configuration</h2>
+<p>Copy the example environment file and fill in the required
+values:</p>
+<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<p>Generate a secret key for Open WebUI session signing:</p>
+<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<p>Open <code>compose/.env</code> and paste the result into
+<code>WEBUI_SECRET_KEY=</code>.</p>
+<p>That is the only required change. Review the rest of the file if you
+want to change ports, the data directory, or the default model, but the
+defaults work.</p>
+<hr />
+<h2 id="step-3-create-data-directories">Step 3: Create data
+directories</h2>
+<p>All ZIM files, models, the RAG index, and Open WebUI's database live
+under one root. Create it once:</p>
+<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
+sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<p>If your laptop has limited disk on <code>/var/</code>, change
+<code>ALLARKIVE_DATA_DIR</code> in <code>compose/.env</code> to a path
+with more space (e.g. an external drive mounted at
+<code>/mnt/external/allarkive</code>).</p>
+<hr />
+<h2 id="step-4-fetch-a-bundle">Step 4: Fetch a bundle</h2>
+<p>A bundle is a curated set of ZIM files. Choose one:</p>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Contents</th>
+<th>Disk (ZIMs only)</th>
+<th>Good for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minimal</code></td>
+<td>WikiMed + iFixit</td>
+<td>~4 GB</td>
+<td>Low-disk test run</td>
+</tr>
+<tr>
+<td><code>balanced</code></td>
+<td>Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask
+Ubuntu</td>
+<td>~23 GB</td>
+<td>Daily use</td>
+</tr>
+<tr>
+<td><code>comprehensive</code></td>
+<td>Full Wikipedia (images) + Gutenberg + Stack Exchange</td>
+<td>~330 GB</td>
+<td>Large-disk machines</td>
+</tr>
+</tbody>
+</table>
+<p>Download and verify:</p>
+<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<p>The script downloads each ZIM file and verifies its SHA-256 checksum.
+If verification fails, it stops and tells you which file is corrupt. Do
+not proceed past a checksum failure — re-run or re-download.</p>
+<hr />
+<h2 id="step-5-start-the-stack">Step 5: Start the stack</h2>
+<pre class="bash"><code>cd compose/
+docker compose up -d</code></pre>
+<p>On first run, Docker does two things before the services start:</p>
+<ol type="1">
+<li><strong>Builds the RAG image from source</strong>
+(<code>scripts/rag/</code>) — takes 2–4 minutes depending on your
+machine and network (downloads Python dependencies).</li>
+<li><strong>Pulls the remaining images</strong> (kiwix-serve, Ollama,
+Open WebUI, nginx).</li>
+</ol>
+<p>Subsequent starts are fast — images are already present.</p>
+<p>To watch progress:</p>
+<pre class="bash"><code>docker compose logs -f</code></pre>
+<p>Wait until all containers show <code>healthy</code>:</p>
+<pre class="bash"><code>docker compose ps</code></pre>
+<p>Typically 2–5 minutes on first run (excluding model download), less
+than a minute on subsequent starts.</p>
+<h3 id="gpu-acceleration-optional">GPU acceleration (optional)</h3>
+<p>If your laptop has an NVIDIA GPU with CUDA drivers installed:</p>
+<pre class="bash"><code>docker compose --profile gpu up -d</code></pre>
+<hr />
+<h2 id="step-6-pull-ai-models">Step 6: Pull AI models</h2>
+<p>Two models are needed — the chat model (for answering questions) and
+the embedding model (for indexing and search). Pull them before
+indexing:</p>
+<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<p>If you chose a different model in <code>compose/.env</code>,
+substitute it here. Both pulls resume automatically if interrupted.</p>
+<hr />
+<h2 id="step-7-index-the-archive">Step 7: Index the archive</h2>
+<p>The RAG pipeline indexes your ZIM files so the AI can search them.
+Trigger it manually so you can watch the output:</p>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434</code></pre>
+<p>To force a full rebuild of an existing index:</p>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force</code></pre>
+<p>Indexing time depends on the bundle and hardware. The balanced bundle
+takes roughly 10–30 minutes on a modern laptop. The index persists
+across restarts; you only need to re-index if you add or change ZIM
+files.</p>
+<hr />
+<h2 id="step-8-open-the-landing-page">Step 8: Open the landing page</h2>
+<p>Open <code>http://localhost:8080</code> in a browser.</p>
+<p>You should see the AllArkive landing page with a status line showing
+your archive size and model name. Try:</p>
+<ol type="1">
+<li><strong>Search the archive</strong> — full-text search over your ZIM
+files via Kiwix.</li>
+<li><strong>Ask the AI</strong> — type a question and see the answer
+with numbered citations linking back to the archive.</li>
+</ol>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<p>All ports are bound to <code>127.0.0.1</code> (loopback only) by
+default. Nothing is reachable from outside your machine.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Bound to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Landing page</td>
+<td>8080</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Open WebUI</td>
+<td>3000</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td>11434</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>RAG service</td>
+<td>8000</td>
+<td>127.0.0.1</td>
+</tr>
+</tbody>
+</table>
+<p>To change a port, edit <code>compose/.env</code>.</p>
+<hr />
+<h2 id="stopping-and-restarting">Stopping and restarting</h2>
+<pre class="bash"><code># Stop without removing volumes:
+cd compose/ &amp;&amp; docker compose down
+
+# Start again (fast, model already downloaded):
+cd compose/ &amp;&amp; docker compose up -d</code></pre>
+<hr />
+<h2 id="cleanup-and-uninstall">Cleanup and uninstall</h2>
+<p>Use <code>scripts/cleanup.sh</code>. It has three levels — nothing is
+deleted unless you explicitly ask.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it removes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./scripts/cleanup.sh</code></td>
+<td>Stops and removes containers only. Data and images kept.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --images</code></td>
+<td>Also removes Docker images (re-pulled on next start).</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --data</code></td>
+<td>Also deletes the data directory: ZIMs, models, RAG index, Open WebUI
+DB. <strong>Irreversible.</strong> Prompts before deleting.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --all</code></td>
+<td><code>--images</code> + <code>--data</code>. Full wipe. Prompts
+before deleting.</td>
+</tr>
+</tbody>
+</table>
+<p>After a full wipe, start fresh with
+<code>./scripts/bootstrap.sh --bundle balanced</code>.</p>
+<hr />
+<h2 id="updating">Updating</h2>
+<p>Pull new images, then restart:</p>
+<pre class="bash"><code>cd compose/
+docker compose pull
+docker compose up -d</code></pre>
+<p>Check <code>CHANGELOG.md</code> before updating to see if any config
+or data migration is needed.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="docker-compose-command-not-found"><code>docker compose</code>
+command not found</h3>
+<p>Install the Docker Compose plugin:
+<code>sudo apt install docker-compose-plugin</code>.</p>
+<h3 id="webui_secret_key-error-on-startup"><code>WEBUI_SECRET_KEY</code>
+error on startup</h3>
+<p>The key is required. Run <code>openssl rand -hex 32</code>, paste the
+result into <code>compose/.env</code> as
+<code>WEBUI_SECRET_KEY=&lt;value&gt;</code>.</p>
+<h3 id="open-webui-shows-a-blank-page-or-502-error">Open WebUI shows a
+blank page or 502 error</h3>
+<p>The RAG service or Ollama may still be initialising. Check:</p>
+<pre class="bash"><code>docker compose ps
+docker compose logs rag</code></pre>
+<p>Wait for all containers to show <code>healthy</code>. The first
+startup is slow.</p>
+<h3 id="rag-image-build-fails">RAG image build fails</h3>
+<p>The RAG image is built from <code>scripts/rag/</code>. Common
+causes:</p>
+<ul>
+<li>No internet during build (needs to download Python packages)</li>
+<li>Docker out of disk space</li>
+</ul>
+<p>Check with <code>docker compose logs rag</code> and
+<code>df -h</code>. To retry the build:</p>
+<pre class="bash"><code>docker compose build rag
+docker compose up -d</code></pre>
+<h3 id="ollama-model-download-is-stuck">Ollama model download is
+stuck</h3>
+<p>Ollama resumes interrupted downloads. Run:</p>
+<pre class="bash"><code>docker compose exec ollama ollama pull qwen2.5:7b</code></pre>
+<p>If it keeps stalling, check your disk space: the model needs ~4.4 GB
+free.</p>
+<h3 id="kiwix-shows-no-zim-files-found">Kiwix shows "no ZIM files
+found"</h3>
+<p>Check that your ZIM files landed in the right directory:</p>
+<pre class="bash"><code>ls /var/lib/allarkive/zim/</code></pre>
+<p>If the directory is empty, re-run
+<code>./scripts/fetch-bundle.sh balanced</code>.</p>
+<h3 id="port-already-in-use">Port already in use</h3>
+<pre class="bash"><code>ss -tlnp | grep 8080    # or 8081, 3000, 11434, 8000</code></pre>
+<p>Stop whatever is using that port, or change AllArkive's port in
+<code>compose/.env</code>.</p>
+<hr />
+<h2 id="what-is-next">What is next</h2>
+<p>Once the stack is running:</p>
+<ul>
+<li>Ask the AI a question and check that the numbered citations link
+back to the archive. If the answer says "no sources found," re-index and
+confirm the models are pulled.</li>
+<li>Try the full-text search mode to browse ZIM files directly via
+Kiwix.</li>
+<li>To share the archive with other devices on your network, see <a
+href="../deployment/lan-access.html"><code>docs/deployment/lan-access.md</code></a>.</li>
+</ul>
+<hr />
+<h2 id="what-bootstrapsh-does">What bootstrap.sh does</h2>
+<p>If you used <code>bootstrap.sh --bundle balanced</code>, it ran steps
+1–8 automatically: created directories, fetched and verified ZIMs, wrote
+resolved paths to <code>compose/.env</code>, detected and avoided port
+conflicts, started the stack, pulled both models, and ran the indexer.
+Paths chosen during bootstrap are saved to
+<code>~/.config/allarkive/config.json</code> and reused on future
+runs.</p>
+<p>The manual steps above are the exact equivalent, useful when you want
+more control, need to debug a specific step, or are running on a machine
+where Docker is not already set up.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/install/laptop.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/install/laptop.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#quick-start-automated">Quick start (automated)</a></li>
+<li class="toc-h3"><a href="#indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</a></li>
+<li class="toc-h2"><a href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3"><a href="#hardware">Hardware</a></li>
+<li class="toc-h3"><a href="#software">Software</a></li>
+<li class="toc-h2"><a href="#step-1-clone-the-repository">Step 1: Clone the repository</a></li>
+<li class="toc-h2"><a href="#step-2-set-up-configuration">Step 2: Set up configuration</a></li>
+<li class="toc-h2"><a href="#step-3-create-data-directories">Step 3: Create data
+directories</a></li>
+<li class="toc-h2"><a href="#step-4-fetch-a-bundle">Step 4: Fetch a bundle</a></li>
+<li class="toc-h2"><a href="#step-5-start-the-stack">Step 5: Start the stack</a></li>
+<li class="toc-h3"><a href="#gpu-acceleration-optional">GPU acceleration (optional)</a></li>
+<li class="toc-h2"><a href="#step-6-pull-ai-models">Step 6: Pull AI models</a></li>
+<li class="toc-h2"><a href="#step-7-index-the-archive">Step 7: Index the archive</a></li>
+<li class="toc-h2"><a href="#step-8-open-the-landing-page">Step 8: Open the landing page</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#stopping-and-restarting">Stopping and restarting</a></li>
+<li class="toc-h2"><a href="#cleanup-and-uninstall">Cleanup and uninstall</a></li>
+<li class="toc-h2"><a href="#updating">Updating</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#docker-compose-command-not-found">docker compose
+command not found</a></li>
+<li class="toc-h3"><a href="#webui_secret_key-error-on-startup">WEBUI_SECRET_KEY
+error on startup</a></li>
+<li class="toc-h3"><a href="#open-webui-shows-a-blank-page-or-502-error">Open WebUI shows a
+blank page or 502 error</a></li>
+<li class="toc-h3"><a href="#rag-image-build-fails">RAG image build fails</a></li>
+<li class="toc-h3"><a href="#ollama-model-download-is-stuck">Ollama model download is
+stuck</a></li>
+<li class="toc-h3"><a href="#kiwix-shows-no-zim-files-found">Kiwix shows &quot;no ZIM files
+found&quot;</a></li>
+<li class="toc-h3"><a href="#port-already-in-use">Port already in use</a></li>
+<li class="toc-h2"><a href="#what-is-next">What is next</a></li>
+<li class="toc-h2"><a href="#what-bootstrapsh-does">What bootstrap.sh does</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

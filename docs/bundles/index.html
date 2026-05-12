@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundles overview — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Bundles overview.">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="../install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="../install/macos.html">macOS</a></li>
+<li><a href="../install/windows.html">Windows (WSL2)</a></li>
+<li><a href="../install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="../deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="../deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="../deployment/split.html">Split across two machines</a></li>
+<li><a href="../deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="index.html" aria-current="page">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Bundles</span> / <span>Bundles overview</span></p>
+            <article class="doc-content">
+<h1 id="allarkive-bundles">AllArkive bundles</h1>
+<p>A bundle is a curated set of ZIM files — offline knowledge archives
+in Kiwix's packaged format. This page describes the three bundles
+included with AllArkive v0.1, their contents, sizes, and license
+obligations.</p>
+<hr />
+<h2 id="choosing-a-bundle">Choosing a bundle</h2>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Use case</th>
+<th>ZIM disk</th>
+<th>+ model</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minimal</code></td>
+<td>Pi 4, low-disk machines, testing</td>
+<td>~4 GB</td>
+<td>~2–4 GB</td>
+<td>~6–8 GB</td>
+</tr>
+<tr>
+<td><code>balanced</code></td>
+<td>Daily-use laptop (recommended)</td>
+<td>~23 GB</td>
+<td>~5 GB</td>
+<td>~28 GB</td>
+</tr>
+<tr>
+<td><code>comprehensive</code></td>
+<td>Large-disk machines, full research</td>
+<td>~330 GB</td>
+<td>~4 GB</td>
+<td>~335 GB</td>
+</tr>
+</tbody>
+</table>
+<p>All bundles run fully offline once installed. Updates require
+re-downloading the relevant ZIM files.</p>
+<hr />
+<h2 id="fetching-a-bundle">Fetching a bundle</h2>
+<pre class="bash"><code>./scripts/fetch-bundle.sh &lt;bundle-name&gt;</code></pre>
+<p>The script downloads each ZIM file listed in
+<code>bundles/&lt;name&gt;/manifest.json</code>, verifies the SHA-256
+checksum, and stops on any verification failure. Do not proceed past a
+checksum failure — re-download the affected file.</p>
+<hr />
+<h2 id="the-minimal-bundle">The <code>minimal</code> bundle</h2>
+<p><strong>Good for</strong>: Raspberry Pi 4, machines with less than 10
+GB free, first-time installs where you want a fast smoke test.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Type</th>
+<th>Approx size</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WikiMed — medical reference (English)</td>
+<td>Medical reference wiki</td>
+<td>~500 MB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>iFixit — repair guides (English)</td>
+<td>Repair and disassembly guides</td>
+<td>~3 GB</td>
+<td>CC-BY-NC-SA 3.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total ZIM size</strong>: ~3.5 GB</p>
+<p><strong>Recommended model</strong>: <code>qwen2.5:3b</code> (fits in
+4 GB RAM)</p>
+<p><strong>Manifest</strong>:
+<code>bundles/minimal/manifest.json</code></p>
+<h3 id="ifixit-license-note">iFixit license note</h3>
+<p>iFixit guides are licensed under CC-BY-NC-SA 3.0, which prohibits
+commercial use. AllArkive's personal-use, self-hosted context is within
+the non-commercial terms. If you are deploying AllArkive in a commercial
+setting, consult the iFixit terms before bundling.</p>
+<hr />
+<h2 id="the-balanced-bundle">The <code>balanced</code> bundle</h2>
+<p><strong>Good for</strong>: most laptop and server installs. Full
+English reference library under 30 GB — fits on any modern laptop.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Type</th>
+<th>Verified size</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wikipedia (English, mini — full text)</td>
+<td>General encyclopaedia</td>
+<td>12 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>WikiMed — medical reference (English)</td>
+<td>Medical reference wiki</td>
+<td>~500 MB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>iFixit — repair guides (English)</td>
+<td>Repair and disassembly guides</td>
+<td>3.3 GB</td>
+<td>CC-BY-NC-SA 3.0</td>
+</tr>
+<tr>
+<td>SuperUser (Stack Exchange)</td>
+<td>General tech Q&amp;A</td>
+<td>3.7 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>Unix &amp; Linux (Stack Exchange)</td>
+<td>Unix/Linux Q&amp;A</td>
+<td>1.2 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>Ask Ubuntu (Stack Exchange)</td>
+<td>Ubuntu Q&amp;A</td>
+<td>2.6 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total ZIM size</strong>: ~23 GB <em>(sizes verified from
+download.kiwix.org, 2026-05)</em></p>
+<p>The Wikipedia <code>mini</code> variant contains every article in
+full — it strips decorative templates and infobox styling, not content.
+It is substantially smaller than <code>nopic</code> (~48 GB) for this
+reason.</p>
+<p>Project Gutenberg (<code>en_all</code>, ~200 GB) is
+<strong>not</strong> in this bundle — the full corpus is ~200 GB. It is
+included in the <code>comprehensive</code> bundle. You can also add it
+manually as a custom ZIM (see the section below).</p>
+<p><strong>Recommended model</strong>: <code>qwen2.5:7b</code> (~4 GB,
+fits in 8 GB RAM)</p>
+<p><strong>Manifest</strong>:
+<code>bundles/balanced/manifest.json</code></p>
+<h3 id="wikipedia-text-only-note">Wikipedia text-only note</h3>
+<p>This bundle uses the "nopic" (no pictures) Wikipedia variant, which
+is significantly smaller than the full archive while containing all
+article text. If you want infobox images and diagrams, use the
+<code>comprehensive</code> bundle instead.</p>
+<h3 id="project-gutenberg-license-note">Project Gutenberg license
+note</h3>
+<p>Project Gutenberg hosts texts whose copyright has expired in the
+United States (pre-1928 publication date is a common but not universal
+rule). Some texts are contributed with explicit open licenses. License
+status varies per text. The Gutenberg website documents this per item.
+AllArkive ships the ZIM as-is; you are responsible for understanding the
+terms applicable to specific texts you use.</p>
+<hr />
+<h2 id="the-comprehensive-bundle">The <code>comprehensive</code>
+bundle</h2>
+<p><strong>Good for</strong>: users with 350+ GB free disk who want a
+full reference library including Wikipedia with images, the complete
+Project Gutenberg corpus, and major Stack Exchange communities.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Type</th>
+<th>Approx size</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wikipedia (English, with images)</td>
+<td>General encyclopaedia</td>
+<td>~85 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>WikiMed — medical reference (English)</td>
+<td>Medical reference wiki</td>
+<td>~500 MB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>iFixit — repair guides (English)</td>
+<td>Repair and disassembly guides</td>
+<td>~3 GB</td>
+<td>CC-BY-NC-SA 3.0</td>
+</tr>
+<tr>
+<td>Project Gutenberg (English, full corpus)</td>
+<td>Classic literature, public domain</td>
+<td>~200 GB</td>
+<td>Public domain + various</td>
+</tr>
+<tr>
+<td>Stack Overflow</td>
+<td>Programming Q&amp;A</td>
+<td>~30 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>SuperUser (Stack Exchange)</td>
+<td>General tech Q&amp;A</td>
+<td>~2 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+<tr>
+<td>Math Stack Exchange</td>
+<td>Mathematics Q&amp;A</td>
+<td>~3 GB</td>
+<td>CC-BY-SA 4.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total ZIM size</strong>: ~323 GB</p>
+<p>The Gutenberg <code>en_all</code> ZIM (~200 GB) dominates the disk
+requirement. If you want everything else without Gutenberg, use the
+<code>balanced</code> bundle and add individual sources manually.</p>
+<p><strong>Recommended model</strong>: <code>qwen2.5:7b</code> on 16 GB
+RAM; <code>qwen2.5:14b</code> on 32+ GB for better reasoning quality
+over large archives.</p>
+<p><strong>Manifest</strong>:
+<code>bundles/comprehensive/manifest.json</code></p>
+<hr />
+<h2 id="license-summary">License summary</h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>License</th>
+<th>Commercial use</th>
+<th>Attribution required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wikipedia</td>
+<td>CC-BY-SA 4.0</td>
+<td>Yes</td>
+<td>Yes (ShareAlike)</td>
+</tr>
+<tr>
+<td>WikiMed</td>
+<td>CC-BY-SA 4.0</td>
+<td>Yes</td>
+<td>Yes (ShareAlike)</td>
+</tr>
+<tr>
+<td>iFixit</td>
+<td>CC-BY-NC-SA 3.0</td>
+<td><strong>No</strong></td>
+<td>Yes (ShareAlike)</td>
+</tr>
+<tr>
+<td>Project Gutenberg</td>
+<td>Public domain / various</td>
+<td>Per text</td>
+<td>Per text</td>
+</tr>
+<tr>
+<td>Stack Overflow</td>
+<td>CC-BY-SA 4.0</td>
+<td>Yes</td>
+<td>Yes (ShareAlike)</td>
+</tr>
+<tr>
+<td>SuperUser</td>
+<td>CC-BY-SA 4.0</td>
+<td>Yes</td>
+<td>Yes (ShareAlike)</td>
+</tr>
+<tr>
+<td>Math Stack Exchange</td>
+<td>CC-BY-SA 4.0</td>
+<td>Yes</td>
+<td>Yes (ShareAlike)</td>
+</tr>
+</tbody>
+</table>
+<p>AllArkive's glue code is AGPL-3.0. The bundled content keeps its own
+licenses. Each bundle's license detail is in
+<code>bundles/&lt;name&gt;/LICENSE.md</code>.</p>
+<hr />
+<h2 id="adding-a-custom-bundle">Adding a custom bundle</h2>
+<p>AllArkive does not restrict which ZIM files you use. To add a ZIM not
+in a default bundle:</p>
+<ol type="1">
+<li>Download the ZIM from <code>https://download.kiwix.org/zim/</code>
+or another trusted source.</li>
+<li>Verify the checksum manually:
+<pre class="bash"><code>sha256sum your-file.zim
+# compare against the .sha256 file published alongside the download</code></pre></li>
+<li>Move the verified ZIM to <code>$ALLARKIVE_DATA_DIR/zim/</code>.</li>
+<li>Restart kiwix-serve so it picks up the new file:
+<pre class="bash"><code>docker compose restart kiwix</code></pre></li>
+<li>Re-run the RAG indexer so the new content is searchable via AI:
+<pre class="bash"><code>docker compose exec rag python -m rag.index</code></pre></li>
+</ol>
+<p><strong>License reminder</strong>: before adding a custom ZIM,
+confirm its license permits your intended use. See the
+<code>THREAT_MODEL.md</code> section on custom bundles and poisoned
+content.</p>
+<hr />
+<h2 id="updating-a-bundle">Updating a bundle</h2>
+<p>ZIM files are periodically republished by the upstream projects. To
+update:</p>
+<ol type="1">
+<li>Edit <code>bundles/&lt;name&gt;/manifest.json</code> with the new
+filename and SHA-256.</li>
+<li>Delete the old ZIM from <code>$ALLARKIVE_DATA_DIR/zim/</code>.</li>
+<li>Re-run <code>./scripts/fetch-bundle.sh &lt;name&gt;</code>.</li>
+<li>Re-index:
+<code>docker compose exec rag python -m rag.index</code>.</li>
+</ol>
+<p>Bundle updates are noted in <code>CHANGELOG.md</code>.</p>
+<hr />
+<h2 id="zim-file-sizes-and-indexing-time">ZIM file sizes and indexing
+time</h2>
+<p>The RAG indexer reads article text from each ZIM, generates
+embeddings, and writes them to
+<code>$ALLARKIVE_DATA_DIR/index/index.db</code>. Approximate times on a
+modern laptop CPU:</p>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Index size</th>
+<th>First-run index time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>minimal</td>
+<td>~200 MB</td>
+<td>~5 minutes</td>
+</tr>
+<tr>
+<td>balanced</td>
+<td>~1–2 GB</td>
+<td>~15–30 minutes</td>
+</tr>
+<tr>
+<td>comprehensive</td>
+<td>~5–10 GB</td>
+<td>~2–4 hours</td>
+</tr>
+</tbody>
+</table>
+<p>The index persists across restarts. Re-indexing is only needed when
+ZIM files change.</p>
+<p>The <code>RAG_MAX_ARTICLES</code> setting in
+<code>compose/.env</code> caps articles indexed per ZIM. The default
+(5000) keeps indexing time manageable. Increase it on faster hardware
+with more time available.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/bundles/README.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/bundles/README.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#choosing-a-bundle">Choosing a bundle</a></li>
+<li class="toc-h2"><a href="#fetching-a-bundle">Fetching a bundle</a></li>
+<li class="toc-h2"><a href="#the-minimal-bundle">The minimal bundle</a></li>
+<li class="toc-h3"><a href="#ifixit-license-note">iFixit license note</a></li>
+<li class="toc-h2"><a href="#the-balanced-bundle">The balanced bundle</a></li>
+<li class="toc-h3"><a href="#wikipedia-text-only-note">Wikipedia text-only note</a></li>
+<li class="toc-h3"><a href="#project-gutenberg-license-note">Project Gutenberg license
+note</a></li>
+<li class="toc-h2"><a href="#the-comprehensive-bundle">The comprehensive
+bundle</a></li>
+<li class="toc-h2"><a href="#license-summary">License summary</a></li>
+<li class="toc-h2"><a href="#adding-a-custom-bundle">Adding a custom bundle</a></li>
+<li class="toc-h2"><a href="#updating-a-bundle">Updating a bundle</a></li>
+<li class="toc-h2"><a href="#zim-file-sizes-and-indexing-time">ZIM file sizes and indexing
+time</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

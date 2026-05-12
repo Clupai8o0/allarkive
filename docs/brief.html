@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brief — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Brief.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html" aria-current="page">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Brief</span></p>
+            <article class="doc-content">
+<h1 id="allarkive--technical-brief">AllArkive — Technical Brief</h1>
+<p>A self-contained reference for a writer or speaker. Assumes zero
+prior context. Read top to bottom, then cherry-pick.</p>
+<hr />
+<h2 id="1-the-one-line-pitch">1. The one-line pitch</h2>
+<blockquote>
+<p>A private, offline research assistant that runs on your own hardware,
+with citations you can check.</p>
+</blockquote>
+<p>A self-hostable knowledge ark: a curated offline library (Wikipedia,
+repair guides, Stack Exchange, public-domain books) plus a local LLM
+(Ollama + Open WebUI) plus a retrieval pipeline that answers questions
+only from the library, with clickable citations back to the source
+articles.</p>
+<p>The framing the maintainers explicitly use is <strong>resilience,
+privacy, censorship resistance, and educational access</strong> — not
+prepper bunkers, not "the internet is going to collapse." That
+distinction matters; it's enforced in the design docs and the public
+copy.</p>
+<hr />
+<h2 id="2-the-people-and-the-moment">2. The people and the moment</h2>
+<ul>
+<li><strong>Built by</strong>: Sam and Sham. Two-person maintainer team.
+Public copy is always "we" — never single-founder voice.</li>
+<li><strong>License</strong>: AGPL-3.0 for the glue code (this repo).
+Copyleft is deliberate — if someone runs a fork as a service,
+improvements have to flow back. Each bundled archive keeps its own
+upstream license (Wikipedia CC-BY-SA, iFixit CC-BY-NC-SA, Project
+Gutenberg public-domain-ish, etc.).</li>
+<li><strong>Public debut</strong>: BSides Melbourne, <strong>May 16–17,
+2026</strong>. Audience is infosec — skeptical, allergic to hype. v0.1
+alpha ships alongside that talk.</li>
+<li><strong>Hosting</strong>: GitHub primary, Codeberg mirror via a
+GitHub Action. Resilience-by-mirroring is the project's own ethos
+applied to itself.</li>
+</ul>
+<hr />
+<h2 id="3-the-problem-space-why-this-exists">3. The problem space (why
+this exists)</h2>
+<p>The brief that the docs make, plainly:</p>
+<ol type="1">
+<li><strong>Cloud-tenant fragility.</strong> Most "AI assistants" rent
+compute, models, and content from third parties. Outage, billing, ToS,
+or policy change breaks the user.</li>
+<li><strong>Censorship.</strong> Wikipedia, Stack Exchange, and similar
+are blocked in different jurisdictions at different times. Once a ZIM
+file is on local disk, no operator can quietly remove it.</li>
+<li><strong>Surveillance.</strong> Every cloud LLM query is a logged
+event somewhere. Local inference removes that channel.</li>
+<li><strong>Hallucinations presented without evidence.</strong> Even
+when cloud models are right, the user can't check them. AllArkive forces
+every answer through a retrieval step against a known corpus and renders
+the citations inline.</li>
+</ol>
+<p>The product is the <em>boring</em> version of all of this — not a
+manifesto, just plumbing that runs on a laptop or a Pi.</p>
+<hr />
+<h2 id="4-architecture--three-loosely-coupled-layers">4. Architecture —
+three loosely-coupled layers</h2>
+<p>The locked decision: each layer must be replaceable and must work
+without the others where it makes sense.</p>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│  Layer 3 — Glue                                           │
+│  nginx landing page (port 8080) + scripts + compose       │
+│  Single entry point. Proxies /api/rag/* to RAG service.   │
+└──────────────────────────────────────────────────────────┘
+            │                              │
+            ▼                              ▼
+┌────────────────────────┐   ┌──────────────────────────────┐
+│  Layer 1 — Archive     │   │  Layer 2 — Local AI          │
+│  Kiwix-serve (8081)    │   │  Ollama (11434)              │
+│  Serves .zim files.    │◀──│  Open WebUI (3000)           │
+│  Runs alone if needed. │   │  RAG service (8000)          │
+└────────────────────────┘   └──────────────────────────────┘</code></pre>
+<p>Each service is a pinned container — no <code>:latest</code> allowed
+anywhere in this project.</p>
+<h3 id="41-pinned-versions">4.1 Pinned versions</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Image</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Archive</td>
+<td><code>ghcr.io/kiwix/kiwix-serve:3.8.2</code> (digest pinned)</td>
+<td>Auto-scans <code>.zim</code> dir every 30s</td>
+</tr>
+<tr>
+<td>LLM runtime</td>
+<td><code>ollama/ollama:0.22.1</code> (digest pinned)</td>
+<td>CPU default; optional <code>--profile gpu</code> for CUDA</td>
+</tr>
+<tr>
+<td>Chat UI</td>
+<td><code>ghcr.io/open-webui/open-webui:0.9.2</code> (digest
+pinned)</td>
+<td>Telemetry forced off via three env vars</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>Locally built <code>allarkive-rag:0.1.0</code></td>
+<td>Python 3.11, FastAPI, OpenAI-compatible API</td>
+</tr>
+<tr>
+<td>Landing/gateway</td>
+<td><code>nginx:1.27.3-alpine</code> (digest pinned)</td>
+<td>Serves <code>landing/</code>, proxies <code>/api/rag/</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-default-ports--all-bind-to-127001">4.2 Default ports — all
+bind to <code>127.0.0.1</code></h3>
+<p><code>8080</code> landing • <code>8081</code> kiwix •
+<code>3000</code> Open WebUI • <code>8000</code> RAG •
+<code>11434</code> Ollama. Remote access is opt-in and documented
+separately (<code>docs/deployment/lan-access.md</code>).</p>
+<h3 id="43-models-pinned-by-nametag-in-bootstrap">4.3 Models (pinned by
+name+tag in bootstrap)</h3>
+<ul>
+<li><strong>Chat</strong>: <code>qwen2.5:7b</code> (default),
+<code>qwen2.5:3b</code> (Pi 8 GB), <code>qwen2.5:1.5b</code> (Pi 4
+GB)</li>
+<li><strong>Embedding</strong>: <code>nomic-embed-text</code>
+(768-dim)</li>
+</ul>
+<h3 id="44-data-layout">4.4 Data layout</h3>
+<pre><code>/var/lib/allarkive/        # /mnt/ssd/allarkive on Pi (USB SSD — never SD card)
+  ├── zim/      # the archive
+  ├── index/    # sqlite-vec vector index
+  ├── models/   # Ollama model store
+  └── data/     # Open WebUI sqlite + chat history</code></pre>
+<p>The SD-card-fails-under-random-write rule is a real lesson learned,
+not a stylistic choice — Pi deployments are required to mount a USB
+SSD.</p>
+<hr />
+<h2 id="5-the-rag-pipeline--the-interesting-engineering-bit">5. The RAG
+pipeline — the interesting engineering bit</h2>
+<p>This is the part worth demoing on stage. It's small (a few hundred
+lines of Python in <code>scripts/rag/</code>) and intentionally simple,
+but every piece is doing real work.</p>
+<h3 id="51-indexer-indexerpy">5.1 Indexer (<code>indexer.py</code>)</h3>
+<ol type="1">
+<li>Opens ZIM files via <strong>libzim</strong> (the official Kiwix
+Python binding).</li>
+<li>Strips HTML with BeautifulSoup, leaves plain article text.</li>
+<li>Chunks at <strong>800 chars, 100-char overlap</strong>.</li>
+<li>Embeds each chunk with <code>nomic-embed-text</code> over Ollama's
+HTTP API (768-dim float32 vectors, L2-normalized).</li>
+<li>Stores chunks + embeddings in <strong>sqlite-vec</strong> at
+<code>index/index.db</code>. No separate vector daemon — it's a SQLite
+extension.</li>
+<li>Idempotent: skips ZIMs whose mtime hasn't changed; commits every 50
+chunks.</li>
+<li>Per-ZIM caps (<code>--max-articles</code>,
+<code>--large-max-articles</code> for huge ZIMs like Gutenberg) keep
+indexing tractable.</li>
+</ol>
+<h3 id="52-retrieval-server-serverpy">5.2 Retrieval server
+(<code>server.py</code>)</h3>
+<ul>
+<li>FastAPI, exposes an <strong>OpenAI-compatible
+<code>/v1/chat/completions</code></strong> endpoint. This is the lever
+that makes the whole project work — Open WebUI is wired to it via
+<code>OPENAI_API_BASE_URLS=http://rag:8000/v1</code>, so the RAG
+pipeline appears in the UI as just another "model."</li>
+<li>Flow:
+<ol type="1">
+<li>Embed user query with same <code>nomic-embed-text</code> model.</li>
+<li>KNN search over normalized vectors in sqlite-vec, top-K=5, drop
+anything beyond <code>RAG_MAX_DISTANCE</code> (default 1.0).</li>
+<li><strong>If no passages survive the filter, return a "no sources"
+message at the API level.</strong> The LLM is never given the chance to
+answer ungrounded.</li>
+<li>Otherwise, build prompt with numbered passages.</li>
+</ol></li>
+<li>Side endpoints: <code>/status</code> returns binding mode, installed
+archives, model names, index readiness; <code>/health</code> for
+Docker.</li>
+</ul>
+<h3 id="53-prompt-promptpy">5.3 Prompt (<code>prompt.py</code>)</h3>
+<p>System prompt enforces two rules:</p>
+<ul>
+<li>Every claim must carry an inline <code>[N]</code> marker matching a
+passage.</li>
+<li>"Do not invent citations. If you cannot support a statement, omit
+it."</li>
+</ul>
+<h3 id="54-citation-rewriter-citationspy">5.4 Citation rewriter
+(<code>citations.py</code>)</h3>
+<p>Post-processes the model's response, turning <code>[N]</code> markers
+into Markdown links that point back to the actual Kiwix article URL:
+<code>http://127.0.0.1:8081/{zim_name}/{article_path}</code>. Click a
+citation → land on the source article in the archive viewer. The chain —
+query → vector search → LLM → cited answer → click-through to the
+original ZIM article — is the whole product.</p>
+<h3 id="55-why-this-design-is-interesting">5.5 Why this design is
+interesting</h3>
+<ul>
+<li><strong>sqlite-vec, not pgvector/Qdrant/Chroma.</strong> No daemon,
+no schema migration, the index is a single file you can rsync.
+Trade-off: no clustering, no fancy reranking. Fine for v0.1.</li>
+<li><strong>OpenAI-compatible shape.</strong> Open WebUI doesn't know
+AllArkive exists — it just sees a model called
+<code>allarkive-rag</code>. Any future client that speaks OpenAI chat
+completions is automatically compatible.</li>
+<li><strong>Refusal is enforced upstream of the model.</strong> This is
+the architectural answer to "how do you stop the LLM from
+hallucinating." You don't ask politely in a system prompt and hope; the
+API itself refuses to call the model when retrieval returns
+nothing.</li>
+</ul>
+<hr />
+<h2 id="6-deployment-topologies">6. Deployment topologies</h2>
+<p>Four patterns ship in v0.1, all from the same compose files.</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Hardware</th>
+<th>Compose file</th>
+<th>Bundle</th>
+<th>Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. Single laptop</strong></td>
+<td>One machine</td>
+<td><code>docker-compose.yml</code></td>
+<td>balanced</td>
+<td>qwen2.5:7b</td>
+</tr>
+<tr>
+<td><strong>B. Pi text-only (full stack)</strong></td>
+<td>Pi 4 4–8 GB + USB SSD</td>
+<td><code>docker-compose.pi.yml</code></td>
+<td>minimal</td>
+<td>qwen2.5:1.5b or :3b</td>
+</tr>
+<tr>
+<td><strong>C. Pi archive-only</strong></td>
+<td>Pi 4 + SSD</td>
+<td><code>docker-compose.pi-archive.yml</code></td>
+<td>any</td>
+<td>none (no AI)</td>
+</tr>
+<tr>
+<td><strong>D. Split</strong></td>
+<td>Laptop (AI) + Pi (archive)</td>
+<td>both, LAN</td>
+<td>any</td>
+<td>as fits laptop</td>
+</tr>
+</tbody>
+</table>
+<p>Pattern C and D model the "AI dies but archive survives" story: a
+stripped-down Pi running only kiwix-serve is a fully-functioning local
+library other devices on the LAN can read. The split deployment exposes
+<code>KIWIX_HOST=pi.local</code> to the RAG service.</p>
+<p>The Pi compose file uses extended healthcheck timeouts (60s/120s vs
+30s/90s on laptop) and caps Ollama's memory
+(<code>OLLAMA_MEMORY_LIMIT=4G</code>). These are tuned-from-experience
+numbers, not guesses.</p>
+<hr />
+<h2 id="7-bundles-the-content">7. Bundles (the content)</h2>
+<p>Three published bundles, each with a manifest
+(<code>bundles/&lt;name&gt;/manifest.json</code>) listing ZIM file,
+source URL, SHA-256, and license, plus a <code>LICENSE.md</code>
+inventory.</p>
+<h3 id="minimal--47-gb">Minimal — ~4.7 GB</h3>
+<ul>
+<li>WikiMed (medical reference, CC-BY-SA 4.0) ~1.4 GB</li>
+<li>iFixit (repair guides, <strong>CC-BY-NC-SA 3.0</strong>) ~3.3
+GB</li>
+<li>Recommended chat model: qwen2.5:3b. Index ~200 MB. Indexing ~5
+min.</li>
+</ul>
+<h3 id="balanced--24-gb-default">Balanced — ~24 GB
+<em>(default)</em></h3>
+<ul>
+<li>Wikipedia English mini (full text, no images) ~12 GB</li>
+<li>WikiMed ~1.4 GB</li>
+<li>iFixit ~3.3 GB</li>
+<li>SuperUser / Unix-Linux / Ask Ubuntu Stack Exchange ~7.5 GB
+combined</li>
+<li>Recommended chat model: qwen2.5:7b. Index 1–2 GB. Indexing 15–30
+min.</li>
+</ul>
+<h3 id="comprehensive--411-gb">Comprehensive — ~411 GB</h3>
+<ul>
+<li>Wikipedia English <strong>with images</strong> ~115 GB</li>
+<li>WikiMed, iFixit</li>
+<li>Project Gutenberg English ~206 GB</li>
+<li>Stack Overflow 2023-11 snapshot ~75 GB</li>
+<li>Math Stack Exchange ~6.9 GB</li>
+<li>Recommended chat model: qwen2.5:7b (16 GB RAM) or qwen2.5:14b (32+
+GB RAM). Indexing 2–4 hours.</li>
+</ul>
+<h3 id="license-posture">License posture</h3>
+<p>Every bundle's license inventory is checked into the repo. iFixit is
+<strong>non-commercial only</strong> — a real legal constraint to
+mention when discussing reuse. Wikipedia/WikiMed/Stack Exchange are
+CC-BY-SA (ShareAlike). Project Gutenberg is mostly public-domain in the
+US but text-by-text where it gets fuzzy.</p>
+<hr />
+<h2 id="8-the-bootstrap-experience">8. The bootstrap experience</h2>
+<p>One command, by design:
+<code>./scripts/bootstrap.sh [--bundle balanced] [--pi] [--model qwen2.5:7b]</code>.</p>
+<p>The script (~700 lines, well-instrumented) walks through:</p>
+<ol type="1">
+<li><strong>Prereqs</strong> — Docker ≥ 24, curl, sha256sum, python3,
+Docker daemon up.</li>
+<li><strong>Data dirs</strong> — create
+<code>/var/lib/allarkive/{zim,index,models,data}</code> (or the Pi
+path), check write perms.</li>
+<li><strong>Env file</strong> — copy <code>.env.example</code>, require
+<code>WEBUI_SECRET_KEY</code> (64-char hex, generated via
+<code>openssl rand -hex 32</code>).</li>
+<li><strong>Port detection</strong> — find conflicts, auto-assign free
+ports, store choices back to <code>.env</code>.</li>
+<li><strong>Disk-space check</strong> — fail fast if the chosen bundle
+won't fit.</li>
+<li><strong>Bundle fetch</strong> — calls <code>fetch-bundle.sh</code>,
+downloads each ZIM with curl resume, <strong>verifies SHA-256 against
+the manifest</strong>, halts loudly on mismatch.</li>
+<li><strong>Stack up</strong> — <code>docker compose up -d</code>, wait
+for health checks. Detects an already-running Ollama on the host (e.g.
+macOS Ollama.app on <code>host.docker.internal:11434</code>) and reuses
+it.</li>
+<li><strong>Pull models</strong> — chat + embedding via Ollama API, with
+progress.</li>
+<li><strong>Index</strong> —
+<code>docker compose exec rag python indexer.py</code>, prints chunk
+counts per ZIM at the end.</li>
+</ol>
+<p>The whole thing is idempotent and the resolved storage paths are
+persisted to <code>~/.config/allarkive/config.json</code> so subsequent
+runs pick them up automatically.</p>
+<p>Lifecycle peers:</p>
+<ul>
+<li><code>fetch-bundle.sh</code> — bundle download + checksum
+verification, standalone.</li>
+<li><code>reindex.sh</code> — re-run the indexer after adding ZIMs.</li>
+<li><code>teardown.sh</code> — stop the stack, preserve data.</li>
+<li><code>cleanup.sh</code> — stop and optionally remove images / data /
+both, with prompts before destructive steps.</li>
+</ul>
+<hr />
+<h2 id="9-the-landing-page">9. The landing page</h2>
+<p><code>http://localhost:8080</code> is the deliberate front door. The
+landing page (<code>landing/index.html</code> + <code>app.js</code> +
+<code>style.css</code>, served by nginx) has three modes:</p>
+<ul>
+<li><strong>Search</strong> — direct query against Kiwix's full-text
+index, opens the article.</li>
+<li><strong>Ask AI</strong> — submits to
+<code>/api/rag/v1/chat/completions</code>, streams the response, renders
+inline citations linked back to the kiwix article.</li>
+<li><strong>Manage</strong> — table of installed archives (name, size,
+last updated), with copyable instructions for adding/removing
+bundles.</li>
+</ul>
+<p>Two pieces of mandatory text the project never lets you remove:</p>
+<blockquote>
+<p><strong>Responses can be wrong. Check the citations.</strong>
+<em>(rendered with every AI answer)</em></p>
+<p>AllArkive is a research and reference tool. It is not a substitute
+for professional medical, legal, or safety advice. <em>(footer)</em></p>
+</blockquote>
+<p>The visual aesthetic is library catalogue, not SaaS. System fonts
+only, no web fonts, no external CDN, dark mode via
+<code>prefers-color-scheme</code>, information-dense. The status line
+literally says "binding: localhost only" so the user can see at a glance
+that nothing's leaking outbound.</p>
+<hr />
+<h2 id="10-design-and-tone--rules-with-teeth">10. Design and tone —
+rules with teeth</h2>
+<p><code>docs/DESIGN.md</code> is the tone constitution. Both for the
+talk and for any external writing, these are the rules:</p>
+<p><strong>Allowed framing:</strong></p>
+<ul>
+<li>"An offline research assistant that runs on your own hardware."</li>
+<li>"Useful when your internet is fine. More useful when it isn't."</li>
+<li>"Censorship resistance, privacy, and educational access."</li>
+<li>"RAG with citations is checkable, not infallible."</li>
+</ul>
+<p><strong>Forbidden framing:</strong></p>
+<ul>
+<li>"Survive the collapse of the internet."</li>
+<li>"When the grid goes down…"</li>
+<li>"Civilization-in-a-box" <em>(internal joke only, never
+public)</em></li>
+<li>Prepper / bunker / doomsday / apocalypse register</li>
+<li>Replacement for the internet / doctor / lawyer / expert</li>
+</ul>
+<p><strong>Voice rules:</strong></p>
+<ul>
+<li>Plain words over jargon ("local AI" not "edge inference").</li>
+<li>Em dashes without spaces: <code>word—word</code>.</li>
+<li>No exclamation marks. No emoji in README, landing page, or error
+messages.</li>
+<li>"We" is correct (Sam + Sham).</li>
+<li>Never claim more than RAG delivers.</li>
+</ul>
+<p>These rules show up in commit-review and PR-review. Drift is treated
+as a bug.</p>
+<hr />
+<h2 id="11-threat-model--what-this-does-and-doesnt-protect-against">11.
+Threat model — what this does and doesn't protect against</h2>
+<p>Lifted verbatim in structure from
+<code>docs/THREAT_MODEL.md</code>.</p>
+<h3 id="protects-against-partially">Protects against (partially)</h3>
+<ol type="1">
+<li><strong>ISP / connectivity outage.</strong> Once installed, runs
+fully offline. Trade-off: snapshot ages.</li>
+<li><strong>Cloud rug-pulls.</strong> No third-party runtime dependency.
+Trade-off: still trusting upstream projects (Kiwix, Ollama) at install
+time; AGPL forks viable if they shift.</li>
+<li><strong>Source-level censorship.</strong> ZIM on disk = unreachable
+to censors. Trade-off: must acquire ZIM during an unblocked window or
+via sneakernet.</li>
+<li><strong>Query surveillance.</strong> No telemetry, no outbound
+calls, default <code>127.0.0.1</code>. Trade-off: LAN opt-in exposes
+traffic to the local network operator.</li>
+<li><strong>Local-machine privacy.</strong> Chat history in a local
+sqlite, your machine. Trade-off: unencrypted disk = anyone with physical
+access reads it.</li>
+</ol>
+<h3 id="does-not-protect-against">Does <strong>not</strong> protect
+against</h3>
+<ul>
+<li>Targeted attacker with code execution on the box.</li>
+<li>Hallucinations (mitigated by citations + "no sources" path; not
+eliminated — user must check).</li>
+<li>Poisoned content in custom bundles.</li>
+<li>Supply-chain attacks on upstream ZIM mirrors <em>between</em>
+checksum pin and download.</li>
+<li>AllArkive itself being malicious — running our installer is running
+our code with user permissions. Mitigations: open source, AGPL-3.0,
+signed releases, signed git tags, eventual reproducible builds.</li>
+<li>ISP / network operator seeing AllArkive <em>installation</em>
+traffic.</li>
+<li>Physical seizure. Use full-disk encryption.</li>
+<li>Legal exposure for archive content in your jurisdiction.</li>
+</ul>
+<h3 id="default-security-posture">Default security posture</h3>
+<p>All services <code>127.0.0.1</code> only. Open WebUI auth disabled
+(correct on localhost, must be enabled before LAN exposure). Telemetry
+forced off in three places. The <code>RAG_API_KEY</code> env (default
+<code>"allarkive"</code>) is explicitly <strong>not</strong> a security
+boundary; it's there for client compatibility, not protection.</p>
+<hr />
+<h2 id="12-roadmap">12. Roadmap</h2>
+<h3 id="v01-may-2026-locked">v0.1 (May 2026, locked)</h3>
+<p>Single-machine docker-compose install • three bundles
+(minimal/balanced/comprehensive) • RAG with citation enforcement •
+landing page • install guides (laptop, server, macOS, Windows WSL2) •
+four deployment patterns • threat model + disclaimers • GitHub +
+Codeberg mirror • signed releases and tags • demo GIF in README.</p>
+<h3 id="explicitly-out-of-scope-for-v01">Explicitly out of scope for
+v0.1</h3>
+<p>Clustering, federation, mesh, IPFS, phone apps, hardened/airgap
+build, specialized medical/legal/agricultural bundles, bundle deltas,
+multi-language UI, multi-user accounts, cloud sync, telemetry,
+public-internet-facing default.</p>
+<h3 id="v02-candidates">v0.2 candidates</h3>
+<p>Bundle deltas (no more 50 GB re-downloads). Better RAG: hybrid search
+(vector + keyword), multi-language. First-run wizard. Pre-flight check
+script. Backup/restore. Documented LAN opt-in with reverse proxy +
+auth.</p>
+<h3 id="v03-ideas">v0.3+ ideas</h3>
+<p>Specialized bundles (medical, agricultural, software). Non-technical
+UX. Mesh/LAN federation. Phone-as-client. Hardened build. End-to-end
+reproducible builds. Formal security audit.</p>
+<h3 id="will-never-do">Will never do</h3>
+<p>SaaS. Telemetry. VC funding. "Anonymous usage stats." Marketed as
+survival/medical/legal tool. Non-reproducible binaries. Proprietary
+bundled content.</p>
+<hr />
+<h2 id="13-state-of-play-as-of-writing">13. State of play (as of
+writing)</h2>
+<p>From <code>CHANGELOG.md [Unreleased]</code> and
+<code>TODO.md</code>:</p>
+<p><strong>Done:</strong> repo skeleton, manual install, compose files,
+RAG pipeline, landing page, per-bundle LICENSE.md files, images pinned
+to SHA-256 digests, bundle manifests promoted to v1.0, install guides
+rewritten for docker-compose primary path, RAG↔︎Open WebUI integration
+wired, <code>THREAT_MODEL.md</code> finalized.</p>
+<p><strong>Open:</strong></p>
+<ul>
+<li>Hands-on Pi validation: imaging a Pi, walking
+<code>pi-text-only.md</code> and <code>pi-archive-only.md</code>
+end-to-end, testing the split deployment.</li>
+<li>Screenshots for install guides (need a clean install pass).</li>
+<li>Demo GIF, signed release artifacts, talk dry-run.</li>
+</ul>
+<p>The technical scaffolding is in; the remaining work is empirical (Pi
+hardware) and presentational (talk + GIF + signing).</p>
+<hr />
+<h2 id="14-governance-and-contribution">14. Governance and
+contribution</h2>
+<ul>
+<li><strong>Two-person maintainer model.</strong> Single maintainer can
+merge typo/doc/dep/bug-fix changes. Two-maintainer sign-off required
+for: locked decisions in <code>CLAUDE.md</code>, default security
+posture, bundle contents, license/governance, minor/major releases.</li>
+<li><strong>No legal entity, no funding, no commercial
+relationships.</strong></li>
+<li><strong>DCO sign-off</strong> on every commit
+(<code>git commit -s</code>). Not a CLA.</li>
+<li><strong>Conventional Commits</strong> in imperative mood. Branch
+prefixes <code>feat/</code>, <code>fix/</code>, <code>docs/</code> from
+<code>dev</code>.</li>
+<li><strong>Releases:</strong> semver; signed git tags; release notes +
+checksums + signed artifacts; mirror verified; ≥ one release per
+quarter.</li>
+</ul>
+<p>What won't be accepted: telemetry of any kind, default-on remote
+access, floating image tags, bundled content with unclear licensing,
+runtime cloud dependencies, anything that erases citation
+disclaimers.</p>
+<hr />
+<h2 id="15-the-deployment-cheat-sheet-one-table">15. The deployment
+cheat sheet (one table)</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Primary entry</td>
+<td><code>http://localhost:8080</code> (nginx landing)</td>
+</tr>
+<tr>
+<td>Archive</td>
+<td><code>http://localhost:8081</code> (kiwix-serve)</td>
+</tr>
+<tr>
+<td>Chat UI</td>
+<td><code>http://localhost:3000</code> (Open WebUI)</td>
+</tr>
+<tr>
+<td>RAG API</td>
+<td><code>http://localhost:8000</code> (FastAPI, OpenAI-compatible)</td>
+</tr>
+<tr>
+<td>LLM</td>
+<td><code>http://localhost:11434</code> (Ollama)</td>
+</tr>
+<tr>
+<td>Default chat model</td>
+<td><code>qwen2.5:7b</code></td>
+</tr>
+<tr>
+<td>Default embed model</td>
+<td><code>nomic-embed-text</code> (768-dim)</td>
+</tr>
+<tr>
+<td>Vector store</td>
+<td>sqlite-vec, single file at <code>$DATA/index/index.db</code></td>
+</tr>
+<tr>
+<td>Chunking</td>
+<td>800 chars, 100 overlap, top-K=5, max L2 distance 1.0</td>
+</tr>
+<tr>
+<td>Config file</td>
+<td><code>~/.config/allarkive/config.json</code></td>
+</tr>
+<tr>
+<td>Min RAM (laptop)</td>
+<td>8 GB; 16 GB recommended</td>
+</tr>
+<tr>
+<td>Min RAM (Pi)</td>
+<td>4 GB; 8 GB recommended</td>
+</tr>
+<tr>
+<td>Disk (balanced bundle)</td>
+<td>~28 GB</td>
+</tr>
+<tr>
+<td>License (glue)</td>
+<td>AGPL-3.0</td>
+</tr>
+<tr>
+<td>Public debut</td>
+<td>BSides Melbourne, 16–17 May 2026</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="16-suggested-narrative-arcs">16. Suggested narrative arcs</h2>
+<p>For a write-up or a talk, three arcs that the existing material
+already supports:</p>
+<ol type="1">
+<li><strong>"How to stop a local LLM from hallucinating."</strong> Open
+with the RAG-refusal trick (no sources → API refuses, model is never
+called). Pull through to citations rendered as kiwix links. Show the
+chain end-to-end on stage. This is the strongest single technical
+story.</li>
+<li><strong>"Resilience without doomsday."</strong> Lead with the
+framing fight in <code>DESIGN.md</code> — why this is <em>not</em>
+prepper software, and why the maintainers police that line. Frame around
+real censorship events, ISP outages, cloud rug-pulls. Pi-archive-only as
+the closing demo: when the AI is gone, the library still works.</li>
+<li><strong>"A 700-line bash script and five containers."</strong> The
+build-it-yourself walkthrough. <code>bootstrap.sh</code> step by step,
+the four compose patterns, the bundle-and-checksum dance. Lands the
+"boring infrastructure" thesis: this is rentable as a weekend project
+for a determined sysadmin, and that's the point.</li>
+</ol>
+<p>Any of the three can carry the BSides slot; mixing the first and
+second is probably the strongest combination for an infosec
+audience.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/BRIEF.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/BRIEF.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#1-the-one-line-pitch">1. The one-line pitch</a></li>
+<li class="toc-h2"><a href="#2-the-people-and-the-moment">2. The people and the moment</a></li>
+<li class="toc-h2"><a href="#3-the-problem-space-why-this-exists">3. The problem space (why
+this exists)</a></li>
+<li class="toc-h2"><a href="#4-architecture--three-loosely-coupled-layers">4. Architecture —
+three loosely-coupled layers</a></li>
+<li class="toc-h3"><a href="#41-pinned-versions">4.1 Pinned versions</a></li>
+<li class="toc-h3"><a href="#42-default-ports--all-bind-to-127001">4.2 Default ports — all
+bind to 127.0.0.1</a></li>
+<li class="toc-h3"><a href="#43-models-pinned-by-nametag-in-bootstrap">4.3 Models (pinned by
+name+tag in bootstrap)</a></li>
+<li class="toc-h3"><a href="#44-data-layout">4.4 Data layout</a></li>
+<li class="toc-h2"><a href="#5-the-rag-pipeline--the-interesting-engineering-bit">5. The RAG
+pipeline — the interesting engineering bit</a></li>
+<li class="toc-h3"><a href="#51-indexer-indexerpy">5.1 Indexer (indexer.py)</a></li>
+<li class="toc-h3"><a href="#52-retrieval-server-serverpy">5.2 Retrieval server
+(server.py)</a></li>
+<li class="toc-h3"><a href="#53-prompt-promptpy">5.3 Prompt (prompt.py)</a></li>
+<li class="toc-h3"><a href="#54-citation-rewriter-citationspy">5.4 Citation rewriter
+(citations.py)</a></li>
+<li class="toc-h3"><a href="#55-why-this-design-is-interesting">5.5 Why this design is
+interesting</a></li>
+<li class="toc-h2"><a href="#6-deployment-topologies">6. Deployment topologies</a></li>
+<li class="toc-h2"><a href="#7-bundles-the-content">7. Bundles (the content)</a></li>
+<li class="toc-h3"><a href="#minimal--47-gb">Minimal — ~4.7 GB</a></li>
+<li class="toc-h3"><a href="#balanced--24-gb-default">Balanced — ~24 GB
+(default)</a></li>
+<li class="toc-h3"><a href="#comprehensive--411-gb">Comprehensive — ~411 GB</a></li>
+<li class="toc-h3"><a href="#license-posture">License posture</a></li>
+<li class="toc-h2"><a href="#8-the-bootstrap-experience">8. The bootstrap experience</a></li>
+<li class="toc-h2"><a href="#9-the-landing-page">9. The landing page</a></li>
+<li class="toc-h2"><a href="#10-design-and-tone--rules-with-teeth">10. Design and tone —
+rules with teeth</a></li>
+<li class="toc-h2"><a href="#11-threat-model--what-this-does-and-doesnt-protect-against">11.
+Threat model — what this does and doesn&#x27;t protect against</a></li>
+<li class="toc-h3"><a href="#protects-against-partially">Protects against (partially)</a></li>
+<li class="toc-h3"><a href="#does-not-protect-against">Does not protect
+against</a></li>
+<li class="toc-h3"><a href="#default-security-posture">Default security posture</a></li>
+<li class="toc-h2"><a href="#12-roadmap">12. Roadmap</a></li>
+<li class="toc-h3"><a href="#v01-may-2026-locked">v0.1 (May 2026, locked)</a></li>
+<li class="toc-h3"><a href="#explicitly-out-of-scope-for-v01">Explicitly out of scope for
+v0.1</a></li>
+<li class="toc-h3"><a href="#v02-candidates">v0.2 candidates</a></li>
+<li class="toc-h3"><a href="#v03-ideas">v0.3+ ideas</a></li>
+<li class="toc-h3"><a href="#will-never-do">Will never do</a></li>
+<li class="toc-h2"><a href="#13-state-of-play-as-of-writing">13. State of play (as of
+writing)</a></li>
+<li class="toc-h2"><a href="#14-governance-and-contribution">14. Governance and
+contribution</a></li>
+<li class="toc-h2"><a href="#15-the-deployment-cheat-sheet-one-table">15. The deployment
+cheat sheet (one table)</a></li>
+<li class="toc-h2"><a href="#16-suggested-narrative-arcs">16. Suggested narrative arcs</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

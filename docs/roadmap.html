@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Roadmap.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html" aria-current="page">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Roadmap</span></p>
+            <article class="doc-content">
+<h1 id="roadmap">ROADMAP</h1>
+<p>What ships when. The v0.1 scope is locked. Everything else is
+"interesting later."</p>
+<h2
+id="v01--first-public-release-target-bsides-melbourne-may-1617-2026">v0.1
+— first public release (target: BSides Melbourne, May 16–17, 2026)</h2>
+<p><strong>Goal</strong>: one person can install AllArkive on a laptop
+in an afternoon, ask the local AI a question about the local archive,
+and get an answer with citations they can verify.</p>
+<h3 id="in-scope">In scope</h3>
+<ul>
+<li><code>docker-compose</code> install of Kiwix + Ollama + Open WebUI
+on one machine.</li>
+<li>Default knowledge bundle (<code>balanced</code>) with English
+Wikipedia text-only, a medical reference wiki, iFixit, Project
+Gutenberg, Stack Exchange.</li>
+<li>Two additional bundles: <code>minimal</code> (Pi-friendly) and
+<code>comprehensive</code> (full Wikipedia with images for users with
+disk).</li>
+<li>RAG pipeline with citations. No-source = no-answer behaviour.</li>
+<li>Local landing page (search, chat, manage).</li>
+<li>Install guides for laptop, Linux server, macOS, Windows (via
+WSL2).</li>
+<li>Deployment patterns for Pi text-only, Pi archive-only, and laptop+Pi
+split.</li>
+<li>Threat model and explicit disclaimers.</li>
+<li>AGPL-3.0 licensed glue code; bundle content tracked with its own
+licenses.</li>
+<li>GitHub primary, Codeberg mirror.</li>
+<li>Signed releases, signed git tags.</li>
+<li>Demo GIF in README.</li>
+</ul>
+<h3 id="out-of-scope-explicitly-deferred">Out of scope (explicitly
+deferred)</h3>
+<ul>
+<li>Clustering, replication, federation between nodes.</li>
+<li>Mesh networking, serverless transport, IPFS-style content
+addressing.</li>
+<li>Phone apps (Android, iOS).</li>
+<li>Hardened or airgap-only build target.</li>
+<li>Specialised bundles for medical, agricultural, or legal use.</li>
+<li>Bundle deltas (incremental archive updates).</li>
+<li>Multi-language UI.</li>
+<li>Multi-user accounts / roles / quotas.</li>
+<li>Cloud sync of any kind.</li>
+<li>Telemetry of any kind.</li>
+<li>Public-internet-facing default deployment.</li>
+</ul>
+<h2 id="v02--quality-of-life">v0.2 — quality of life</h2>
+<p><strong>Goal</strong>: the install is smoother, the AI is better, the
+docs cover the long tail.</p>
+<h3 id="candidates-not-commitments">Candidates (not commitments)</h3>
+<ul>
+<li>Bundle deltas — update an archive without re-downloading 50 GB.</li>
+<li>Improved RAG: better embeddings, hybrid search (vector +
+keyword).</li>
+<li>Multi-language retrieval.</li>
+<li>A first-run wizard on the landing page (pick a bundle, pick a
+model).</li>
+<li>Pre-flight check script: "does your machine actually have what this
+needs."</li>
+<li>Backup and restore scripts for the archive and the user's chat
+history.</li>
+<li>Documented opt-in LAN access with reverse proxy + auth
+examples.</li>
+</ul>
+<h2 id="v03--ideas">v0.3+ — ideas</h2>
+<p>In rough order of how much they interest us, not how likely they
+are:</p>
+<ul>
+<li><strong>Specialised bundles</strong>: a curated medical bundle (with
+extra disclaimers), an agricultural bundle (FAO docs, soil/crop guides),
+a software-development bundle (curated Stack Exchange + selected
+open-source docs).</li>
+<li><strong>A second landing-page experience for non-technical
+users</strong> — bigger fonts, fewer options, more guidance.</li>
+<li><strong>Mesh / LAN federation</strong> — multiple AllArkive nodes on
+the same LAN exchange archive availability so a query can hit any of
+them.</li>
+<li><strong>Phone-as-a-client app</strong> — connect to a home AllArkive
+node from a phone on the same network. Not a full local stack on the
+phone.</li>
+<li><strong>Hardened build</strong> — minimal base images, SELinux
+profiles, signed kernel modules, etc. For users who want this as part of
+a security posture.</li>
+<li><strong>Reproducible builds</strong> end-to-end, including the model
+weights provenance chain.</li>
+<li><strong>A formal security audit</strong> once the project has any
+users worth auditing for.</li>
+</ul>
+<h2 id="what-we-will-probably-never-do">What we will probably never
+do</h2>
+<ul>
+<li>Become a hosted SaaS. The whole point is that it runs on your
+machine.</li>
+<li>Add tracking, telemetry, or "anonymous usage statistics."</li>
+<li>Take VC money for the core project.</li>
+<li>Promise this is a survival tool, a medical tool, or a legal tool. It
+isn't.</li>
+<li>Ship anything we can't reproduce from source.</li>
+<li>Bundle proprietary content.</li>
+</ul>
+<h2 id="how-to-propose-something-for-the-roadmap">How to propose
+something for the roadmap</h2>
+<ol type="1">
+<li>Read this doc and check it isn't already here under a different
+name.</li>
+<li>Open an issue with the <code>roadmap</code> label.</li>
+<li>Describe the user need, not the technical solution.</li>
+<li>Note which version it might fit (v0.2, v0.3, "someday").</li>
+<li>We'll discuss in the issue and either move it into a milestone or
+close with a reason.</li>
+</ol>
+<p>Scope creep is the most likely way this project dies. We'd rather say
+no twenty times than ship a sprawl.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>ROADMAP.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/ROADMAP.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#v01--first-public-release-target-bsides-melbourne-may-1617-2026">v0.1
+— first public release (target: BSides Melbourne, May 16–17, 2026)</a></li>
+<li class="toc-h3"><a href="#in-scope">In scope</a></li>
+<li class="toc-h3"><a href="#out-of-scope-explicitly-deferred">Out of scope (explicitly
+deferred)</a></li>
+<li class="toc-h2"><a href="#v02--quality-of-life">v0.2 — quality of life</a></li>
+<li class="toc-h3"><a href="#candidates-not-commitments">Candidates (not commitments)</a></li>
+<li class="toc-h2"><a href="#v03--ideas">v0.3+ — ideas</a></li>
+<li class="toc-h2"><a href="#what-we-will-probably-never-do">What we will probably never
+do</a></li>
+<li class="toc-h2"><a href="#how-to-propose-something-for-the-roadmap">How to propose
+something for the roadmap</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

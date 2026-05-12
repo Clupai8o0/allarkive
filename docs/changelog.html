@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Changelog.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html" aria-current="page">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Changelog</span></p>
+            <article class="doc-content">
+<h1 id="changelog">CHANGELOG</h1>
+<p>All notable changes to this project are documented here.</p>
+<p>The format is based on <a
+href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and
+this project adheres to <a
+href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="unreleased"><a
+href="https://github.com/allarkive/allarkive/compare/v0.1.0...HEAD">Unreleased</a></h2>
+<h3 id="added">Added</h3>
+<ul>
+<li><code>docs/index.html</code>, <code>docs/styles.css</code>,
+<code>docs/.nojekyll</code> — public-facing landing page intended to be
+served by GitHub Pages from <code>main</code>/<code>docs</code>. Short
+project explanation, install snippet, links to the hosted docs. Distinct
+from the local landing page at <code>landing/</code>, which remains the
+in-stack entry point.</li>
+<li><code>bundles/minimal/LICENSE.md</code>,
+<code>bundles/balanced/LICENSE.md</code>,
+<code>bundles/comprehensive/LICENSE.md</code> — per-bundle license
+summaries listing each ZIM's source, license, and attribution as
+required by CLAUDE.md.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><p><code>scripts/bootstrap.sh</code> final summary now prints chunk
+counts per archive from the RAG <code>index.db</code>, so a fresh user
+can see exactly what got indexed rather than discovering an
+empty/partial index only when a query returns "no sources
+found".</p></li>
+<li><p>Install guides (<code>README.md</code>,
+<code>docs/install/{laptop,macos,windows,server}.md</code>,
+<code>docs/deployment/pi-text-only.md</code>,
+<code>docs/index.html</code>) and <code>docs/ARCHITECTURE.MD</code> now
+state that RAG indexing runs after the stack starts and takes hours on
+CPU for the balanced bundle, that the indexer is resumable and
+idempotent, and that Kiwix browsing works immediately while RAG coverage
+grows in the background. Replaces stale "10–30 minutes for the balanced
+bundle" claims in <code>docs/install/server.md</code> and
+<code>docs/deployment/pi-text-only.md</code>.</p></li>
+<li><p>All Docker images in <code>compose/docker-compose.yml</code>,
+<code>compose/docker-compose.pi.yml</code>, and
+<code>compose/docker-compose.pi-archive.yml</code> are now pinned to
+SHA-256 digests (multi-arch manifest digests fetched via
+<code>docker buildx imagetools inspect</code>). Images affected:
+kiwix-serve 3.8.2, ollama 0.22.1, open-webui 0.9.2, nginx
+1.27.3-alpine.</p></li>
+<li><p>Bundle manifests promoted from <code>"version": "draft"</code> to
+<code>"version": "1.0"</code>; ZIM selection finalised and model choices
+resolved: <code>minimal</code> → WikiMed + iFixit, qwen2.5:3b;
+<code>balanced</code> → Wikipedia text + WikiMed + iFixit + Gutenberg +
+SuperUser, qwen2.5:7b; <code>comprehensive</code> → adds Wikipedia with
+images + Stack Overflow + Math SE, qwen2.5:7b.</p></li>
+<li><p><code>docs/install/laptop.md</code> — rewritten from Milestone 2
+draft to use docker-compose as the primary install path; manual-install
+appendix note preserved.</p></li>
+<li><p><code>docs/install/server.md</code> — headless Linux server
+install guide; covers Docker Engine install, SSH port forwarding for
+browser access, data directory setup, and systemd service unit.</p></li>
+<li><p><code>docs/install/macos.md</code> — macOS install guide; covers
+Docker Desktop, Apple Silicon Metal acceleration, resource limits, and
+file-sharing permissions.</p></li>
+<li><p><code>docs/install/windows.md</code> — Windows install guide via
+WSL2 + Docker Desktop; covers WSL2 install, memory configuration,
+filesystem performance notes, NVIDIA GPU passthrough, and Defender
+exclusions.</p></li>
+<li><p><code>docs/bundles/README.md</code> — bundle reference: contents,
+ZIM sizes, license summary, how to add custom ZIMs, and indexing time
+estimates for each bundle.</p></li>
+<li><p><code>docs/deployment/lan-access.md</code> — opt-in LAN access
+guide; Caddy and nginx reverse-proxy examples, basic auth setup,
+firewall rules, and security posture summary.</p></li>
+<li><p><code>docs/THREAT_MODEL.md</code> — renamed from
+<code>THREAD_MODEL.MD</code> (filename typo fix); added build-learnings
+section covering: Open WebUI auth-off default, RAG "no sources"
+enforcement, Docker bridge isolation, RAG API key not being a security
+boundary, image digest pinning status, and iFixit commercial-use
+restriction.</p></li>
+</ul>
+<h3 id="changed-1">Changed</h3>
+<ul>
+<li><code>compose/docker-compose.pi-archive.yml</code> — archive-only
+compose stack for a dedicated Raspberry Pi kiwix node (deployment
+pattern C); single service with a <code>KIWIX_BIND</code> variable for
+toggling between loopback-only and LAN access without editing the
+compose file.</li>
+<li><code>docs/deployment/pi-text-only.md</code> — full walkthrough for
+running the AllArkive stack (kiwix + Ollama + RAG + landing page) on a
+Raspberry Pi 4/5 with a USB SSD; covers OS imaging, SSD mount, Docker
+install, bootstrap, smoke tests, and ARM/low-RAM troubleshooting.</li>
+<li><code>docs/deployment/pi-archive-only.md</code> — walkthrough for a
+dedicated kiwix archive node on a Pi; covers LAN exposure, firewall
+rules, ZIM bundle download, and verification steps.</li>
+<li><code>docs/deployment/split.md</code> — guide for the split
+topology: AI (Ollama + RAG) on a laptop, archive (kiwix) on a separate
+Pi; covers NFS mount, index copy alternatives, network configuration,
+and citation URL consistency.</li>
+</ul>
+<h3 id="changed-2">Changed</h3>
+<ul>
+<li><p><code>compose/docker-compose.pi.yml</code> — added
+<code>OPENAI_API_BASE_URLS</code> and <code>OPENAI_API_KEYS</code> to
+the <code>open-webui</code> service so <code>allarkive-rag</code>
+appears as a selectable model (matching the laptop stack); added
+<code>depends_on: rag</code> with
+<code>condition: service_healthy</code> to <code>open-webui</code>;
+added <code>condition: service_healthy</code> to <code>rag</code> and
+<code>landing</code> depends_on blocks; extended Ollama
+<code>start_period</code> to 90 s; changed default
+<code>CHAT_MODEL</code> from <code>qwen2.5:7b</code> to
+<code>qwen2.5:1.5b</code> to fit Pi 4 with 4 GB RAM; added model size
+guidance comment.</p></li>
+<li><p><code>landing/index.html</code>, <code>landing/style.css</code>,
+<code>landing/app.js</code> — local landing page served at
+<code>http://localhost:8080</code>; single-page with Search/Chat and
+Manage sections; dark mode via <code>prefers-color-scheme</code>; no
+external assets; all system fonts.</p></li>
+<li><p><code>landing/nginx.conf</code> — nginx config serving static
+files on port 8080; proxies <code>/api/rag/</code> to the RAG service so
+the browser makes same-origin API calls.</p></li>
+<li><p><code>scripts/rag/server.py</code> — <code>/status</code>
+endpoint returning binding mode, installed archives (name, size, mtime),
+archive count and total size, chat/embed model names, and RAG index
+readiness; consumed by the landing page status line and Manage
+section.</p></li>
+<li><p><code>compose/docker-compose.yml</code> — <code>landing</code>
+service (<code>nginx:1.27.3-alpine</code>) on <code>LANDING_PORT</code>
+(default 8080); depends on <code>rag</code> being healthy.</p></li>
+<li><p><code>compose/docker-compose.pi.yml</code> — <code>rag</code> and
+<code>landing</code> services added, matching the laptop stack with
+Pi-appropriate timeouts and a lower <code>RAG_MAX_ARTICLES</code>
+cap.</p></li>
+<li><p><code>compose/.env.example</code> —
+<code>LANDING_PORT=8080</code>.</p></li>
+<li><p><code>scripts/rag/server.py</code> — FastAPI RAG service exposing
+an OpenAI-compatible <code>/v1/chat/completions</code> endpoint; every
+response is grounded in retrieved passages or refused with an explicit
+no-sources message; supports streaming via SSE.</p></li>
+<li><p><code>scripts/rag/indexer.py</code> — CLI indexer that reads ZIM
+files via <code>libzim</code>, chunks article text, embeds with Ollama
+(<code>nomic-embed-text</code>), and stores normalised float32 vectors
+in an sqlite-vec index at
+<code>$ALLARKIVE_DATA_DIR/index/index.db</code>. Idempotent: re-run
+safely; skips unchanged ZIMs; <code>--force</code> to rebuild.</p></li>
+<li><p><code>scripts/rag/prompt.py</code> — system prompt template
+requiring <code>[N]</code> citation markers and a hard refusal when no
+relevant passages are found.</p></li>
+<li><p><code>scripts/rag/citations.py</code> — post-processor that
+rewrites <code>[N]</code> markers to Markdown links pointing at the
+local kiwix article viewer.</p></li>
+<li><p><code>scripts/rag/Dockerfile</code> — multi-arch
+(<code>linux/amd64</code>, <code>linux/arm64</code>) Python 3.11 image
+for the RAG service.</p></li>
+<li><p><code>scripts/rag/requirements.txt</code> — pinned Python
+dependencies for the RAG service.</p></li>
+<li><p><code>compose/docker-compose.yml</code> — RAG service
+(<code>allarkive-rag:0.1.0</code>) added to the default stack; Open
+WebUI wired to the RAG service via <code>OPENAI_API_BASE_URLS</code> so
+<code>allarkive-rag</code> appears as a selectable model alongside
+Ollama models.</p></li>
+<li><p><code>compose/.env.example</code> — RAG tuning knobs:
+<code>EMBED_MODEL</code>, <code>CHAT_MODEL</code>,
+<code>RAG_TOP_K</code>, <code>RAG_MAX_DISTANCE</code>,
+<code>RAG_MAX_ARTICLES</code>, <code>KIWIX_PUBLIC_URL</code>.</p></li>
+<li><p><code>scripts/bootstrap.sh</code> — pulls
+<code>nomic-embed-text</code> embedding model and runs the indexer
+automatically on first boot.</p></li>
+</ul>
+<h3 id="changed-3">Changed</h3>
+<ul>
+<li><p><code>compose/docker-compose.yml</code> — <code>open-webui</code>
+now depends on <code>rag</code> being healthy before starting, ensuring
+the model is visible at first launch.</p></li>
+<li><p><code>scripts/bootstrap.sh</code> — summary screen shows RAG port
+and re-index instructions.</p></li>
+<li><p><code>docs/ARCHITECTURE.md</code> — filled in Milestone 4
+decisions (vector DB, embedding model, Open WebUI integration
+approach).</p></li>
+<li><p><code>TODO.md</code> — Milestone 4 CC tasks marked done; vector
+DB and embedding model open questions resolved.</p></li>
+<li><p><code>compose/docker-compose.yml</code> — default stack with
+kiwix-serve, Ollama, and Open WebUI; all services bound to 127.0.0.1;
+CPU-only by default with a <code>--profile gpu</code> opt-in for NVIDIA
+GPU acceleration; telemetry disabled on Open WebUI; health checks on
+every service.</p></li>
+<li><p><code>compose/docker-compose.pi.yml</code> — Raspberry Pi variant
+(deployment pattern B); data root defaults to
+<code>/mnt/ssd/allarkive</code>; extended healthcheck grace periods;
+Ollama memory cap via <code>OLLAMA_MEMORY_LIMIT</code>.</p></li>
+<li><p><code>compose/.env.example</code> — documented environment
+template covering ports, data directory, Open WebUI secret key, and Pi
+overrides.</p></li>
+<li><p><code>scripts/bootstrap.sh</code> — first-run setup: checks
+prerequisites, creates data directories, fetches the default bundle,
+starts the compose stack, and pulls the default Ollama model with
+streamed progress.</p></li>
+<li><p><code>scripts/fetch-bundle.sh</code> — downloads and SHA-256
+verifies ZIM files listed in a bundle manifest; resumes partial
+downloads; pins new checksums back to the manifest after first
+verification.</p></li>
+<li><p><code>bundles/balanced/manifest.json</code> — draft balanced
+bundle: Wikipedia EN nopic, WikiMed, iFixit, Project Gutenberg,
+SuperUser (~30 GB total ZIMs).</p></li>
+<li><p><code>bundles/minimal/manifest.json</code> — draft minimal
+bundle: WikiMed + iFixit (~3.5 GB total ZIMs; Pi-friendly).</p></li>
+<li><p><code>bundles/comprehensive/manifest.json</code> — draft
+comprehensive bundle: Wikipedia EN with images, WikiMed, iFixit,
+Gutenberg, Stack Overflow, SuperUser, Math SE (~130 GB+ total
+ZIMs).</p></li>
+<li><p><code>docs/install/laptop.md</code> — manual install guide (draft
+v0) covering Ollama, Kiwix, and Open WebUI on Ubuntu 22.04/24.04 LTS;
+includes smoke tests, port summary, and troubleshooting. To be validated
+and corrected during Milestone 2.</p></li>
+<li><p>Initial repository scaffolding.</p></li>
+<li><p><code>CLAUDE.md</code> master instructions for agent-driven
+development.</p></li>
+<li><p><code>ARCHITECTURE.md</code> describing the three-layer
+design.</p></li>
+<li><p><code>DESIGN.md</code> covering tone, voice, and landing page
+direction.</p></li>
+<li><p><code>THREAT_MODEL.md</code> documenting what the project does
+and does not protect against.</p></li>
+<li><p><code>ROADMAP.md</code> separating v0.1 scope from v0.2+
+ideas.</p></li>
+<li><p><code>TODO.md</code>, <code>DOCS.md</code>,
+<code>GOVERNANCE.md</code>.</p></li>
+<li><p><code>CONTRIBUTING.md</code>, <code>CODE_OF_CONDUCT.md</code>,
+<code>SECURITY.md</code>.</p></li>
+<li><p><code>LICENSE</code> — AGPL-3.0 full text.</p></li>
+<li><p><code>.gitignore</code> covering Python, Node, Docker, OS
+clutter, and ZIM archives.</p></li>
+<li><p><code>.editorconfig</code> with per-filetype indent and
+line-ending rules.</p></li>
+<li><p><code>.github/workflows/ci.yml</code> — markdown lint,
+shellcheck, compose validation, Python lint.</p></li>
+<li><p><code>.github/workflows/mirror-codeberg.yml</code> — push mirror
+to Codeberg on every <code>main</code> commit.</p></li>
+<li><p><code>.github/ISSUE_TEMPLATE/</code> — bug, feature, and
+bundle-proposal templates.</p></li>
+<li><p><code>.github/PULL_REQUEST_TEMPLATE.md</code>.</p></li>
+<li><p>Directory skeleton: <code>compose/</code>,
+<code>scripts/rag/</code>, <code>bundles/</code>, <code>landing/</code>,
+<code>docs/install/</code>, <code>docs/bundles/</code>,
+<code>docs/deployment/</code>.</p></li>
+<li><p>License rationale paragraph in <code>CONTRIBUTING.md</code> —
+documents why AGPL-3.0 was chosen over MIT/Apache-2.0.</p></li>
+</ul>
+<h3 id="changed-4">Changed</h3>
+<ul>
+<li><em>Nothing yet.</em></li>
+</ul>
+<h3 id="deprecated">Deprecated</h3>
+<ul>
+<li><em>Nothing yet.</em></li>
+</ul>
+<h3 id="removed">Removed</h3>
+<ul>
+<li><em>Nothing yet.</em></li>
+</ul>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li><em>Nothing yet.</em></li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li><em>Nothing yet.</em></li>
+</ul>
+<hr />
+<h2 id="010--unreleased"><a
+href="https://github.com/allarkive/allarkive/releases/tag/v0.1.0">0.1.0</a>
+— Unreleased</h2>
+<p>First public release. Scope:</p>
+<ul>
+<li>One-command Docker install of Kiwix, Ollama, and Open WebUI.</li>
+<li>Default starter knowledge bundle (English Wikipedia text-only, a
+medical reference wiki, iFixit, Project Gutenberg).</li>
+<li>RAG pipeline with citation-required prompts.</li>
+<li>Local landing page (search archive, chat with AI, manage
+bundles).</li>
+<li>Documentation: install guides for laptop and server; deployment
+patterns for Pi text-only, Pi archive-only, and split.</li>
+<li>Demo GIF in the README.</li>
+<li>Codeberg mirror automated via GitHub Action.</li>
+<li>AGPL-3.0 licensed glue code; bundled content keeps original
+licenses.</li>
+</ul>
+<hr />
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>CHANGELOG.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/CHANGELOG.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#unreleased">Unreleased</a></li>
+<li class="toc-h3"><a href="#added">Added</a></li>
+<li class="toc-h3"><a href="#changed">Changed</a></li>
+<li class="toc-h3"><a href="#changed-1">Changed</a></li>
+<li class="toc-h3"><a href="#changed-2">Changed</a></li>
+<li class="toc-h3"><a href="#changed-3">Changed</a></li>
+<li class="toc-h3"><a href="#changed-4">Changed</a></li>
+<li class="toc-h3"><a href="#deprecated">Deprecated</a></li>
+<li class="toc-h3"><a href="#removed">Removed</a></li>
+<li class="toc-h3"><a href="#fixed">Fixed</a></li>
+<li class="toc-h3"><a href="#security">Security</a></li>
+<li class="toc-h2"><a href="#010--unreleased">0.1.0
+— Unreleased</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

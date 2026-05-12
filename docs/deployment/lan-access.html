@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opt-in LAN access — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Opt-in LAN access.">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="../install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="../install/macos.html">macOS</a></li>
+<li><a href="../install/windows.html">Windows (WSL2)</a></li>
+<li><a href="../install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="split.html">Split across two machines</a></li>
+<li><a href="lan-access.html" aria-current="page">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Deployment</span> / <span>Opt-in LAN access</span></p>
+            <article class="doc-content">
+<h1 id="lan-access-opt-in">LAN access (opt-in)</h1>
+<p>By default, AllArkive binds all services to <code>127.0.0.1</code> —
+nothing is reachable outside the machine it runs on. This page documents
+how to enable access from other devices on your local network.</p>
+<p><strong>This is opt-in and not the default for a reason.</strong>
+Read the risk section before proceeding.</p>
+<hr />
+<h2 id="when-you-might-want-this">When you might want this</h2>
+<ul>
+<li>You run AllArkive on a home server or NAS and want to reach it from
+a laptop or tablet on the same network.</li>
+<li>You have AllArkive on a Raspberry Pi (archive-only or full stack)
+and want other household devices to use it.</li>
+<li>You want to share access with one other trusted person on the same
+LAN.</li>
+</ul>
+<hr />
+<h2 id="when-you-probably-do-not-want-this">When you probably do not
+want this</h2>
+<ul>
+<li>You want to access AllArkive from outside your home network (the
+public internet). That is a different setup and requires significantly
+more security consideration than this guide covers. It is out of scope
+for v0.1.</li>
+<li>You are on a shared or untrusted network (office, coffee shop, hotel
+WiFi). Do not expose AllArkive on those networks without a VPN.</li>
+</ul>
+<hr />
+<h2 id="the-risk">The risk</h2>
+<p>Once a service binds to <code>0.0.0.0</code> instead of
+<code>127.0.0.1</code>, any device on the same network segment can reach
+it. On a home network with a router that separates LAN from internet,
+this is usually acceptable. On a network you do not control, it is
+not.</p>
+<p>Open WebUI has no login by default (<code>WEBUI_AUTH=false</code> in
+the default config). Anyone who can reach the port can use the AI. If
+that is a concern, enable authentication before exposing it.</p>
+<hr />
+<h2 id="option-a-expose-only-the-landing-page-recommended">Option A:
+expose only the landing page (recommended)</h2>
+<p>The landing page is a static site. It does not run AI queries
+directly — it links to the other services. Exposing only port 8080
+behind a reverse proxy is the lowest-risk option.</p>
+<h3 id="setup-with-caddy-simplest">Setup with Caddy (simplest)</h3>
+<p><a href="https://caddyserver.com/">Caddy</a> handles TLS
+automatically with a self-signed certificate for LAN use.</p>
+<ol type="1">
+<li><p>Install Caddy on the AllArkive host:</p>
+<pre class="bash"><code># Debian/Ubuntu:
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf &#39;https://dl.cloudsmith.io/public/caddy/stable/gpg.key&#39; \
+  | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf &#39;https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt&#39; \
+  | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update &amp;&amp; sudo apt install caddy</code></pre></li>
+<li><p>Create <code>/etc/caddy/Caddyfile</code>:</p>
+<pre><code>http://0.0.0.0:9080 {
+    reverse_proxy 127.0.0.1:8080
+}</code></pre>
+<p>This binds Caddy to port 9080 on all interfaces and forwards to the
+landing page on localhost. Using a non-standard port reduces accidental
+exposure and avoids conflicts.</p></li>
+<li><p>Start Caddy:</p>
+<pre class="bash"><code>sudo systemctl enable --now caddy</code></pre></li>
+<li><p>On other devices, visit <code>http://&lt;host-ip&gt;:9080</code>.
+Find the host IP: <code>ip addr show | grep 'inet '</code>.</p></li>
+</ol>
+<h3 id="setup-with-nginx">Setup with nginx</h3>
+<p>If you prefer nginx:</p>
+<pre class="bash"><code>sudo apt install -y nginx</code></pre>
+<p>Create <code>/etc/nginx/sites-available/allarkive</code>:</p>
+<pre class="nginx"><code>server {
+    listen 0.0.0.0:9080;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre>
+<p>Enable it:</p>
+<pre class="bash"><code>sudo ln -s /etc/nginx/sites-available/allarkive /etc/nginx/sites-enabled/
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></pre>
+<hr />
+<h2 id="option-b-expose-the-full-stack-with-authentication">Option B:
+expose the full stack with authentication</h2>
+<p>If you want the chat interface (Open WebUI on port 3000) accessible
+from other devices, enable authentication first, then expose it via a
+reverse proxy.</p>
+<h3 id="step-1-enable-open-webui-authentication">Step 1: enable Open
+WebUI authentication</h3>
+<p>In <code>compose/.env</code>:</p>
+<pre class="bash"><code>WEBUI_AUTH=true
+WEBUI_ENABLE_SIGNUP=false</code></pre>
+<p>Restart the stack:</p>
+<pre class="bash"><code>cd compose/ &amp;&amp; docker compose up -d open-webui</code></pre>
+<p>On first load, you will be prompted to create an admin account. Do
+this from localhost before exposing the port.</p>
+<h3 id="step-2-add-basic-auth-in-the-reverse-proxy-belt-and-braces">Step
+2: add basic auth in the reverse proxy (belt and braces)</h3>
+<p>Even with Open WebUI's built-in auth, adding HTTP basic auth at the
+proxy layer means an attacker needs two credentials, not one.</p>
+<p>With Caddy (<code>/etc/caddy/Caddyfile</code>):</p>
+<pre><code>http://0.0.0.0:9080 {
+    basicauth /* {
+        alice $2a$14$...  # bcrypt hash — generate with: caddy hash-password
+    }
+    reverse_proxy 127.0.0.1:3000
+}</code></pre>
+<p>Generate a password hash:</p>
+<pre class="bash"><code>caddy hash-password
+# Paste the hash into Caddyfile</code></pre>
+<p>With nginx (<code>/etc/nginx/sites-available/allarkive</code>):</p>
+<pre class="nginx"><code>server {
+    listen 0.0.0.0:9080;
+
+    auth_basic &quot;AllArkive&quot;;
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection &quot;upgrade&quot;;
+        proxy_set_header Host $host;
+    }
+}</code></pre>
+<p>Create the password file:</p>
+<pre class="bash"><code>sudo apt install -y apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd alice</code></pre>
+<h3 id="step-3-also-expose-kiwix-serve-optional">Step 3: also expose
+kiwix-serve (optional)</h3>
+<p>If you want archive search from other devices too, add a second proxy
+block for port 8081, or extend the existing block with a
+<code>/archive/</code> path.</p>
+<hr />
+<h2 id="firewall-rules">Firewall rules</h2>
+<p>If you use <code>ufw</code>:</p>
+<pre class="bash"><code># Allow your chosen proxy port from LAN only (e.g. 192.168.1.0/24):
+sudo ufw allow from 192.168.1.0/24 to any port 9080
+sudo ufw deny 9080</code></pre>
+<p>Replace <code>192.168.1.0/24</code> with your actual LAN subnet. This
+blocks anyone outside your LAN subnet from reaching the proxy port even
+if the firewall is on a machine with a public IP.</p>
+<hr />
+<h2 id="updating-composeenv-for-lan-use">Updating
+<code>compose/.env</code> for LAN use</h2>
+<p>The RAG citation links in model responses include the kiwix-serve
+URL. By default this is <code>http://127.0.0.1:8081</code>, which only
+works on the AllArkive host itself.</p>
+<p>If you want citations to be clickable from other devices:</p>
+<pre class="bash"><code># Replace with the AllArkive host&#39;s LAN IP or hostname:
+KIWIX_PUBLIC_URL=http://192.168.1.42:8081</code></pre>
+<p>Or, if you are proxying kiwix-serve through the same reverse
+proxy:</p>
+<pre class="bash"><code>KIWIX_PUBLIC_URL=http://192.168.1.42:9080/archive</code></pre>
+<p>Restart the RAG service after changing this:</p>
+<pre class="bash"><code>cd compose/ &amp;&amp; docker compose restart rag</code></pre>
+<hr />
+<h2 id="security-posture-summary">Security posture summary</h2>
+<p>After enabling LAN access with the steps above:</p>
+<table>
+<thead>
+<tr>
+<th>What changed</th>
+<th>Risk</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Landing page reachable on LAN</td>
+<td>Low</td>
+<td>Static HTML, no auth needed</td>
+</tr>
+<tr>
+<td>Open WebUI reachable on LAN</td>
+<td>Medium</td>
+<td>Enable <code>WEBUI_AUTH=true</code>; add proxy basic auth</td>
+</tr>
+<tr>
+<td>Kiwix reachable on LAN</td>
+<td>Low</td>
+<td>Read-only archive; no auth needed</td>
+</tr>
+<tr>
+<td>Ollama API reachable on LAN</td>
+<td>High if exposed</td>
+<td>Do not expose directly; keep behind proxy</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Do not expose Ollama's port (11434) directly to the
+LAN.</strong> The Ollama API has no built-in authentication and would
+allow anyone on your network to run arbitrary models. All AI requests
+should go through Open WebUI or the RAG service, both of which can be
+protected.</p>
+<hr />
+<h2 id="this-is-not-a-guide-to-internet-facing-deployment">This is not a
+guide to internet-facing deployment</h2>
+<p>Exposing AllArkive on the public internet requires:</p>
+<ul>
+<li>A real TLS certificate (Let's Encrypt or similar)</li>
+<li>Fail2ban or rate limiting to slow brute-force attacks</li>
+<li>Careful review of which ports are exposed</li>
+<li>Ongoing security updates</li>
+</ul>
+<p>This is documented as out of scope for v0.1. If you need it, start
+with the Caddy or nginx documentation, then layer AllArkive's services
+behind a fully hardened reverse proxy configuration.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/deployment/lan-access.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/deployment/lan-access.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#when-you-might-want-this">When you might want this</a></li>
+<li class="toc-h2"><a href="#when-you-probably-do-not-want-this">When you probably do not
+want this</a></li>
+<li class="toc-h2"><a href="#the-risk">The risk</a></li>
+<li class="toc-h2"><a href="#option-a-expose-only-the-landing-page-recommended">Option A:
+expose only the landing page (recommended)</a></li>
+<li class="toc-h3"><a href="#setup-with-caddy-simplest">Setup with Caddy (simplest)</a></li>
+<li class="toc-h3"><a href="#setup-with-nginx">Setup with nginx</a></li>
+<li class="toc-h2"><a href="#option-b-expose-the-full-stack-with-authentication">Option B:
+expose the full stack with authentication</a></li>
+<li class="toc-h3"><a href="#step-1-enable-open-webui-authentication">Step 1: enable Open
+WebUI authentication</a></li>
+<li class="toc-h3"><a href="#step-2-add-basic-auth-in-the-reverse-proxy-belt-and-braces">Step
+2: add basic auth in the reverse proxy (belt and braces)</a></li>
+<li class="toc-h3"><a href="#step-3-also-expose-kiwix-serve-optional">Step 3: also expose
+kiwix-serve (optional)</a></li>
+<li class="toc-h2"><a href="#firewall-rules">Firewall rules</a></li>
+<li class="toc-h2"><a href="#updating-composeenv-for-lan-use">Updating
+compose/.env for LAN use</a></li>
+<li class="toc-h2"><a href="#security-posture-summary">Security posture summary</a></li>
+<li class="toc-h2"><a href="#this-is-not-a-guide-to-internet-facing-deployment">This is not a
+guide to internet-facing deployment</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

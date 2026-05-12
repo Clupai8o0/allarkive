@@ -2,30 +2,17 @@
 
 /* ── Variables ────────────────────────────────────────────────────────────── */
 :root {
-    --bg:          #fafaf8;
-    --bg-surface:  #f2f1ef;
-    --text:        #1a1a1a;
-    --text-muted:  #5a5a5a;
-    --accent:      #3d5a80;
-    --accent-text: #ffffff;
-    --border:      #d4d4d0;
-    --code-bg:     #eeece8;
+    --bg:          #d4bcc8;
+    --bg-surface:  #c8aebb;
+    --text:        #17191d;
+    --text-muted:  #4a4d54;
+    --accent:      #17191d;
+    --accent-text: #d4bcc8;
+    --border:      #17191d;
+    --code-bg:     #c8aebb;
     --radius:      4px;
-    --font-body:   system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
     --font-mono:   ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg:          #141414;
-        --bg-surface:  #1e1e1e;
-        --text:        #e0e0e0;
-        --text-muted:  #888888;
-        --accent:      #4a6fa5;
-        --accent-text: #f0f0f0;
-        --border:      #333333;
-        --code-bg:     #252525;
-    }
+    --font-body:   var(--font-mono);
 }
 
 /* ── Reset ────────────────────────────────────────────────────────────────── */
@@ -258,10 +245,6 @@ a.citation:hover {
 
 .response-error {
     color: #b44;
-}
-
-@media (prefers-color-scheme: dark) {
-    .response-error { color: #f88; }
 }
 
 /* ── Disclaimer ───────────────────────────────────────────────────────────── */

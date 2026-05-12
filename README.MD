@@ -54,6 +54,8 @@ System requirements:
 
 After install, open `http://localhost:8080` for the landing page.
 
+> **Heads-up: indexing runs after the stack starts and takes time.** The RAG indexer embeds every ZIM chunk through your local Ollama. On CPU this is **several hours for the balanced bundle**, less for minimal. Leave it running — it's resumable and idempotent. Kiwix browsing works immediately at `http://localhost:8081`; RAG answers in Open WebUI improve as coverage grows, so "no sources found" early on is expected for topics not yet indexed. Watch progress with `docker compose -f compose/docker-compose.yml logs -f rag`.
+
 ## Documentation
 
 Pick your starting point:

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>README — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: README.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html" aria-current="page">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>README</span></p>
+            <article class="doc-content">
+<h1 id="allarkive">AllArkive</h1>
+<p><strong>A self-hostable, offline knowledge ark — Wikipedia, repair
+guides, books, and a local AI that can search them, all running on your
+own hardware.</strong></p>
+<blockquote>
+<p>Because the internet wasn't supposed to be rented.</p>
+</blockquote>
+<hr />
+<h2 id="what-this-is">What this is</h2>
+<p>AllArkive bundles three things that already exist into something one
+person can install in an afternoon:</p>
+<ol type="1">
+<li><strong>An offline knowledge archive</strong> — Wikipedia, Stack
+Exchange, Project Gutenberg, iFixit, and more, packaged as Kiwix ZIM
+files.</li>
+<li><strong>A local AI</strong> — an open-weight LLM (via Ollama and
+Open WebUI) that runs entirely on your machine, with no calls to the
+cloud.</li>
+<li><strong>A retrieval pipeline</strong> — RAG that lets the AI answer
+questions using the local archive, with citations back to the
+source.</li>
+</ol>
+<p>Run it on a laptop, a home server, or a Raspberry Pi. Use it as a
+private research assistant. Keep it as a fallback for when the open web
+gets worse.</p>
+<p><strong>Status</strong>: alpha. v0.1 is the first public release. See
+<a href="roadmap.html"><code>ROADMAP.md</code></a>.</p>
+<h2 id="why">Why</h2>
+<p>The infrastructure of shared knowledge is more centralised, more
+surveilled, and more hostile to users than it has ever been. The tools
+to run a useful piece of it on cheap hardware exist — they just haven't
+been packaged together. We packaged them.</p>
+<p>This is <strong>not</strong> a survival kit, a prepper bunker, or a
+doomsday cache. It's a library and a search tool, built on open weights
+and open content, that runs on your own machine. The framing is
+<strong>censorship resistance, privacy, and educational
+access</strong>.</p>
+<h2 id="whats-in-the-default-bundle-v01">What's in the default bundle
+(v0.1)</h2>
+<p>The "balanced" bundle, recommended for most laptops (~23 GB ZIM
+total, ~28 GB with model):</p>
+<ul>
+<li><strong>Wikipedia</strong> (English, mini — full text, minimal
+styling) — 12 GB</li>
+<li><strong>WikiMed</strong> — medical reference, for general lookups,
+<strong>not</strong> medical advice</li>
+<li><strong>iFixit</strong> — repair guides</li>
+<li><strong>SuperUser</strong> — general tech Q&amp;A</li>
+</ul>
+<p>Smaller and larger bundles are documented in <a
+href="docs/bundles/"><code>docs/bundles/</code></a>. Project Gutenberg
+(full corpus, ~200 GB) is in the <code>comprehensive</code> bundle.</p>
+<blockquote>
+<p>The AI can be wrong. RAG with citations makes its output checkable,
+not infallible. <strong>Not a substitute for professional medical,
+legal, or safety advice.</strong></p>
+</blockquote>
+<h2 id="install">Install</h2>
+<pre class="bash"><code>git clone https://github.com/allarkive/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+./scripts/bootstrap.sh</code></pre>
+<p>System requirements:</p>
+<ul>
+<li><strong>Minimum</strong>: 8 GB RAM, 30 GB disk, x86_64 or arm64</li>
+<li><strong>Recommended</strong>: 16 GB RAM, 50 GB SSD, modern CPU</li>
+<li><strong>Pi text-only build</strong>: Raspberry Pi 4 (4 GB+) with USB
+SSD</li>
+</ul>
+<p>After install, open <code>http://localhost:8080</code> for the
+landing page.</p>
+<blockquote>
+<p><strong>Heads-up: indexing runs after the stack starts and takes
+time.</strong> The RAG indexer embeds every ZIM chunk through your local
+Ollama. On CPU this is <strong>several hours for the balanced
+bundle</strong>, less for minimal. Leave it running — it's resumable and
+idempotent. Kiwix browsing works immediately at
+<code>http://localhost:8081</code>; RAG answers in Open WebUI improve as
+coverage grows, so "no sources found" early on is expected for topics
+not yet indexed. Watch progress with
+<code>docker compose -f compose/docker-compose.yml logs -f rag</code>.</p>
+</blockquote>
+<h2 id="documentation">Documentation</h2>
+<p>Pick your starting point:</p>
+<table>
+<thead>
+<tr>
+<th>I want to…</th>
+<th>Read this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Install on Linux (laptop or desktop)</td>
+<td><a
+href="install/laptop.html"><code>docs/install/laptop.md</code></a></td>
+</tr>
+<tr>
+<td>Install on macOS</td>
+<td><a
+href="install/macos.html"><code>docs/install/macos.md</code></a></td>
+</tr>
+<tr>
+<td>Install on Windows (WSL2)</td>
+<td><a
+href="install/windows.html"><code>docs/install/windows.md</code></a></td>
+</tr>
+<tr>
+<td>Install on a headless server</td>
+<td><a
+href="install/server.html"><code>docs/install/server.md</code></a></td>
+</tr>
+<tr>
+<td>Run on a Raspberry Pi (full stack)</td>
+<td><a
+href="deployment/pi-text-only.html"><code>docs/deployment/pi-text-only.md</code></a></td>
+</tr>
+<tr>
+<td>Run a Pi as a dedicated archive node</td>
+<td><a
+href="deployment/pi-archive-only.html"><code>docs/deployment/pi-archive-only.md</code></a></td>
+</tr>
+<tr>
+<td>Split the archive and AI across two machines</td>
+<td><a
+href="deployment/split.html"><code>docs/deployment/split.md</code></a></td>
+</tr>
+<tr>
+<td>Enable LAN access for other devices</td>
+<td><a
+href="deployment/lan-access.html"><code>docs/deployment/lan-access.md</code></a></td>
+</tr>
+<tr>
+<td>Choose a content bundle</td>
+<td><a
+href="bundles/index.html"><code>docs/bundles/README.md</code></a></td>
+</tr>
+<tr>
+<td>Understand how it works</td>
+<td><a
+href="architecture.html"><code>docs/ARCHITECTURE.MD</code></a></td>
+</tr>
+<tr>
+<td>Understand what it protects against</td>
+<td><a
+href="threat-model.html"><code>docs/THREAT_MODEL.md</code></a></td>
+</tr>
+<tr>
+<td>Contribute</td>
+<td><a href="contributing.html"><code>CONTRIBUTING.md</code></a></td>
+</tr>
+<tr>
+<td>See what's planned</td>
+<td><a href="roadmap.html"><code>ROADMAP.md</code></a></td>
+</tr>
+<tr>
+<td>See all docs</td>
+<td><a href="docs-index.html"><code>DOCS.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="scripts">Scripts</h2>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scripts/bootstrap.sh</code></td>
+<td>First-run setup. Checks prerequisites, creates data directories,
+fetches a bundle, starts the Docker Compose stack, pulls both AI models,
+and runs the RAG indexer. Idempotent — safe to re-run. Accepts
+<code>--bundle</code>, <code>--pi</code>, <code>--zim-dir</code>,
+<code>--models-dir</code>, and other flags.</td>
+</tr>
+<tr>
+<td><code>scripts/fetch-bundle.sh</code></td>
+<td>Downloads a named bundle (<code>minimal</code>,
+<code>balanced</code>, or <code>comprehensive</code>). Verifies every
+ZIM file against its SHA-256 checksum and stops on any failure. Resumes
+interrupted downloads.</td>
+</tr>
+<tr>
+<td><code>scripts/teardown.sh</code></td>
+<td>Stops the Docker Compose stack. Mirrors <code>bootstrap.sh</code>'s
+compose-file selection — pass <code>--pi</code> or
+<code>--pi-archive</code> to stop the matching stack. Does not delete
+data.</td>
+</tr>
+<tr>
+<td><code>scripts/cleanup.sh</code></td>
+<td>Stops the stack and optionally removes images
+(<code>--images</code>), data directories (<code>--data</code>), or both
+(<code>--all</code>). Prompts before any destructive step.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>scripts/rag/</code> directory contains the RAG pipeline
+that runs inside Docker: <code>indexer.py</code> (ZIM → vector index),
+<code>server.py</code> (OpenAI-compatible API), <code>prompt.py</code>
+(citation-enforcing system prompt), and <code>citations.py</code>
+(post-process <code>[N]</code> markers into links). These are not meant
+to be run directly — the Compose stack manages them.</p>
+<h2 id="architecture">Architecture</h2>
+<p>Three layers, each replaceable:</p>
+<pre><code>┌──────────────────────────────────────────┐
+│  Glue: landing page, docker-compose,     │
+│  bootstrap, RAG pipeline, docs           │
+├──────────────────────────────────────────┤
+│  Local AI: Ollama + Open WebUI + RAG     │
+├──────────────────────────────────────────┤
+│  Archive: Kiwix serving ZIM files        │
+└──────────────────────────────────────────┘</code></pre>
+<p>Full breakdown: <a
+href="architecture.html"><code>docs/ARCHITECTURE.md</code></a>.</p>
+<h2 id="security-and-threat-model">Security and threat model</h2>
+<ul>
+<li><strong>Default-local binding.</strong> Nothing listens on the
+public internet unless you opt in.</li>
+<li><strong>No telemetry.</strong> Ever.</li>
+<li><strong>Signed releases.</strong> Verify checksums for everything
+you download.</li>
+<li><strong>Honest disclaimers.</strong> What this protects against and
+what it doesn't is documented in <a
+href="threat-model.html"><code>docs/THREAT_MODEL.md</code></a>.</li>
+</ul>
+<p>If you find a vulnerability, see <a
+href="security.html"><code>SECURITY.md</code></a>.</p>
+<h2 id="contributing">Contributing</h2>
+<p>We can't curate the world's knowledge alone. Read <a
+href="contributing.html"><code>CONTRIBUTING.md</code></a> and <a
+href="code-of-conduct.html"><code>CODE_OF_CONDUCT.md</code></a>.</p>
+<p>Useful contributions include:</p>
+<ul>
+<li>Bundle proposals (a focused archive for a topic, language, or
+region)</li>
+<li>Install guides for OSes we don't cover</li>
+<li>RAG pipeline improvements</li>
+<li>Documentation, translations, and walkthroughs</li>
+</ul>
+<p>You don't need to write code to be useful here.</p>
+<h2 id="license">License</h2>
+<p>Glue code: <strong>AGPL-3.0</strong>. See <a
+href="LICENSE"><code>LICENSE</code></a>. Bundled content keeps its
+original licenses (Wikipedia is CC-BY-SA, Project Gutenberg is public
+domain, etc.). Each bundle ships with its own license inventory.</p>
+<h2 id="mirror">Mirror</h2>
+<p>Primary: <a
+href="https://github.com/allarkive/allarkive">github.com/allarkive/allarkive</a>
+Mirror: <a
+href="https://codeberg.org/allarkive/allarkive">codeberg.org/allarkive/allarkive</a></p>
+<h2 id="credits">Credits</h2>
+<p>Built by Sam and Sham. Standing on the shoulders of <a
+href="https://kiwix.org">Kiwix</a>, <a
+href="https://ollama.com">Ollama</a>, <a
+href="https://openwebui.com">Open WebUI</a>, and the people who maintain
+the open archives we bundle.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>README.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/README.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#what-this-is">What this is</a></li>
+<li class="toc-h2"><a href="#why">Why</a></li>
+<li class="toc-h2"><a href="#whats-in-the-default-bundle-v01">What&#x27;s in the default bundle
+(v0.1)</a></li>
+<li class="toc-h2"><a href="#install">Install</a></li>
+<li class="toc-h2"><a href="#documentation">Documentation</a></li>
+<li class="toc-h2"><a href="#scripts">Scripts</a></li>
+<li class="toc-h2"><a href="#architecture">Architecture</a></li>
+<li class="toc-h2"><a href="#security-and-threat-model">Security and threat model</a></li>
+<li class="toc-h2"><a href="#contributing">Contributing</a></li>
+<li class="toc-h2"><a href="#license">License</a></li>
+<li class="toc-h2"><a href="#mirror">Mirror</a></li>
+<li class="toc-h2"><a href="#credits">Credits</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

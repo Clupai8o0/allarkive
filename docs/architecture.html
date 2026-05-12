@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Architecture.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html" aria-current="page">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Architecture</span></p>
+            <article class="doc-content">
+<h1 id="architecturemd">ARCHITECTURE.md</h1>
+<p>How AllArkive is structured. Read this before changing any layer.</p>
+<h2 id="design-principles">Design principles</h2>
+<ol type="1">
+<li><strong>Three loosely-coupled layers.</strong> The archive can run
+without the AI. The AI can run without RAG. The glue should never assume
+the layers are co-located.</li>
+<li><strong>No internet at runtime.</strong> Once installed, every layer
+must function with zero outbound network calls. Updates are explicit and
+user-initiated.</li>
+<li><strong>Default-local.</strong> Every service binds to
+<code>127.0.0.1</code>. Remote access is an opt-in deployment pattern,
+not a default.</li>
+<li><strong>Replaceable parts.</strong> Kiwix, Ollama, Open WebUI are
+upstream tools. We pin versions, document the integration surface, and
+avoid deep coupling.</li>
+<li><strong>Honest output.</strong> Any model response that surfaces in
+the UI shows its sources. No source = no answer.</li>
+</ol>
+<h2 id="the-three-layers">The three layers</h2>
+<h3 id="layer-1--archive-kiwix--zim">Layer 1 — Archive (Kiwix +
+ZIM)</h3>
+<p><strong>Purpose</strong>: serve static, offline copies of large
+knowledge bases.</p>
+<p><strong>Components</strong>:</p>
+<ul>
+<li><code>kiwix-serve</code> — reads ZIM files and exposes an HTTP API +
+UI.</li>
+<li>ZIM files — Kiwix's packaged format. We don't generate ZIMs; we
+curate which ones to bundle and document how to add more.</li>
+</ul>
+<p><strong>What we own</strong>:</p>
+<ul>
+<li>The bundle manifests
+(<code>bundles/&lt;name&gt;/manifest.json</code>): list of ZIMs, source
+URLs, SHA-256 checksums, license metadata.</li>
+<li>The <code>fetch-bundle.sh</code> script that downloads and verifies
+a bundle.</li>
+<li>The <code>kiwix-serve</code> config (port binding, library file,
+CORS).</li>
+</ul>
+<p><strong>What we don't own</strong>:</p>
+<ul>
+<li>ZIM creation. Upstream Kiwix and the OpenZIM project handle
+that.</li>
+<li>Content correctness inside ZIMs.</li>
+</ul>
+<p><strong>Default port</strong>: <code>8081</code> (loopback only).</p>
+<h3 id="layer-2--local-ai-ollama--open-webui--rag">Layer 2 — Local AI
+(Ollama + Open WebUI + RAG)</h3>
+<p><strong>Purpose</strong>: answer natural-language questions using the
+local archive.</p>
+<p><strong>Components</strong>:</p>
+<ul>
+<li><strong>Ollama</strong> — runs open-weight models (Llama, Mistral,
+Qwen, etc.) on CPU or GPU.</li>
+<li><strong>Open WebUI</strong> — chat interface, talks to Ollama over
+its HTTP API.</li>
+<li><strong>RAG pipeline</strong> (ours) — sits between the user query
+and the model:
+<ol type="1">
+<li>Query → embedding → vector search over an index built from ZIM
+content.</li>
+<li>Top-k passages retrieved with source URLs.</li>
+<li>Passages + query → model with a strict prompt template that requires
+citations.</li>
+<li>Model output post-processed to surface citations as clickable links
+into Kiwix.</li>
+</ol></li>
+</ul>
+<p><strong>What we own</strong>:</p>
+<ul>
+<li>The RAG pipeline: indexing, embedding choice, retrieval, prompt
+template, citation enforcement.</li>
+<li>The default model recommendation (updated as better open-weight
+models ship).</li>
+<li>The minimum/recommended/ideal hardware specs.</li>
+</ul>
+<p><strong>What we don't own</strong>:</p>
+<ul>
+<li>Ollama internals. Open WebUI internals. Model weights.</li>
+</ul>
+<p><strong>Default ports</strong>:</p>
+<ul>
+<li>Ollama: <code>11434</code> (loopback only)</li>
+<li>Open WebUI: <code>3000</code> (loopback only)</li>
+<li>RAG service: <code>8000</code> (loopback only)</li>
+</ul>
+<p><strong>Honesty</strong>: the model can hallucinate. Every response
+surfaces sources. UI says "checkable, not infallible" near every chat
+surface. See <code>DESIGN.md</code> for the exact wording.</p>
+<h3 id="layer-3--glue">Layer 3 — Glue</h3>
+<p><strong>Purpose</strong>: turn three loose tools into something one
+person can install and use.</p>
+<p><strong>Components</strong>:</p>
+<ul>
+<li><code>compose/docker-compose.yml</code> — the one-command install of
+the full stack.</li>
+<li><code>compose/docker-compose.pi.yml</code> — ARM / low-RAM variant
+(smaller model, no embedding GPU, text-only bundle).</li>
+<li><code>scripts/bootstrap.sh</code> — first-run setup: pull images,
+fetch default bundle, index for RAG, start services.</li>
+<li><code>scripts/fetch-bundle.sh</code> — download + checksum-verify a
+named bundle.</li>
+<li><code>landing/</code> — a static landing page served on
+<code>localhost:8080</code>. Single entry point: search the archive,
+chat with the AI, see what's installed, see disclaimers.</li>
+<li><code>docs/</code> — install guides, deployment patterns, threat
+model.</li>
+</ul>
+<p><strong>Where most of the work goes.</strong> The individual upstream
+tools work. The hard part is making them work together so the user
+doesn't need to understand each one.</p>
+<h2 id="data-flow-rag-query">Data flow (RAG query)</h2>
+<pre><code>User
+  │ &quot;How do I bleed a radiator?&quot;
+  ▼
+Landing page (localhost:8080)
+  │
+  ▼
+Open WebUI (localhost:3000)
+  │ POST /api/chat
+  ▼
+RAG service (localhost:8000)
+  │ 1. Embed query
+  │ 2. Vector search → top-k passages from ZIM index
+  │ 3. Build prompt with passages + citation requirement
+  ▼
+Ollama (localhost:11434)
+  │ Generate response constrained to cite passages
+  ▼
+RAG service
+  │ 4. Validate citations exist in retrieved passages
+  │ 5. Rewrite citations as kiwix:// links
+  ▼
+Open WebUI → user
+  Response with [1], [2], [3] linking back to
+  http://localhost:8081/viewer#wikipedia/...</code></pre>
+<p>If retrieval returns nothing relevant, the RAG service returns "no
+sources found for this question" rather than letting the model
+freewheel.</p>
+<h2 id="deployment-patterns-v01">Deployment patterns (v0.1)</h2>
+<p>We support and document four hardware patterns. Anything else is
+unsupported in v0.1.</p>
+<h3 id="a--single-laptop-default">A — Single laptop (default)</h3>
+<p>Full stack on one machine. Recommended starting point for most
+users.</p>
+<ul>
+<li>All three layers in one <code>docker-compose up</code>.</li>
+<li>Default bundle = "balanced".</li>
+<li>See <code>docs/deployment/laptop.md</code>.</li>
+</ul>
+<h3 id="b--pi-text-only--low-power">B — Pi text-only / low-power</h3>
+<p>A cheaper, slower install. Proves the project runs on small
+hardware.</p>
+<ul>
+<li>Smaller model (e.g. Qwen 3B or quantised 7B).</li>
+<li>Text-only bundle (no Wikipedia images).</li>
+<li>USB SSD required (SD cards are not acceptable for the archive).</li>
+<li>See <code>docs/deployment/pi-text-only.md</code>.</li>
+</ul>
+<h3 id="c--pi-archive-only-node">C — Pi archive-only node</h3>
+<p>No AI, just the archive. Useful as a read-only library other devices
+on the LAN can talk to. Also useful for testing the "AI box dies but the
+archive survives" scenario.</p>
+<ul>
+<li>Just <code>kiwix-serve</code> on the Pi with a USB SSD.</li>
+<li>The AI runs on a separate machine and points at this Pi for
+retrieval.</li>
+<li>See <code>docs/deployment/pi-archive-only.md</code>.</li>
+</ul>
+<h3 id="d--two-machine-split">D — Two-machine split</h3>
+<p>AI on a beefier desktop, archive on the Pi (pattern C). The RAG
+service points at the Pi for ZIM access.</p>
+<ul>
+<li>Same compose, different env vars
+(<code>KIWIX_HOST=pi.local</code>).</li>
+<li>LAN-only. Still default-local from the AI side.</li>
+<li>See <code>docs/deployment/split.md</code>.</li>
+</ul>
+<h2 id="storage-layout-per-machine">Storage layout (per machine)</h2>
+<pre><code>/var/lib/allarkive/
+├── zim/                 # ZIM files (large, slow disk OK)
+├── index/               # RAG vector index (smaller, fast disk preferred)
+├── models/              # Ollama model store
+└── data/                # Open WebUI sqlite + user prefs</code></pre>
+<p>On Pis, this lives on the USB SSD, mounted at
+<code>/mnt/ssd/allarkive</code>. SD cards are for OS only.</p>
+<h2 id="network-topology">Network topology</h2>
+<h3 id="default-single-laptop">Default (single laptop)</h3>
+<p>All services bound to <code>127.0.0.1</code>. Browser hits
+<code>localhost:8080</code>. Nothing on the LAN, nothing on the
+internet.</p>
+<h3 id="lan-access-opt-in">LAN access (opt-in)</h3>
+<p>Bind the landing page to <code>0.0.0.0</code>, put it behind a
+reverse proxy (Caddy or nginx), require auth. Documented in
+<code>docs/deployment/lan-access.md</code>. Not a default.</p>
+<h3 id="internet-access-strongly-discouraged-for-v01">Internet access
+(strongly discouraged for v0.1)</h3>
+<p>Out of scope. Documented as "here is what would need to be true; we
+don't recommend it yet."</p>
+<h2 id="pinning-and-reproducibility">Pinning and reproducibility</h2>
+<ul>
+<li><strong>Image tags</strong>: pin every Docker image to a digest
+(<code>@sha256:...</code>), not a tag. Renovate/Dependabot bump
+them.</li>
+<li><strong>Models</strong>: pin to a specific Ollama model tag and
+document the SHA. Don't auto-update on user machines.</li>
+<li><strong>ZIMs</strong>: every bundle manifest pins the upstream URL
+and SHA-256.</li>
+<li><strong>Scripts</strong>: shellcheck-clean, version-pinned tools
+(<code>apt install -y kiwix-tools=2.x.y</code> etc.).</li>
+</ul>
+<h2 id="whats-deliberately-out-of-scope-for-v01">What's deliberately out
+of scope for v0.1</h2>
+<p>See <code>ROADMAP.md</code> for full list. Headlines:</p>
+<ul>
+<li>No clustering, no replication.</li>
+<li>No mesh / serverless transport.</li>
+<li>No phone apps.</li>
+<li>No specialised bundles for medical or agricultural use.</li>
+<li>No hardened/airgap-only build target.</li>
+<li>No telemetry. Ever.</li>
+</ul>
+<h2 id="decisions-made-in-milestone-4">Decisions made in Milestone
+4</h2>
+<ul>
+<li><strong>Vector DB</strong>: sqlite-vec. Embedded SQLite extension —
+no extra service, no daemon, no port. Index lives at
+<code>$ALLARKIVE_DATA_DIR/index/index.db</code>.</li>
+<li><strong>Embedding model</strong>: <code>nomic-embed-text</code> via
+Ollama (768 dimensions). Pulled alongside the chat model by
+<code>bootstrap.sh</code>. Runs fully offline once downloaded.
+<strong>Indexing is the slowest part of bootstrap</strong>: every ZIM
+chunk is embedded through Ollama, which on CPU runs at roughly 5–15
+chunks/sec. For the balanced bundle this is several hours; the indexer
+is resumable and idempotent, so it's intended to run in the background
+after bootstrap returns. Kiwix browsing works immediately; RAG answers
+improve as index coverage grows.</li>
+<li><strong>RAG integration with Open WebUI</strong>: the RAG service
+exposes an OpenAI-compatible API on port 8000. Open WebUI is configured
+via <code>OPENAI_API_BASE_URLS</code> to show <code>allarkive-rag</code>
+as a selectable model alongside native Ollama models.</li>
+<li><strong>Citation format</strong>: <code>[N]</code> inline markers in
+the model response are rewritten by the RAG service to Markdown links
+pointing at
+<code>http://127.0.0.1:8081/{zim_name}/{article_path}</code>.</li>
+</ul>
+<h2 id="decisions-to-revisit-in-v02">Decisions to revisit in v0.2+</h2>
+<p>These are not commitments, just things we noted while building
+v0.1:</p>
+<ul>
+<li>Embedding model: <code>nomic-embed-text</code> is the v0.1 default;
+better recall vs. speed tradeoffs exist (e.g.
+<code>mxbai-embed-large</code>, <code>all-minilm</code>).</li>
+<li>Whether RAG should also surface "related entries you didn't ask
+about."</li>
+<li>Multi-language retrieval and response.</li>
+<li>Bundle deltas (don't re-download 50 GB to update).</li>
+</ul>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/ARCHITECTURE.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/ARCHITECTURE.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#design-principles">Design principles</a></li>
+<li class="toc-h2"><a href="#the-three-layers">The three layers</a></li>
+<li class="toc-h3"><a href="#layer-1--archive-kiwix--zim">Layer 1 — Archive (Kiwix +
+ZIM)</a></li>
+<li class="toc-h3"><a href="#layer-2--local-ai-ollama--open-webui--rag">Layer 2 — Local AI
+(Ollama + Open WebUI + RAG)</a></li>
+<li class="toc-h3"><a href="#layer-3--glue">Layer 3 — Glue</a></li>
+<li class="toc-h2"><a href="#data-flow-rag-query">Data flow (RAG query)</a></li>
+<li class="toc-h2"><a href="#deployment-patterns-v01">Deployment patterns (v0.1)</a></li>
+<li class="toc-h3"><a href="#a--single-laptop-default">A — Single laptop (default)</a></li>
+<li class="toc-h3"><a href="#b--pi-text-only--low-power">B — Pi text-only / low-power</a></li>
+<li class="toc-h3"><a href="#c--pi-archive-only-node">C — Pi archive-only node</a></li>
+<li class="toc-h3"><a href="#d--two-machine-split">D — Two-machine split</a></li>
+<li class="toc-h2"><a href="#storage-layout-per-machine">Storage layout (per machine)</a></li>
+<li class="toc-h2"><a href="#network-topology">Network topology</a></li>
+<li class="toc-h3"><a href="#default-single-laptop">Default (single laptop)</a></li>
+<li class="toc-h3"><a href="#lan-access-opt-in">LAN access (opt-in)</a></li>
+<li class="toc-h3"><a href="#internet-access-strongly-discouraged-for-v01">Internet access
+(strongly discouraged for v0.1)</a></li>
+<li class="toc-h2"><a href="#pinning-and-reproducibility">Pinning and reproducibility</a></li>
+<li class="toc-h2"><a href="#whats-deliberately-out-of-scope-for-v01">What&#x27;s deliberately out
+of scope for v0.1</a></li>
+<li class="toc-h2"><a href="#decisions-made-in-milestone-4">Decisions made in Milestone
+4</a></li>
+<li class="toc-h2"><a href="#decisions-to-revisit-in-v02">Decisions to revisit in v0.2+</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

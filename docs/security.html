@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Security.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html" aria-current="page">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Community</span> / <span>Security</span></p>
+            <article class="doc-content">
+<h1 id="security">SECURITY</h1>
+<p>How to report security issues in AllArkive.</p>
+<h2 id="reporting-a-vulnerability">Reporting a vulnerability</h2>
+<p><strong>Do not</strong> open a public GitHub issue for a security
+vulnerability.</p>
+<p>Email: <strong><a
+href="mailto:security@allarkive.org">security@allarkive.org</a></strong>
+<em>(placeholder — replace before v0.1)</em> PGP key: see <a
+href="docs/security/pgp-key.txt"><code>docs/security/pgp-key.txt</code></a>
+<em>(to be added)</em></p>
+<p>Please include:</p>
+<ul>
+<li>A description of the vulnerability.</li>
+<li>Steps to reproduce.</li>
+<li>Affected version(s).</li>
+<li>Your assessment of impact.</li>
+<li>Whether you've disclosed this to anyone else.</li>
+</ul>
+<h2 id="what-to-expect">What to expect</h2>
+<ul>
+<li><strong>Acknowledgement</strong> within 5 business days.</li>
+<li><strong>Triage and initial assessment</strong> within 14 days.</li>
+<li><strong>Coordinated disclosure timeline</strong> agreed with you.
+Default target is 90 days from acknowledgement to public
+disclosure.</li>
+<li><strong>Credit</strong> in the release notes if you want it.</li>
+</ul>
+<p>We're a two-person project. We can't promise enterprise SLAs. We will
+be responsive and honest about what we can and can't do.</p>
+<h2 id="whats-in-scope">What's in scope</h2>
+<ul>
+<li>Code in this repository.</li>
+<li>The default <code>docker-compose</code> deployment, with default
+settings.</li>
+<li>Bundle download and verification scripts.</li>
+<li>The local landing page.</li>
+<li>The RAG pipeline and prompt-injection surfaces.</li>
+</ul>
+<h2 id="whats-out-of-scope">What's out of scope</h2>
+<ul>
+<li>Vulnerabilities in upstream projects (Kiwix, Ollama, Open WebUI).
+Report those upstream. We're happy to coordinate.</li>
+<li>Vulnerabilities that require an attacker already on the host
+machine.</li>
+<li>Vulnerabilities in user-modified deployments (changed bindings,
+custom reverse proxies, third-party bundles).</li>
+<li>Self-XSS in the local landing page when the user pastes
+attacker-controlled content into their own browser.</li>
+<li>Issues with services exposed to the public internet against our
+explicit recommendation. (We document not to do this. If you do it
+anyway, that's your threat model.)</li>
+</ul>
+<h2 id="hardening-the-default-posture">Hardening the default
+posture</h2>
+<p>Out of the box:</p>
+<ul>
+<li>All services bind to <code>127.0.0.1</code>.</li>
+<li>No telemetry.</li>
+<li>Pinned image digests.</li>
+<li>Verified bundle checksums.</li>
+<li>Signed releases and tags.</li>
+</ul>
+<p>If you find something that weakens this posture by default, that's in
+scope.</p>
+<h2 id="coordinated-disclosure-preferences">Coordinated disclosure
+preferences</h2>
+<ul>
+<li>We prefer coordinated disclosure with a reasonable embargo (default
+90 days).</li>
+<li>We will publish a security advisory in GitHub Security Advisories
+and link from <code>CHANGELOG.md</code>.</li>
+<li>We will not pursue legal action against good-faith security research
+that follows this policy.</li>
+</ul>
+<h2 id="hall-of-fame">Hall of fame</h2>
+<p>Once we have one. <em>(empty for now)</em></p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>SECURITY.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/SECURITY.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#reporting-a-vulnerability">Reporting a vulnerability</a></li>
+<li class="toc-h2"><a href="#what-to-expect">What to expect</a></li>
+<li class="toc-h2"><a href="#whats-in-scope">What&#x27;s in scope</a></li>
+<li class="toc-h2"><a href="#whats-out-of-scope">What&#x27;s out of scope</a></li>
+<li class="toc-h2"><a href="#hardening-the-default-posture">Hardening the default
+posture</a></li>
+<li class="toc-h2"><a href="#coordinated-disclosure-preferences">Coordinated disclosure
+preferences</a></li>
+<li class="toc-h2"><a href="#hall-of-fame">Hall of fame</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

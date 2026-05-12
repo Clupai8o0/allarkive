@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi as archive node — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Pi as archive node.">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="../install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="../install/macos.html">macOS</a></li>
+<li><a href="../install/windows.html">Windows (WSL2)</a></li>
+<li><a href="../install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="pi-archive-only.html" aria-current="page">Pi as archive node</a></li>
+<li><a href="split.html">Split across two machines</a></li>
+<li><a href="lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Deployment</span> / <span>Pi as archive node</span></p>
+            <article class="doc-content">
+<h1 id="deployment-raspberry-pi-archive-only-node-pattern-c">Deployment:
+Raspberry Pi archive-only node (pattern C)</h1>
+<p>This guide runs <code>kiwix-serve</code> on a Raspberry Pi without
+Ollama or any AI components. Use this pattern when:</p>
+<ul>
+<li>You want a dedicated, low-power archive node on the LAN.</li>
+<li>Another machine (laptop or Pi with the text-only stack) provides the
+AI layer.</li>
+<li>You are running a split deployment (see
+<code>docs/deployment/split.md</code>).</li>
+</ul>
+<p><strong>Time estimate</strong>: one to two hours, mostly downloading
+ZIM files.</p>
+<hr />
+<h2 id="hardware-requirements">Hardware requirements</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Minimum</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Board</td>
+<td>Raspberry Pi 4 (1 GB RAM)</td>
+<td>kiwix-serve is very lean</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>USB SSD, 8 GB free</td>
+<td>Size depends on bundle; see below</td>
+</tr>
+<tr>
+<td>Power</td>
+<td>Official 5 V / 3 A adapter</td>
+<td></td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Ethernet recommended</td>
+<td>Stable LAN connection for split use</td>
+</tr>
+</tbody>
+</table>
+<p>No Ollama means RAM requirements are minimal—even a 1 GB Pi 4 or a Pi
+Zero 2 W can run <code>kiwix-serve</code> comfortably. A Pi 5 has no
+advantage here.</p>
+<p><strong>Do not use SD card storage for ZIM files.</strong> Even reads
+of large ZIM files cause significant SD wear. A USB SSD is required.</p>
+<h3 id="bundle-size-guide">Bundle size guide</h3>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Approx. ZIM size</th>
+<th>Recommended SSD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minimal</code></td>
+<td>~3.5 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td><code>balanced</code></td>
+<td>~30 GB</td>
+<td>64 GB</td>
+</tr>
+<tr>
+<td><code>comprehensive</code></td>
+<td>~130 GB+</td>
+<td>256 GB+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-1-image-the-os">Step 1: Image the OS</h2>
+<p>Download <strong>Raspberry Pi OS Lite (64-bit)</strong> — the "Lite"
+variant, no desktop. Bookworm (Debian 12) or later.</p>
+<p>Flash with Raspberry Pi Imager. Before writing, configure:</p>
+<ul>
+<li>Hostname: <code>allarkive-archive</code> (or similar)</li>
+<li>SSH enabled</li>
+<li>Username and password</li>
+<li>Wi-Fi if needed (Ethernet preferred for a server)</li>
+</ul>
+<p>Boot, confirm SSH:</p>
+<pre class="bash"><code>ssh pi@allarkive-archive.local</code></pre>
+<p>Update:</p>
+<pre class="bash"><code>sudo apt update &amp;&amp; sudo apt full-upgrade -y
+sudo reboot</code></pre>
+<hr />
+<h2 id="step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</h2>
+<pre class="bash"><code>lsblk</code></pre>
+<p>Format if needed (new SSD):</p>
+<pre class="bash"><code>sudo fdisk /dev/sda     # new GPT partition table, one partition
+sudo mkfs.ext4 /dev/sda1</code></pre>
+<p>Mount:</p>
+<pre class="bash"><code>sudo mkdir -p /mnt/ssd
+sudo mount /dev/sda1 /mnt/ssd</code></pre>
+<p>Persist across reboots—add to <code>/etc/fstab</code> (get UUID via
+<code>sudo blkid /dev/sda1</code>):</p>
+<pre><code>UUID=YOUR-UUID  /mnt/ssd  ext4  defaults,noatime  0  2</code></pre>
+<pre class="bash"><code>sudo mount -a
+df -h /mnt/ssd</code></pre>
+<hr />
+<h2 id="step-3-install-docker">Step 3: Install Docker</h2>
+<pre class="bash"><code>curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker &quot;$USER&quot;
+newgrp docker
+docker compose version</code></pre>
+<hr />
+<h2 id="step-4-clone-the-repository">Step 4: Clone the repository</h2>
+<pre class="bash"><code>sudo mkdir -p /mnt/ssd/allarkive-repo
+sudo chown &quot;$USER&quot; /mnt/ssd/allarkive-repo
+git clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo
+cd /mnt/ssd/allarkive-repo</code></pre>
+<hr />
+<h2 id="step-5-create-data-directory">Step 5: Create data directory</h2>
+<pre class="bash"><code>mkdir -p /mnt/ssd/allarkive/zim</code></pre>
+<hr />
+<h2 id="step-6-download-a-bundle">Step 6: Download a bundle</h2>
+<p>Run <code>fetch-bundle.sh</code> from the Pi (it resumes partial
+downloads):</p>
+<pre class="bash"><code>ALLARKIVE_DATA_DIR=/mnt/ssd/allarkive \
+  scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<p>Replace <code>minimal</code> with <code>balanced</code> or
+<code>comprehensive</code> if you have the storage.</p>
+<p>Verify:</p>
+<pre class="bash"><code>ls -lh /mnt/ssd/allarkive/zim/*.zim</code></pre>
+<hr />
+<h2 id="step-7-configure-kiwix">Step 7: Configure kiwix</h2>
+<p>Copy the environment template:</p>
+<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<p>Edit <code>compose/.env</code>—only a few fields are relevant for
+archive-only:</p>
+<pre><code>ALLARKIVE_DATA_DIR=/mnt/ssd/allarkive
+
+# Port binding for kiwix-serve.
+# Default (127.0.0.1) means LAN access is not possible.
+# For split deployment, change KIWIX_BIND to 0.0.0.0 and
+# secure with a firewall. See docs/deployment/split.md.
+KIWIX_BIND=127.0.0.1
+KIWIX_PORT=8081</code></pre>
+<p><code>WEBUI_SECRET_KEY</code> is not used by the archive-only stack;
+leave it blank.</p>
+<hr />
+<h2 id="step-8-start-kiwix-serve">Step 8: Start kiwix-serve</h2>
+<pre class="bash"><code>cd /mnt/ssd/allarkive-repo
+docker compose -f compose/docker-compose.pi-archive.yml --env-file compose/.env up -d</code></pre>
+<hr />
+<h2 id="step-9-smoke-test">Step 9: Smoke test</h2>
+<pre class="bash"><code>curl -sf http://127.0.0.1:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix OK&quot;</code></pre>
+<p>Open a browser on the Pi (or over SSH port-forward):</p>
+<pre class="bash"><code>ssh -L 8081:127.0.0.1:8081 pi@allarkive-archive.local</code></pre>
+<p>Then open <code>http://127.0.0.1:8081</code>. You should see the
+kiwix-serve article browser with the downloaded archive listed.</p>
+<hr />
+<h2 id="enabling-lan-access-required-for-split-deployment">Enabling LAN
+access (required for split deployment)</h2>
+<p>By default, kiwix is bound to <code>127.0.0.1</code> and is not
+reachable from other machines. For a split deployment, the archive node
+must be reachable from the AI node.</p>
+<p>Edit <code>compose/.env</code>:</p>
+<pre><code>KIWIX_BIND=0.0.0.0</code></pre>
+<p>Restart:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml --env-file compose/.env up -d</code></pre>
+<p>Verify kiwix is now listening on all interfaces:</p>
+<pre class="bash"><code>ss -tlnp | grep 8081</code></pre>
+<p>Expected: <code>0.0.0.0:8081</code> instead of
+<code>127.0.0.1:8081</code>.</p>
+<p><strong>Firewall recommendation</strong>: if the Pi is on a home LAN,
+restrict access to known IPs using <code>ufw</code>:</p>
+<pre class="bash"><code>sudo apt install -y ufw
+sudo ufw default deny incoming
+sudo ufw allow ssh
+# Allow kiwix from the AI node&#39;s IP only
+sudo ufw allow from &lt;AI-NODE-IP&gt; to any port 8081
+sudo ufw enable</code></pre>
+<p>For a full reverse-proxy setup with auth, see
+<code>docs/deployment/lan-access.md</code>.</p>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Bound to (default)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>127.0.0.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="kiwix-exits-immediately">kiwix exits immediately</h3>
+<p>Check logs:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml logs kiwix</code></pre>
+<p>Common causes:</p>
+<ul>
+<li>No ZIM files in <code>/mnt/ssd/allarkive/zim/</code> — fetch a
+bundle first.</li>
+<li>The <code>ALLARKIVE_DATA_DIR</code> in <code>.env</code> does not
+match the actual mount path.</li>
+</ul>
+<h3 id="download-stalls-mid-bundle">Download stalls mid-bundle</h3>
+<p><code>fetch-bundle.sh</code> uses <code>wget --continue</code>.
+Re-run it; it resumes. If the connection is consistently dropping,
+try:</p>
+<pre class="bash"><code>scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<h3 id="ssd-not-mounting-after-reboot">SSD not mounting after
+reboot</h3>
+<p>Check <code>/etc/fstab</code> entries and that the UUID matches:</p>
+<pre class="bash"><code>sudo blkid /dev/sda1
+grep ssd /etc/fstab</code></pre>
+<p>If the UUID has changed (replaced SSD), update
+<code>/etc/fstab</code>.</p>
+<h3 id="zim-file-corrupted">ZIM file corrupted</h3>
+<p>Re-run <code>fetch-bundle.sh</code>. It verifies checksums and will
+re-download any file that fails verification.</p>
+<hr />
+<h2 id="updating-zim-files">Updating ZIM files</h2>
+<p>Kiwix releases updated ZIM snapshots periodically. To update:</p>
+<ol type="1">
+<li>Update the bundle manifest in
+<code>bundles/&lt;name&gt;/manifest.json</code> with new URLs and
+checksums.</li>
+<li>Run <code>fetch-bundle.sh</code> — it replaces old files and
+verifies the new ones.</li>
+<li>Restart kiwix-serve:</li>
+</ol>
+<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml restart kiwix</code></pre>
+<hr />
+<h2 id="what-is-next">What is next</h2>
+<ul>
+<li>To add the AI layer to this Pi, see
+<code>docs/deployment/pi-text-only.md</code>.</li>
+<li>To connect an AI node to this archive node over the LAN, see
+<code>docs/deployment/split.md</code>.</li>
+</ul>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/deployment/pi-archive-only.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/deployment/pi-archive-only.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#hardware-requirements">Hardware requirements</a></li>
+<li class="toc-h3"><a href="#bundle-size-guide">Bundle size guide</a></li>
+<li class="toc-h2"><a href="#step-1-image-the-os">Step 1: Image the OS</a></li>
+<li class="toc-h2"><a href="#step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</a></li>
+<li class="toc-h2"><a href="#step-3-install-docker">Step 3: Install Docker</a></li>
+<li class="toc-h2"><a href="#step-4-clone-the-repository">Step 4: Clone the repository</a></li>
+<li class="toc-h2"><a href="#step-5-create-data-directory">Step 5: Create data directory</a></li>
+<li class="toc-h2"><a href="#step-6-download-a-bundle">Step 6: Download a bundle</a></li>
+<li class="toc-h2"><a href="#step-7-configure-kiwix">Step 7: Configure kiwix</a></li>
+<li class="toc-h2"><a href="#step-8-start-kiwix-serve">Step 8: Start kiwix-serve</a></li>
+<li class="toc-h2"><a href="#step-9-smoke-test">Step 9: Smoke test</a></li>
+<li class="toc-h2"><a href="#enabling-lan-access-required-for-split-deployment">Enabling LAN
+access (required for split deployment)</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#kiwix-exits-immediately">kiwix exits immediately</a></li>
+<li class="toc-h3"><a href="#download-stalls-mid-bundle">Download stalls mid-bundle</a></li>
+<li class="toc-h3"><a href="#ssd-not-mounting-after-reboot">SSD not mounting after
+reboot</a></li>
+<li class="toc-h3"><a href="#zim-file-corrupted">ZIM file corrupted</a></li>
+<li class="toc-h2"><a href="#updating-zim-files">Updating ZIM files</a></li>
+<li class="toc-h2"><a href="#what-is-next">What is next</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

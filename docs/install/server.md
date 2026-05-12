@@ -4,7 +4,10 @@ This guide installs AllArkive on a headless Linux server over SSH, using
 the docker-compose stack. It assumes Ubuntu 22.04 LTS or 24.04 LTS with
 no desktop environment.
 
-**Time estimate**: 15–30 minutes setup, then waiting for downloads.
+**Time estimate**: 15–30 minutes setup, then waiting for downloads. After
+the stack starts, RAG indexing runs in the background — **expect several
+hours for the balanced bundle on CPU**, faster on a server with a CUDA
+GPU. See *Indexing takes hours* below.
 
 ---
 
@@ -22,6 +25,29 @@ nano compose/.env
 ```
 
 The manual steps below cover the same actions in detail.
+
+### Indexing takes hours — leave it running
+
+When `bootstrap.sh` finishes, the **RAG indexer keeps running** in the
+`rag` container, embedding every ZIM chunk through Ollama:
+
+- **minimal bundle**: 10–30 minutes
+- **balanced bundle**: several hours on CPU, much faster with a CUDA GPU
+- **comprehensive bundle**: overnight
+
+The indexer is **resumable and idempotent** — disconnect the SSH session
+(use `tmux`/`screen` or run via `nohup` if you started it interactively),
+reboot, or re-run `bootstrap.sh` later, and it picks up where it left off.
+
+Kiwix browsing at `http://<server>:8081` works **immediately** (once a
+reverse proxy or LAN binding is configured — see
+[`docs/deployment/lan-access.md`](../deployment/lan-access.md)). RAG
+answers improve as coverage grows — "no sources found" early on is expected
+for topics not yet indexed. Watch progress:
+
+```bash
+docker compose -f compose/docker-compose.yml logs -f rag
+```
 
 ---
 
@@ -223,8 +249,10 @@ docker compose exec rag python indexer.py \
     --force
 ```
 
-Indexing time: roughly 10–30 minutes for the balanced bundle on a typical
-server CPU. The index persists across restarts.
+Indexing time: **10–30 minutes for the minimal bundle, several hours for
+the balanced bundle on CPU**, much faster on a CUDA GPU. The indexer is
+resumable and idempotent — kill it any time and re-run. The index
+persists across restarts.
 
 ---
 

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows (WSL2) — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Windows (WSL2).">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="../index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="../readme.html">README</a></li>
+<li><a href="../architecture.html">Architecture</a></li>
+<li><a href="../roadmap.html">Roadmap</a></li>
+<li><a href="../threat-model.html">Threat model</a></li>
+<li><a href="../design.html">Design</a></li>
+<li><a href="../brief.html">Brief</a></li>
+<li><a href="../docs-index.html">Docs index</a></li>
+<li><a href="../changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="macos.html">macOS</a></li>
+<li><a href="windows.html" aria-current="page">Windows (WSL2)</a></li>
+<li><a href="server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="../deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="../deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="../deployment/split.html">Split across two machines</a></li>
+<li><a href="../deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="../bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="../contributing.html">Contributing</a></li>
+<li><a href="../code-of-conduct.html">Code of conduct</a></li>
+<li><a href="../governance.html">Governance</a></li>
+<li><a href="../security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Install</span> / <span>Windows (WSL2)</span></p>
+            <article class="doc-content">
+<h1 id="installing-allarkive-on-windows-wsl2">Installing AllArkive on
+Windows (WSL2)</h1>
+<p>This guide installs AllArkive on Windows using WSL2 (Windows
+Subsystem for Linux 2) and Docker Desktop. AllArkive runs inside a Linux
+environment on your Windows machine — the Windows-native experience is
+limited to opening a browser to view the UI.</p>
+<p><strong>Tested on</strong>: Windows 11 22H2 and later. Windows 10
+21H2 and later should also work with WSL2 support.</p>
+<p><strong>Time estimate</strong>: 30–60 minutes setup (WSL2 install
+included), then waiting for downloads. After the stack starts, RAG
+indexing runs in the background — <strong>expect several hours for the
+balanced bundle on CPU</strong>, faster with an NVIDIA GPU passed into
+WSL2. See <em>Indexing takes hours</em> below.</p>
+<hr />
+<h2 id="quick-start-automated">Quick start (automated)</h2>
+<p>Once WSL2 and Docker Desktop are installed (Steps 1–3 below), the
+rest is one command inside your Ubuntu terminal:</p>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive
+cp compose/.env.example compose/.env
+openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
+nano compose/.env
+./scripts/bootstrap.sh --bundle balanced</code></pre>
+<p>The manual steps below cover WSL2 setup and the same actions in
+detail.</p>
+<h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</h3>
+<p>When <code>bootstrap.sh</code> finishes, the <strong>RAG indexer
+keeps running</strong> in the <code>rag</code> container, embedding
+every ZIM chunk through Ollama:</p>
+<ul>
+<li><strong>minimal bundle</strong>: 15–30 minutes</li>
+<li><strong>balanced bundle</strong>: several hours on CPU, faster with
+a CUDA GPU</li>
+<li><strong>comprehensive bundle</strong>: overnight</li>
+</ul>
+<p>The indexer is <strong>resumable and idempotent</strong> — you can
+close the WSL terminal, suspend the machine, or reboot, and re-running
+<code>bootstrap.sh</code> (or
+<code>docker compose exec rag python indexer.py</code>) picks up where
+it left off.</p>
+<p>Kiwix browsing at <code>http://localhost:8081</code> works
+<strong>immediately</strong>. RAG answers in Open WebUI improve as
+coverage grows — "no sources found" early on is expected for topics not
+yet indexed. Watch progress:</p>
+<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="hardware">Hardware</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAM</td>
+<td>8 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>Free disk</td>
+<td>20 GB (WSL2 + minimal bundle + model)</td>
+<td>80 GB (balanced bundle + model)</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>Any x86_64</td>
+<td>More cores = faster inference</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>Not required</td>
+<td>NVIDIA GPU supported — see below</td>
+</tr>
+</tbody>
+</table>
+<h3 id="windows-version">Windows version</h3>
+<p>WSL2 requires Windows 10 version 21H2 or later, or any version of
+Windows 11. Check: <strong>Start → Settings → System → About → Windows
+specifications</strong>.</p>
+<hr />
+<h2 id="step-1-install-wsl2">Step 1: Install WSL2</h2>
+<p>Open PowerShell as Administrator and run:</p>
+<pre class="powershell"><code>wsl --install</code></pre>
+<p>This installs WSL2 and Ubuntu (the default distro). Reboot when
+prompted.</p>
+<p>After rebooting, Ubuntu will finish installing and ask you to create
+a username and password. Use a simple username with no spaces.</p>
+<p>Verify:</p>
+<pre class="powershell"><code>wsl --status
+# Should show: Default Version: 2</code></pre>
+<hr />
+<h2 id="step-2-install-docker-desktop-for-windows">Step 2: Install
+Docker Desktop for Windows</h2>
+<p>Download from
+<code>https://www.docker.com/products/docker-desktop/</code>.</p>
+<p>During installation:</p>
+<ul>
+<li>Select <strong>Use WSL 2 instead of Hyper-V</strong> (should be
+pre-selected).</li>
+<li>After installation, open Docker Desktop.</li>
+</ul>
+<p>Enable the WSL2 integration for your Ubuntu distro: <strong>Docker
+Desktop → Settings → Resources → WSL Integration → Enable integration
+with additional distros → Ubuntu → Apply &amp; Restart</strong>.</p>
+<p>Verify inside your Ubuntu terminal:</p>
+<pre class="bash"><code>docker compose version</code></pre>
+<hr />
+<h2 id="step-3-configure-wsl2-memory">Step 3: Configure WSL2 memory</h2>
+<p>By default WSL2 may claim too much RAM. Create
+<code>%USERPROFILE%\.wslconfig</code> in Windows (not inside WSL)
+with:</p>
+<pre class="ini"><code>[wsl2]
+memory=10GB
+processors=4</code></pre>
+<p>Adjust <code>memory</code> based on your system RAM (leave at least 2
+GB for Windows). Restart WSL for changes to take effect:</p>
+<pre class="powershell"><code>wsl --shutdown</code></pre>
+<p>Then reopen your Ubuntu terminal.</p>
+<hr />
+<h2 id="step-4-store-data-on-the-wsl2-filesystem">Step 4: Store data on
+the WSL2 filesystem</h2>
+<p><strong>Performance note</strong>: Docker on Windows has fast I/O
+within the WSL2 filesystem (<code>~/</code> or <code>/var/lib/</code>)
+but very slow I/O when accessing Windows paths like
+<code>/mnt/c/</code>. Keep all AllArkive data inside WSL2.</p>
+<p>If you need a large external drive for ZIM files, format it as NTFS
+and mount it inside WSL2:</p>
+<pre class="bash"><code># Example: a drive at D:\ mounted into WSL2
+sudo mkdir /mnt/d
+sudo mount -t drvfs D: /mnt/d
+# Then set ALLARKIVE_DATA_DIR=/mnt/d/allarkive in compose/.env</code></pre>
+<hr />
+<h2 id="step-5-clone-the-repository-inside-ubuntu">Step 5: Clone the
+repository (inside Ubuntu)</h2>
+<p>Open your Ubuntu terminal (search "Ubuntu" in Start):</p>
+<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
+cd allarkive</code></pre>
+<hr />
+<h2 id="step-6-set-up-configuration">Step 6: Set up configuration</h2>
+<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<p>Generate a secret key:</p>
+<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<p>Open <code>compose/.env</code> (e.g. <code>nano compose/.env</code>)
+and paste the result into <code>WEBUI_SECRET_KEY=</code>.</p>
+<p>Create data directories:</p>
+<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
+sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<hr />
+<h2 id="step-7-fetch-a-bundle">Step 7: Fetch a bundle</h2>
+<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Contents</th>
+<th>Disk (ZIMs only)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minimal</code></td>
+<td>WikiMed + iFixit</td>
+<td>~4 GB</td>
+</tr>
+<tr>
+<td><code>balanced</code></td>
+<td>Wikipedia (mini) + WikiMed + iFixit + SuperUser + Unix SE + Ask
+Ubuntu</td>
+<td>~23 GB</td>
+</tr>
+<tr>
+<td><code>comprehensive</code></td>
+<td>Full Wikipedia (images) + Gutenberg + Stack Exchange</td>
+<td>~330 GB</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-8-start-the-stack">Step 8: Start the stack</h2>
+<pre class="bash"><code>cd compose/
+docker compose up -d</code></pre>
+<p>On first run, Docker does two things before services start:</p>
+<ol type="1">
+<li><strong>Builds the RAG image from source</strong>
+(<code>scripts/rag/</code>) — 2–4 minutes.</li>
+<li><strong>Pulls the remaining images</strong> (kiwix-serve, Ollama,
+Open WebUI, nginx).</li>
+</ol>
+<p>If the build fails with a network error, check Docker Desktop is
+running and WSL integration is enabled (Step 2).</p>
+<p>Watch logs during first startup:</p>
+<pre class="bash"><code>docker compose logs -f</code></pre>
+<p>Wait for all containers to show <code>healthy</code>:</p>
+<pre class="bash"><code>docker compose ps</code></pre>
+<hr />
+<h2 id="step-9-pull-ai-models">Step 9: Pull AI models</h2>
+<p>Two models are needed — the chat model and the embedding model. Pull
+them before indexing:</p>
+<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
+docker compose exec ollama ollama pull qwen2.5:7b
+
+# Embedding model (~270 MB):
+docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<p>Both pulls resume automatically if interrupted.</p>
+<hr />
+<h2 id="step-10-index-the-archive">Step 10: Index the archive</h2>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434</code></pre>
+<p>To force a full rebuild:</p>
+<pre class="bash"><code>docker compose exec rag python indexer.py \
+    --zim-dir /data \
+    --index-dir /index \
+    --ollama-url http://ollama:11434 \
+    --force</code></pre>
+<hr />
+<h2 id="step-11-open-the-landing-page">Step 11: Open the landing
+page</h2>
+<p>In your Windows browser (not inside WSL), visit
+<code>http://localhost:8080</code>.</p>
+<p>WSL2 automatically forwards ports from the Linux environment to
+Windows localhost, so you do not need to do anything extra.</p>
+<hr />
+<h2 id="what-bootstrapsh-does">What bootstrap.sh does</h2>
+<p><code>bootstrap.sh</code> covers steps 5–11 automatically once WSL2
+and Docker Desktop are set up: creates directories, fetches and verifies
+ZIMs, writes storage paths to <code>compose/.env</code>, detects port
+conflicts, starts the stack, pulls both models, and runs the indexer.
+The manual steps above are the exact equivalent.</p>
+<hr />
+<h2 id="nvidia-gpu-acceleration">NVIDIA GPU acceleration</h2>
+<p>If your machine has an NVIDIA GPU with the Windows NVIDIA driver
+(version 470+):</p>
+<ol type="1">
+<li>Install the <a
+href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">CUDA on
+WSL2</a> drivers from NVIDIA (Windows-side only — do not install CUDA
+inside WSL).</li>
+<li>Inside WSL, verify:
+<pre class="bash"><code>nvidia-smi</code></pre></li>
+<li>Start AllArkive with the GPU profile:
+<pre class="bash"><code>docker compose --profile gpu up -d</code></pre></li>
+</ol>
+<hr />
+<h2 id="port-summary">Port summary</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Access from Windows browser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Landing page</td>
+<td>8080</td>
+<td>http://localhost:8080</td>
+</tr>
+<tr>
+<td>kiwix-serve</td>
+<td>8081</td>
+<td>http://localhost:8081</td>
+</tr>
+<tr>
+<td>Open WebUI</td>
+<td>3000</td>
+<td>http://localhost:3000</td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td>11434</td>
+<td>http://localhost:11434</td>
+</tr>
+<tr>
+<td>RAG service</td>
+<td>8000</td>
+<td>http://localhost:8000</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="stopping-and-starting">Stopping and starting</h2>
+<pre class="bash"><code># In your Ubuntu terminal:
+cd allarkive/compose
+docker compose down
+
+# Start again:
+docker compose up -d</code></pre>
+<p>Docker Desktop must be running before starting the stack.</p>
+<hr />
+<h2 id="cleanup-and-uninstall">Cleanup and uninstall</h2>
+<p>Run these inside your Ubuntu (WSL2) terminal. Nothing is deleted
+unless you explicitly ask.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it removes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./scripts/cleanup.sh</code></td>
+<td>Stops and removes containers only. Data and images kept.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --images</code></td>
+<td>Also removes Docker images (re-pulled on next start).</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --data</code></td>
+<td>Also deletes the data directory: ZIMs, models, RAG index, Open WebUI
+DB. <strong>Irreversible.</strong> Prompts before deleting.</td>
+</tr>
+<tr>
+<td><code>./scripts/cleanup.sh --all</code></td>
+<td><code>--images</code> + <code>--data</code>. Full wipe. Prompts
+before deleting.</td>
+</tr>
+</tbody>
+</table>
+<p>After a full wipe, start fresh with
+<code>./scripts/bootstrap.sh --bundle balanced</code>.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="rag-image-build-fails">RAG image build fails</h3>
+<p>Check that Docker Desktop is running and WSL integration is enabled
+(Step 2). If the build fails partway, retry with:</p>
+<pre class="bash"><code>docker compose build rag &amp;&amp; docker compose up -d</code></pre>
+<h3 id="wsl2-does-not-start">WSL2 does not start</h3>
+<p>Open PowerShell as Administrator and run:</p>
+<pre class="powershell"><code>wsl --update
+wsl --shutdown</code></pre>
+<p>Then reopen Ubuntu.</p>
+<h3 id="docker-commands-not-found-inside-wsl2">Docker commands not found
+inside WSL2</h3>
+<p>Ensure Docker Desktop is running and WSL integration is enabled for
+your Ubuntu distro (see Step 2). Restart Docker Desktop if it was
+already enabled.</p>
+<h3 id="ports-not-forwarding-to-windows">Ports not forwarding to
+Windows</h3>
+<p>WSL2 forwards ports automatically in recent builds of Windows 11. If
+<code>localhost:8080</code> does not work, try the WSL2 IP address
+directly:</p>
+<pre class="bash"><code># Inside WSL2:
+ip addr show eth0 | grep &#39;inet &#39;
+# Note the IP, e.g. 172.18.45.2</code></pre>
+<p>Then visit <code>http://172.18.45.2:8080</code> in your Windows
+browser.</p>
+<h3 id="slow-downloads-inside-wsl2">Slow downloads inside WSL2</h3>
+<p>DNS resolution inside WSL2 can be slow on some Windows setups. Add to
+<code>/etc/wsl.conf</code> inside Ubuntu (create if missing):</p>
+<pre class="ini"><code>[network]
+generateResolvConf = false</code></pre>
+<p>Then edit <code>/etc/resolv.conf</code> to use
+<code>nameserver 8.8.8.8</code>. Restart WSL:
+<code>wsl --shutdown</code>.</p>
+<h3 id="antivirus-interference">Antivirus interference</h3>
+<p>Windows Defender or third-party antivirus may scan every file written
+to the WSL2 filesystem, dramatically slowing ZIM downloads and indexing.
+Add the WSL2 virtual disk
+(<code>%LOCALAPPDATA%\Packages\CanonicalGroupLimited.Ubuntu*</code>) to
+your antivirus exclusion list.</p>
+<h3 id="out-of-disk-space">Out of disk space</h3>
+<p>WSL2 allocates a virtual disk that grows as needed but does not
+shrink automatically. If you delete large files inside WSL and need to
+reclaim Windows disk space:</p>
+<pre class="powershell"><code># In PowerShell (WSL must be shut down first):
+wsl --shutdown
+diskpart
+# then: select vdisk file=&quot;path\to\ext4.vhdx&quot;, compact vdisk</code></pre>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>docs/install/windows.md</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/docs/install/windows.md">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#quick-start-automated">Quick start (automated)</a></li>
+<li class="toc-h3"><a href="#indexing-takes-hours--leave-it-running">Indexing takes hours —
+leave it running</a></li>
+<li class="toc-h2"><a href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3"><a href="#hardware">Hardware</a></li>
+<li class="toc-h3"><a href="#windows-version">Windows version</a></li>
+<li class="toc-h2"><a href="#step-1-install-wsl2">Step 1: Install WSL2</a></li>
+<li class="toc-h2"><a href="#step-2-install-docker-desktop-for-windows">Step 2: Install
+Docker Desktop for Windows</a></li>
+<li class="toc-h2"><a href="#step-3-configure-wsl2-memory">Step 3: Configure WSL2 memory</a></li>
+<li class="toc-h2"><a href="#step-4-store-data-on-the-wsl2-filesystem">Step 4: Store data on
+the WSL2 filesystem</a></li>
+<li class="toc-h2"><a href="#step-5-clone-the-repository-inside-ubuntu">Step 5: Clone the
+repository (inside Ubuntu)</a></li>
+<li class="toc-h2"><a href="#step-6-set-up-configuration">Step 6: Set up configuration</a></li>
+<li class="toc-h2"><a href="#step-7-fetch-a-bundle">Step 7: Fetch a bundle</a></li>
+<li class="toc-h2"><a href="#step-8-start-the-stack">Step 8: Start the stack</a></li>
+<li class="toc-h2"><a href="#step-9-pull-ai-models">Step 9: Pull AI models</a></li>
+<li class="toc-h2"><a href="#step-10-index-the-archive">Step 10: Index the archive</a></li>
+<li class="toc-h2"><a href="#step-11-open-the-landing-page">Step 11: Open the landing
+page</a></li>
+<li class="toc-h2"><a href="#what-bootstrapsh-does">What bootstrap.sh does</a></li>
+<li class="toc-h2"><a href="#nvidia-gpu-acceleration">NVIDIA GPU acceleration</a></li>
+<li class="toc-h2"><a href="#port-summary">Port summary</a></li>
+<li class="toc-h2"><a href="#stopping-and-starting">Stopping and starting</a></li>
+<li class="toc-h2"><a href="#cleanup-and-uninstall">Cleanup and uninstall</a></li>
+<li class="toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+<li class="toc-h3"><a href="#rag-image-build-fails">RAG image build fails</a></li>
+<li class="toc-h3"><a href="#wsl2-does-not-start">WSL2 does not start</a></li>
+<li class="toc-h3"><a href="#docker-commands-not-found-inside-wsl2">Docker commands not found
+inside WSL2</a></li>
+<li class="toc-h3"><a href="#ports-not-forwarding-to-windows">Ports not forwarding to
+Windows</a></li>
+<li class="toc-h3"><a href="#slow-downloads-inside-wsl2">Slow downloads inside WSL2</a></li>
+<li class="toc-h3"><a href="#antivirus-interference">Antivirus interference</a></li>
+<li class="toc-h3"><a href="#out-of-disk-space">Out of disk space</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -17,6 +17,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   each ZIM's source, license, and attribution as required by CLAUDE.md.
 
 ### Changed
+- `scripts/bootstrap.sh` final summary now prints chunk counts per archive
+  from the RAG `index.db`, so a fresh user can see exactly what got indexed
+  rather than discovering an empty/partial index only when a query returns
+  "no sources found".
+- Install guides (`README.md`, `docs/install/{laptop,macos,windows,server}.md`,
+  `docs/deployment/pi-text-only.md`, `docs/index.html`) and
+  `docs/ARCHITECTURE.MD` now state that RAG indexing runs after the stack
+  starts and takes hours on CPU for the balanced bundle, that the indexer
+  is resumable and idempotent, and that Kiwix browsing works immediately
+  while RAG coverage grows in the background. Replaces stale "10–30 minutes
+  for the balanced bundle" claims in `docs/install/server.md` and
+  `docs/deployment/pi-text-only.md`.
 - All Docker images in `compose/docker-compose.yml`,
   `compose/docker-compose.pi.yml`, and `compose/docker-compose.pi-archive.yml`
   are now pinned to SHA-256 digests (multi-arch manifest digests fetched via

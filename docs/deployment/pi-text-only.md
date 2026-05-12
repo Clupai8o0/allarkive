@@ -184,9 +184,18 @@ This will:
 5. Pull `qwen2.5:1.5b` (~900 MB) and `nomic-embed-text` (~270 MB) into Ollama
 6. Run the RAG indexer over the downloaded ZIMs
 
-**Wall-clock time**: 30–90 minutes on a reasonable connection, depending on
-download speed and Pi generation. Indexing the minimal bundle takes 10–30 minutes
-on a Pi 4.
+**Wall-clock time**: 30–90 minutes for download + image build on a
+reasonable connection, depending on Pi generation. After that, the
+**RAG indexer keeps running in the background** — on a Pi 4 expect
+roughly **1–3 hours for the minimal bundle**, longer for balanced.
+Leave it running: the indexer is resumable and idempotent, and Kiwix
+browsing at `http://<pi-ip>:8081` works immediately. RAG answers in
+Open WebUI improve as coverage grows — "no sources found" early on is
+expected for topics not yet indexed. Watch progress:
+
+```bash
+docker compose -f compose/docker-compose.pi.yml logs -f rag
+```
 
 ### If the indexer OOMs during first run
 

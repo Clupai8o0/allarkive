@@ -9,7 +9,9 @@ a browser to view the UI.
 also work with WSL2 support.
 
 **Time estimate**: 30–60 minutes setup (WSL2 install included), then waiting
-for downloads.
+for downloads. After the stack starts, RAG indexing runs in the background —
+**expect several hours for the balanced bundle on CPU**, faster with an
+NVIDIA GPU passed into WSL2. See *Indexing takes hours* below.
 
 ---
 
@@ -28,6 +30,28 @@ nano compose/.env
 ```
 
 The manual steps below cover WSL2 setup and the same actions in detail.
+
+### Indexing takes hours — leave it running
+
+When `bootstrap.sh` finishes, the **RAG indexer keeps running** in the
+`rag` container, embedding every ZIM chunk through Ollama:
+
+- **minimal bundle**: 15–30 minutes
+- **balanced bundle**: several hours on CPU, faster with a CUDA GPU
+- **comprehensive bundle**: overnight
+
+The indexer is **resumable and idempotent** — you can close the WSL
+terminal, suspend the machine, or reboot, and re-running `bootstrap.sh`
+(or `docker compose exec rag python indexer.py`) picks up where it
+left off.
+
+Kiwix browsing at `http://localhost:8081` works **immediately**. RAG answers
+in Open WebUI improve as coverage grows — "no sources found" early on is
+expected for topics not yet indexed. Watch progress:
+
+```bash
+docker compose -f compose/docker-compose.yml logs -f rag
+```
 
 ---
 

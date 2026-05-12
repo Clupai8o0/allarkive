@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs index — AllArkive docs</title>
+    <meta name="description" content="AllArkive documentation: Docs index.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="doc-page">
+    <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
+    <div class="doc-layout">
+<aside class="doc-sidebar" aria-label="Documentation">
+<a class="sidebar-home" href="index.html">
+<span class="sidebar-home-name">AllArkive</span>
+<span class="sidebar-home-tag">docs</span>
+</a>
+<p class="sidebar-section">Overview</p>
+<ul>
+<li><a href="readme.html">README</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="roadmap.html">Roadmap</a></li>
+<li><a href="threat-model.html">Threat model</a></li>
+<li><a href="design.html">Design</a></li>
+<li><a href="brief.html">Brief</a></li>
+<li><a href="docs-index.html" aria-current="page">Docs index</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+</ul>
+<p class="sidebar-section">Install</p>
+<ul>
+<li><a href="install/laptop.html">Laptop / desktop (Linux)</a></li>
+<li><a href="install/macos.html">macOS</a></li>
+<li><a href="install/windows.html">Windows (WSL2)</a></li>
+<li><a href="install/server.html">Headless server</a></li>
+</ul>
+<p class="sidebar-section">Deployment</p>
+<ul>
+<li><a href="deployment/pi-text-only.html">Raspberry Pi (full stack)</a></li>
+<li><a href="deployment/pi-archive-only.html">Pi as archive node</a></li>
+<li><a href="deployment/split.html">Split across two machines</a></li>
+<li><a href="deployment/lan-access.html">Opt-in LAN access</a></li>
+</ul>
+<p class="sidebar-section">Bundles</p>
+<ul>
+<li><a href="bundles/index.html">Bundles overview</a></li>
+</ul>
+<p class="sidebar-section">Community</p>
+<ul>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Code of conduct</a></li>
+<li><a href="governance.html">Governance</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</aside>
+
+        <main class="doc-main">
+            <p class="doc-breadcrumb"><a href="index.html">AllArkive</a> / <span>Overview</span> / <span>Docs index</span></p>
+            <article class="doc-content">
+<h1 id="docs">DOCS</h1>
+<p>Index of every documentation file in this repository. If a doc isn't
+here, it doesn't exist yet.</p>
+<h2 id="how-to-use-this-index">How to use this index</h2>
+<p>If you're a <strong>user</strong>, start with <code>README.md</code>,
+then <code>docs/install/</code>. If you're a
+<strong>contributor</strong>, read <code>CONTRIBUTING.md</code>, then
+<code>CLAUDE.md</code> (yes, even if you're not Claude — it's the
+project's working manual). If you're an <strong>agent</strong> (Claude
+Code or otherwise), <code>CLAUDE.md</code> is mandatory. If you're
+<strong>evaluating the project's trustworthiness</strong>, read
+<code>THREAT_MODEL.md</code>, <code>SECURITY.md</code>, and
+<code>GOVERNANCE.md</code>.</p>
+<h2 id="root-level-docs">Root-level docs</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Audience</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>README.md</code></td>
+<td>Public</td>
+<td>One-line pitch, install snippet, "what's inside," license, status.
+The repo's front door.</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>Agent / contributor</td>
+<td>Master working instructions. Conventions, locked decisions,
+"always/never" rules.</td>
+</tr>
+<tr>
+<td><code>LICENSE</code></td>
+<td>Public</td>
+<td>AGPL-3.0 full text.</td>
+</tr>
+<tr>
+<td><code>CHANGELOG.md</code></td>
+<td>Public / contributor</td>
+<td>Versioned changes in <a href="https://keepachangelog.com">Keep a
+Changelog</a> format.</td>
+</tr>
+<tr>
+<td><code>CONTRIBUTING.md</code></td>
+<td>Contributor</td>
+<td>How to contribute code, content, docs. DCO sign-off, PR
+checklist.</td>
+</tr>
+<tr>
+<td><code>CODE_OF_CONDUCT.md</code></td>
+<td>Community</td>
+<td>Contributor Covenant 2.1.</td>
+</tr>
+<tr>
+<td><code>SECURITY.md</code></td>
+<td>Security researchers</td>
+<td>How to report vulnerabilities.</td>
+</tr>
+<tr>
+<td><code>GOVERNANCE.md</code></td>
+<td>Contributor</td>
+<td>How decisions get made; maintainer process.</td>
+</tr>
+<tr>
+<td><code>ROADMAP.md</code></td>
+<td>Public / contributor</td>
+<td>What's in v0.1, what's deferred, what we'll never build.</td>
+</tr>
+<tr>
+<td><code>TODO.md</code></td>
+<td>Maintainer / agent</td>
+<td>Live task list for v0.1.</td>
+</tr>
+<tr>
+<td><code>DOCS.md</code></td>
+<td>Anyone</td>
+<td>This file — index of every doc.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="docs--the-deeper-documentation"><code>docs/</code> — the deeper
+documentation</h2>
+<h3 id="architecture-and-design">Architecture and design</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/ARCHITECTURE.md</code></td>
+<td>The three-layer design, components, data flow, deployment patterns,
+storage layout, network topology.</td>
+</tr>
+<tr>
+<td><code>docs/DESIGN.md</code></td>
+<td>Tone, voice, UX principles, landing page direction, naming
+conventions, required disclaimer text.</td>
+</tr>
+<tr>
+<td><code>docs/THREAT_MODEL.md</code></td>
+<td>What the project does and does not protect against.
+Disclaimers.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="public-web-landing-page">Public web landing page</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/index.html</code></td>
+<td>Public-facing landing page served by GitHub Pages from
+<code>main</code>/<code>docs</code>. Short project explanation plus
+links to the hosted docs.</td>
+</tr>
+<tr>
+<td><code>docs/styles.css</code></td>
+<td>Styles for the public landing page. System fonts only, no external
+assets.</td>
+</tr>
+<tr>
+<td><code>docs/.nojekyll</code></td>
+<td>Tells GitHub Pages to skip Jekyll and serve the static HTML
+directly.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="install-guides-docsinstall">Install guides
+(<code>docs/install/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/install/laptop.md</code></td>
+<td>Default install on a laptop. The reference guide.</td>
+</tr>
+<tr>
+<td><code>docs/install/server.md</code></td>
+<td>Linux server, no GUI.</td>
+</tr>
+<tr>
+<td><code>docs/install/macos.md</code></td>
+<td>macOS-specific gotchas.</td>
+</tr>
+<tr>
+<td><code>docs/install/windows.md</code></td>
+<td>Windows via WSL2.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bundle-docs-docsbundles">Bundle docs
+(<code>docs/bundles/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/bundles/README.md</code></td>
+<td>What each default bundle contains, sizes, licenses.</td>
+</tr>
+<tr>
+<td><code>docs/bundles/minimal.md</code></td>
+<td>Pi-friendly text-only bundle.</td>
+</tr>
+<tr>
+<td><code>docs/bundles/balanced.md</code></td>
+<td>Default bundle for most laptops.</td>
+</tr>
+<tr>
+<td><code>docs/bundles/comprehensive.md</code></td>
+<td>Full Wikipedia with images plus extras.</td>
+</tr>
+<tr>
+<td><code>docs/bundles/custom.md</code></td>
+<td>How to build your own bundle. License checklist included.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deployment-patterns-docsdeployment">Deployment patterns
+(<code>docs/deployment/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/deployment/laptop.md</code></td>
+<td>Single-machine, all three layers (default).</td>
+</tr>
+<tr>
+<td><code>docs/deployment/pi-text-only.md</code></td>
+<td>Pi with smaller model and text-only bundle.</td>
+</tr>
+<tr>
+<td><code>docs/deployment/pi-archive-only.md</code></td>
+<td>Pi running just <code>kiwix-serve</code>, no AI.</td>
+</tr>
+<tr>
+<td><code>docs/deployment/split.md</code></td>
+<td>AI on one machine, archive on another, LAN-only.</td>
+</tr>
+<tr>
+<td><code>docs/deployment/lan-access.md</code></td>
+<td>Opt-in LAN access with reverse proxy + auth.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="security-docssecurity">Security
+(<code>docs/security/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/security/pgp-keys.txt</code></td>
+<td>Public PGP keys for release signing and security disclosure.</td>
+</tr>
+<tr>
+<td><code>docs/security/release-verification.md</code></td>
+<td>How to verify a release came from us.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operating-the-project-docsops">Operating the project
+(<code>docs/ops/</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/ops/release.md</code></td>
+<td>Step-by-step release process for maintainers.</td>
+</tr>
+<tr>
+<td><code>docs/ops/mirror.md</code></td>
+<td>How the GitHub → Codeberg mirror works.</td>
+</tr>
+<tr>
+<td><code>docs/ops/incident-response.md</code></td>
+<td>What to do when something goes wrong publicly.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="talk-and-launch-docstalk">Talk and launch
+(<code>docs/talk/</code>)</h3>
+<p>Internal-ish, but kept in the public repo because the talk is part of
+the launch.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/talk/abstract.md</code></td>
+<td>BSides Melbourne 2026 talk abstract.</td>
+</tr>
+<tr>
+<td><code>docs/talk/outline.md</code></td>
+<td>Talk structure and timing.</td>
+</tr>
+<tr>
+<td><code>docs/talk/qa-prep.md</code></td>
+<td>Anticipated questions and our answers.</td>
+</tr>
+<tr>
+<td><code>docs/talk/demo-script.md</code></td>
+<td>What we run on stage and what we say while it runs.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="status-of-each-doc">Status of each doc</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>README.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>LICENSE</code></td>
+<td>✅ AGPL-3.0 full text</td>
+</tr>
+<tr>
+<td><code>CHANGELOG.md</code></td>
+<td>✅ written (living doc)</td>
+</tr>
+<tr>
+<td><code>CONTRIBUTING.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>CODE_OF_CONDUCT.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>SECURITY.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>GOVERNANCE.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>ROADMAP.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>TODO.md</code></td>
+<td>✅ written (living doc)</td>
+</tr>
+<tr>
+<td><code>DOCS.md</code></td>
+<td>✅ this file</td>
+</tr>
+<tr>
+<td><code>docs/ARCHITECTURE.MD</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/DESIGN.MD</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/THREAT_MODEL.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/install/laptop.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/install/server.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/install/macos.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/install/windows.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/bundles/README.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/deployment/laptop.md</code></td>
+<td>⬜ to write (single-machine default; laptop.md install guide covers
+it)</td>
+</tr>
+<tr>
+<td><code>docs/deployment/pi-text-only.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/deployment/pi-archive-only.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/deployment/split.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/deployment/lan-access.md</code></td>
+<td>✅ written</td>
+</tr>
+<tr>
+<td><code>docs/security/*</code></td>
+<td>⬜ to write</td>
+</tr>
+<tr>
+<td><code>docs/ops/*</code></td>
+<td>⬜ to write</td>
+</tr>
+<tr>
+<td><code>docs/talk/*</code></td>
+<td>⬜ to write (alongside slide prep)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="updating-this-index">Updating this index</h2>
+<p>Any PR that adds a new doc must update the relevant table in this
+file in the same PR. CI will not enforce that — it's a maintainer
+responsibility.</p>
+
+            </article>
+            <footer class="doc-footer">
+                <p>Source: <code>DOCS.MD</code>. Edit on <a href="https://github.com/clupai8o0/allarkive/blob/main/DOCS.MD">GitHub</a>.</p>
+                <p class="footer-meta">AllArkive · AGPL-3.0 · offline-first, locally-hosted.</p>
+            </footer>
+        </main>
+
+<nav class="doc-toc" aria-label="On this page">
+<p class="doc-toc-label">On this page</p>
+<ul>
+<li class="toc-h2"><a href="#how-to-use-this-index">How to use this index</a></li>
+<li class="toc-h2"><a href="#root-level-docs">Root-level docs</a></li>
+<li class="toc-h2"><a href="#docs--the-deeper-documentation">docs/ — the deeper
+documentation</a></li>
+<li class="toc-h3"><a href="#architecture-and-design">Architecture and design</a></li>
+<li class="toc-h3"><a href="#public-web-landing-page">Public web landing page</a></li>
+<li class="toc-h3"><a href="#install-guides-docsinstall">Install guides
+(docs/install/)</a></li>
+<li class="toc-h3"><a href="#bundle-docs-docsbundles">Bundle docs
+(docs/bundles/)</a></li>
+<li class="toc-h3"><a href="#deployment-patterns-docsdeployment">Deployment patterns
+(docs/deployment/)</a></li>
+<li class="toc-h3"><a href="#security-docssecurity">Security
+(docs/security/)</a></li>
+<li class="toc-h3"><a href="#operating-the-project-docsops">Operating the project
+(docs/ops/)</a></li>
+<li class="toc-h3"><a href="#talk-and-launch-docstalk">Talk and launch
+(docs/talk/)</a></li>
+<li class="toc-h2"><a href="#status-of-each-doc">Status of each doc</a></li>
+<li class="toc-h2"><a href="#updating-this-index">Updating this index</a></li>
+</ul></nav>
+    </div>
+    <script>
+        (function () {
+            var btn = document.querySelector('.sidebar-toggle');
+            var sidebar = document.querySelector('.doc-sidebar');
+            if (!btn || !sidebar) return;
+            sidebar.id = 'doc-sidebar';
+            btn.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        })();
+    </script>
+</body>
+</html>
