@@ -49,6 +49,10 @@ for topics not yet indexed. Watch progress:
 docker compose -f compose/docker-compose.yml logs -f rag
 ```
 
+For tuning coverage (`--max-articles` / `--full-index`), GPU passthrough,
+and common failure modes, see
+[`docs/TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
+
 ---
 
 ## Prerequisites

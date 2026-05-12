@@ -34,6 +34,7 @@ If you're **evaluating the project's trustworthiness**, read `THREAT_MODEL.md`, 
 | `docs/ARCHITECTURE.md` | The three-layer design, components, data flow, deployment patterns, storage layout, network topology. |
 | `docs/DESIGN.md` | Tone, voice, UX principles, landing page direction, naming conventions, required disclaimer text. |
 | `docs/THREAT_MODEL.md` | What the project does and does not protect against. Disclaimers. |
+| `docs/TROUBLESHOOTING.md` | Operational notes, common failure modes, performance tuning, the cap/coverage story, native-Ollama setup, indexer resume behaviour. Read when something feels wrong. |
 
 ### Public web landing page
 
@@ -116,6 +117,7 @@ Internal-ish, but kept in the public repo because the talk is part of the launch
 | `docs/ARCHITECTURE.MD` | ✅ written |
 | `docs/DESIGN.MD` | ✅ written |
 | `docs/THREAT_MODEL.md` | ✅ written |
+| `docs/TROUBLESHOOTING.md` | ✅ written |
 | `docs/install/laptop.md` | ✅ written |
 | `docs/install/server.md` | ✅ written |
 | `docs/install/macos.md` | ✅ written |

@@ -56,6 +56,12 @@ expected for topics not yet indexed. Watch progress:
 docker compose -f compose/docker-compose.yml logs -f rag
 ```
 
+If indexing feels too slow, coverage seems incomplete, or something errors —
+see [`docs/TROUBLESHOOTING.md`](../TROUBLESHOOTING.md). Covers cap/coverage
+tuning (`--max-articles`, `--full-index`), embedding speed on different
+hardware, common sqlite-vec errors, and re-running bootstrap to expand
+coverage without losing existing work.
+
 ---
 
 ## Prerequisites

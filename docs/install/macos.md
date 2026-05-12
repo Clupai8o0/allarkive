@@ -49,6 +49,12 @@ topics not yet indexed. Watch progress:
 docker compose -f compose/docker-compose.yml logs -f rag
 ```
 
+If you have Apple Silicon, **install Ollama natively** for 5–10× faster
+embedding — Docker Desktop on macOS can't see Metal, so the Dockerized Ollama
+falls back to CPU. See [`docs/TROUBLESHOOTING.md`](../TROUBLESHOOTING.md) for
+the full setup, plus coverage-cap tuning, common errors, and how to expand
+RAG coverage by re-running bootstrap.
+
 ---
 
 ## Prerequisites

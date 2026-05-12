@@ -197,6 +197,52 @@ expected for topics not yet indexed. Watch progress:
 docker compose -f compose/docker-compose.pi.yml logs -f rag
 ```
 
+For Pi-specific gotchas (cap tuning, OOM during indexing, search-only mode,
+re-running bootstrap to expand coverage), see
+[`docs/TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
+
+### Recipe: Pi 5 with a large external SSD + tiny model + comprehensive ZIMs
+
+If you have a Pi 5 with an 8 GB RAM module, a USB SSD with 500 GB+ free, and
+no urgency, you can run the full `comprehensive` bundle (411 GB of ZIMs:
+Wikipedia with images, Project Gutenberg, Stack Overflow, …) with the
+smallest chat model. Bundle and model are independent flags — the platform
+default for Pi is `minimal`, but explicit flags override it:
+
+```bash
+scripts/bootstrap.sh --pi --bundle comprehensive --model qwen2.5:1.5b
+```
+
+Expect:
+
+- **Download**: 411 GB over your connection. Hours to days.
+- **Indexing**: on Pi 5 CPU, roughly 2–8 chunks/sec. Millions of chunks. **Days to a couple of weeks** for full coverage. The indexer is resumable; partial answers work as coverage grows.
+- **Disk**: 411 GB ZIMs + ~10–20 GB vector index. Comfortably under 500 GB.
+- **Chat**: `qwen2.5:1.5b` at ~5–15 tokens/sec on Pi 5 CPU. Usable for short answers; lower quality than 7B.
+
+Bump Docker / Ollama RAM limits in `compose/.env` if needed:
+
+```bash
+OLLAMA_MEMORY_LIMIT=6G  # default 4G, fine to raise on an 8 GB Pi
+```
+
+### Recipe: search-only mode (no chat model, smallest footprint)
+
+If the Pi has too little RAM to run a chat model alongside indexing, or you
+just want fast keyword + semantic search without LLM summarisation, pass
+`--no-model`. The chat-model pull step is skipped; the embedding model is
+still pulled (indexing needs it). RAG queries return retrieved passages with
+citations, and the landing page hides the "Ask AI" UI automatically.
+
+```bash
+scripts/bootstrap.sh --pi --bundle comprehensive --no-model
+```
+
+This is the lightest configuration: roughly ~270 MB of model on disk (just
+`nomic-embed-text`), no chat-completion latency, and Pi 5 / Pi 4 RAM is only
+loaded with the embedder. The "search" half of the stack works fully; the
+"chat" half is disabled.
+
 ### If the indexer OOMs during first run
 
 The Pi 4 with 4 GB RAM can struggle to run Ollama and the indexer at the same time.

@@ -47,6 +47,9 @@ _KIWIX_PUBLIC_URL = os.environ.get("KIWIX_PUBLIC_URL", "http://127.0.0.1:8081")
 _WEBUI_PUBLIC_URL = os.environ.get("WEBUI_PUBLIC_URL", "http://127.0.0.1:3000")
 _EMBED_MODEL = os.environ.get("EMBED_MODEL", "nomic-embed-text")
 _CHAT_MODEL = os.environ.get("CHAT_MODEL", "qwen2.5:7b")
+# Sentinel `__none__` (or empty) means search-only mode: skip Ollama /api/chat
+# and return retrieved passages as a citation list. Set by bootstrap.sh --no-model.
+_SEARCH_ONLY = _CHAT_MODEL in ("", "__none__")
 _TOP_K = int(os.environ.get("RAG_TOP_K", "5"))
 _MAX_DIST = float(os.environ.get("RAG_MAX_DISTANCE", "1.0"))
 _INDEX_PATH = str(Path(_INDEX_DIR) / "index.db")
@@ -64,7 +67,12 @@ def _get_db() -> sqlite3.Connection:
                 f"Vector index not found at {_INDEX_PATH}. "
                 "Run: docker compose exec rag python indexer.py"
             )
-        _db = sqlite3.connect(_INDEX_PATH, check_same_thread=False)
+        # Read-only URI mode + busy_timeout so the server's long-lived
+        # connection never contends with the indexer's writes — sqlite-vec's
+        # virtual tables would otherwise raise SQLITE_PROTOCOL even in WAL mode.
+        uri = f"file:{_INDEX_PATH}?mode=ro"
+        _db = sqlite3.connect(uri, uri=True, check_same_thread=False)
+        _db.execute("PRAGMA busy_timeout=30000")
         _db.enable_load_extension(True)
         sqlite_vec.load(_db)
         _db.enable_load_extension(False)
@@ -120,6 +128,32 @@ def _retrieve(query: str) -> list[dict]:
         for r in rows
         if r[4] <= _MAX_DIST
     ]
+
+
+def _format_passages_as_citations(passages: list[dict], kiwix_public_url: str) -> str:
+    """Render retrieved passages as a numbered list with citation links.
+
+    Used in search-only mode (no chat model configured) so the landing page
+    receives the same citation markup it would render from an LLM response.
+    """
+    base = kiwix_public_url.rstrip("/")
+    lines = [
+        "**Search results — top passages from the archive.** "
+        "No chat model is configured (search-only mode), so these are the raw "
+        "retrieved excerpts; click a citation to open the source article.",
+        "",
+    ]
+    for n, p in enumerate(passages, start=1):
+        title = p.get("title") or p["article_path"].rsplit("/", 1)[-1].replace("_", " ")
+        url = f"{base}/{p['zim_name']}/{p['article_path']}"
+        snippet = " ".join(p["text"].split())[:400]
+        if len(p["text"]) > 400:
+            snippet += "…"
+        lines.append(f"[[{n}: {title}]]({url})")
+        lines.append("")
+        lines.append(snippet)
+        lines.append("")
+    return "\n".join(lines).rstrip()
 
 
 def _call_ollama(messages: list[dict]) -> str:
@@ -224,8 +258,9 @@ def status() -> dict:
         "archives": archives,
         "archive_count": len(archives),
         "archive_total_gb": round(total_bytes / 1e9, 1),
-        "chat_model": _CHAT_MODEL,
+        "chat_model": "" if _SEARCH_ONLY else _CHAT_MODEL,
         "embed_model": _EMBED_MODEL,
+        "search_only": _SEARCH_ONLY,
         "rag_ready": Path(_INDEX_PATH).exists(),
     }
 
@@ -264,6 +299,11 @@ def chat_completions(req: _ChatRequest):
     else:
         if not passages:
             answer = NO_SOURCES_TEXT
+        elif _SEARCH_ONLY:
+            # Search-only mode: emit retrieved passages directly with the same
+            # `[[N: title]](url)` citation format the landing page renders for
+            # LLM answers. Lets the landing page treat both modes identically.
+            answer = _format_passages_as_citations(passages, _KIWIX_PUBLIC_URL)
         else:
             system = build_system_prompt(passages)
             llm_msgs = [{"role": "system", "content": system}] + [

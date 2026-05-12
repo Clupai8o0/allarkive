@@ -192,6 +192,7 @@ async function loadStatus() {
         if (data.webui_url) {
             document.getElementById('link-chat').href = data.webui_url;
         }
+        applySearchOnlyMode(!!data.search_only);
         renderStatusLine(statusEl, data);
         renderArchivesTable(archivesEl, data);
     } catch {
@@ -205,7 +206,28 @@ function renderStatusLine(el, data) {
     const archiveStr = data.archive_count > 0
         ? `${data.archive_count} source${data.archive_count !== 1 ? 's' : ''} / ${data.archive_total_gb} GB`
         : 'no archives';
-    el.textContent = `binding: localhost only · archive: ${archiveStr} · model: ${data.chat_model} · RAG: ${ragState}`;
+    const modelStr = data.search_only ? 'search-only (no chat model)' : data.chat_model;
+    el.textContent = `binding: localhost only · archive: ${archiveStr} · model: ${modelStr} · RAG: ${ragState}`;
+}
+
+// Hide the "Ask AI" UI when the backend reports no chat model is configured.
+// Toggles cleanly each /status refresh, so flipping --no-model on/off doesn't
+// require a hard refresh.
+function applySearchOnlyMode(searchOnly) {
+    const navChat = document.getElementById('nav-chat');
+    const aiBtn = document.getElementById('btn-ai-mode');
+    const searchBtn = document.getElementById('btn-search-mode');
+
+    if (navChat) navChat.hidden = searchOnly;
+    if (aiBtn) aiBtn.hidden = searchOnly;
+
+    if (searchOnly) {
+        // Force search mode and keep the input pointed at archive search.
+        setMode('search');
+        if (searchBtn) searchBtn.textContent = 'Search archive (no AI configured)';
+    } else if (searchBtn && searchBtn.textContent.startsWith('Search archive (no AI')) {
+        searchBtn.textContent = 'Search archive';
+    }
 }
 
 function renderArchivesTable(el, data) {

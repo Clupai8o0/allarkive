@@ -219,14 +219,39 @@ def _index_zim(
 ) -> None:
     zim_name = zim_path.stem
     mtime = zim_path.stat().st_mtime
-
-    if not force and _already_indexed(conn, zim_name, mtime):
-        log.info("skip %s (unchanged)", zim_path.name)
-        return
-
     limit = _effective_limit(zim_path, max_articles, large_zim_gb, large_max_articles)
     size_gb = round(zim_path.stat().st_size / 1e9, 1)
     limit_str = str(limit) if limit > 0 else "unlimited"
+
+    # Skip-or-re-index decision. A ZIM is considered "fully indexed" only if
+    # the previous run's mtime matches AND the previous cap covered the whole
+    # archive (or the new cap doesn't allow more articles than the previous
+    # one already captured). Without the second check, raising --max-articles
+    # would silently leave previously-capped ZIMs with stale partial coverage —
+    # the exact footgun that hides demo-critical articles like "Photosynthesis"
+    # when Wikipedia's 463k entries got sampled at 5k.
+    if not force:
+        prev = conn.execute(
+            "SELECT mtime, article_count FROM indexed_zims WHERE zim_name=?",
+            [zim_name],
+        ).fetchone()
+        if prev:
+            prev_mtime, prev_count = prev
+            if abs(prev_mtime - mtime) < 1.0:
+                total_entries = Archive(str(zim_path)).all_entry_count
+                prev_was_capped = prev_count < total_entries
+                new_allows_more = limit == 0 or limit > prev_count
+                if not (prev_was_capped and new_allows_more):
+                    log.info("skip %s (unchanged, cap satisfied)", zim_path.name)
+                    return
+                log.info(
+                    "re-indexing %s: cap raised %d → %s, archive has %d entries",
+                    zim_path.name, prev_count,
+                    "unlimited" if limit == 0 else str(limit),
+                    total_entries,
+                )
+                _drop_zim(conn, zim_name)
+
     log.info("indexing %s  (%.1f GB, limit=%s) ...", zim_path.name, size_gb, limit_str)
 
     if force:

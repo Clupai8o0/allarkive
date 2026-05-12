@@ -16,7 +16,89 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `bundles/comprehensive/LICENSE.md` — per-bundle license summaries listing
   each ZIM's source, license, and attribution as required by CLAUDE.md.
 
+### Added
+- `docs/TROUBLESHOOTING.md` — new central operational reference. Covers:
+  the cap/coverage story ("minimal" means small download, not small content);
+  native-Ollama setup for Apple Silicon speedup; WSL2 GPU passthrough; the
+  formerly-fatal sqlite-vec errors and how the indexer/server now handle them;
+  cap-aware bootstrap re-runs; pace tiers per hardware; sanity-check commands
+  for "is photosynthesis actually in my index"; demo-question selection.
+  Linked from `README.md`, `DOCS.md`, all four install guides, and
+  `docs/deployment/pi-text-only.md`.
+- `scripts/bootstrap.sh --max-articles <N>` and `--full-index` (alias for
+  `--max-articles 0`) let users control the per-ZIM article cap from
+  bootstrap, no longer requiring them to edit `compose/.env` or run the
+  indexer manually. Default cap is now **platform-aware**: 3000 on Pi
+  (CPU-bound), **0 (unlimited) on mac / linux / wsl** because GPU/Metal
+  acceleration makes full coverage feasible. The previous global default of
+  5000 was randomly sampling 1% of ZIMs like Wikipedia (463k+ entries) and
+  silently missing demo-critical articles like Photosynthesis. Bootstrap
+  writes the chosen cap to `compose/.env` as `RAG_MAX_ARTICLES`, so manual
+  `docker compose exec rag python indexer.py` runs honour the same setting.
+  Surfaces in the platform-summary prompt as `index cap: …`.
+- `scripts/bootstrap.sh --no-model` enables **search-only mode**: skips the
+  chat-model pull, writes `CHAT_MODEL=__none__` into `compose/.env`, and the
+  RAG service (`scripts/rag/server.py`) detects the sentinel and returns
+  retrieved passages as a numbered citation list instead of calling Ollama's
+  `/api/chat`. The embedding model is still pulled because indexing needs it.
+  Surfaces in the platform-summary as `model : (none — search-only mode)`.
+  Useful for low-RAM Pi setups or "search the archive, no AI" deployments.
+- `scripts/rag/server.py` `/status` endpoint now reports `search_only: true|false`.
+  `landing/app.js` reads this on each status refresh and hides the "Ask AI" UI
+  (nav link + mode toggle) when no chat model is configured, forcing the page
+  into search-archive mode. The model line in the status bar reads
+  `search-only (no chat model)` in that state.
+- `bundles/comprehensive/manifest.json` populated SHA-256 hashes for the five
+  ZIMs that previously had `"sha256": ""` (Wikipedia maxi 115 GB, Gutenberg
+  206 GB, Stack Overflow 75 GB, SuperUser, Math Stack Exchange). Without these,
+  `scripts/fetch-bundle.sh` would refuse to verify the downloaded files per the
+  project policy in CLAUDE.md.
+- `docs/deployment/pi-text-only.md` gained two recipes: "Pi 5 + large external
+  SSD + tiny model + comprehensive ZIMs" (explicit flags override the
+  platform default of minimal+1.5b) and "search-only mode" (`--no-model`).
+- `scripts/bootstrap.sh` learned a `--platform <mac|linux|pi|wsl>` flag with
+  `auto` detection (Darwin → mac, `/proc/device-tree/model` → pi, `/proc/version`
+  WSL marker → wsl, else linux). Each profile sets the compose file, data-dir
+  base, default bundle, and default chat model. RAM probe auto-downgrades to
+  the minimal bundle + `qwen2.5:1.5b` when total RAM < 6 GB and the user hasn't
+  pinned bundle/model. Confirmation prompt shows detected platform/RAM/GPU and
+  the chosen defaults before continuing; `--yes`/`-y` skips it for CI. On
+  macOS without a host-side Ollama, the script now prints a "install native
+  Ollama for Metal speedup" hint, since Dockerized Ollama on Darwin is CPU-only.
+  On WSL2 with no NVIDIA GPU detected, it warns that indexing will be CPU-bound
+  (recommends `--bundle minimal` or `nvidia-container-toolkit`), since GPU
+  passthrough is the only fast path inside Docker Desktop on Windows.
+  `--pi` is preserved as an alias for `--platform pi`.
+- `scripts/rag/indexer.py` cap-aware resume: the indexer compares each ZIM's
+  previously-recorded `article_count` in `indexed_zims` against the archive's
+  total entries and the new effective cap. If the prior run was capped and the
+  new cap allows more articles (e.g. user re-ran with `--full-index` or just
+  raised `--max-articles`), the ZIM is dropped and re-indexed. ZIMs that were
+  fully covered the first time are still skipped. Means `./scripts/bootstrap.sh`
+  Just Works after raising the cap — no manual `_drop_zim` cleanup needed,
+  and partial-coverage ZIMs no longer hide indefinitely behind a stale
+  completion marker.
+- `scripts/rag/indexer.py` hardening: a single bad embedding (zero magnitude,
+  NaN/inf, or one sqlite-vec rejects) no longer crashes the whole indexer. The
+  bad chunk is logged and skipped, indexing continues. Previously, one
+  malformed vector from Ollama would raise `sqlite3.OperationalError: Internal
+  sqlite-vec error: could not write vector blob` and kill the process.
+- `scripts/rag/server.py` opens `index.db` in read-only URI mode with a
+  30-second `busy_timeout`. This stops the FastAPI server's long-lived
+  connection from contending with the indexer's writes on sqlite-vec's
+  internal shadow tables, which previously surfaced as
+  `sqlite3.OperationalError: locking protocol` mid-indexing — especially
+  pronounced once Ollama was Metal-accelerated and writes got fast. Indexing
+  can now run via `docker compose exec rag python indexer.py` without first
+  stopping the rag service.
+
 ### Changed
+- `scripts/bootstrap.sh` now runs `docker compose build rag` on every invocation
+  before `up`. `docker compose up` reuses locally-tagged images even when the
+  source files behind them have changed, so prior bootstrap re-runs were
+  silently shipping stale `server.py` / `indexer.py` until the user remembered
+  to manually rebuild. Cached layers make the build near-instant (~5s) when
+  nothing changed.
 - `scripts/bootstrap.sh` final summary now prints chunk counts per archive
   from the RAG `index.db`, so a fresh user can see exactly what got indexed
   rather than discovering an empty/partial index only when a query returns

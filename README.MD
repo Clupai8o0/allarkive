@@ -73,6 +73,7 @@ Pick your starting point:
 | Choose a content bundle | [`docs/bundles/README.md`](docs/bundles/README.md) |
 | Understand how it works | [`docs/ARCHITECTURE.MD`](docs/ARCHITECTURE.MD) |
 | Understand what it protects against | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) |
+| Debug a problem, tune coverage, or speed up indexing | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
 | Contribute | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | See what's planned | [`ROADMAP.md`](ROADMAP.md) |
 | See all docs | [`DOCS.md`](DOCS.md) |

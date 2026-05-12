@@ -53,6 +53,12 @@ expected for topics not yet indexed. Watch progress:
 docker compose -f compose/docker-compose.yml logs -f rag
 ```
 
+For Windows specifically: without NVIDIA + `nvidia-container-toolkit` inside
+WSL2, Ollama runs on CPU and indexing is hours/days for any non-minimal
+bundle. See [`docs/TROUBLESHOOTING.md`](../TROUBLESHOOTING.md) for GPU
+passthrough setup, coverage-cap tuning, and re-running bootstrap to expand
+RAG coverage incrementally.
+
 ---
 
 ## Prerequisites

@@ -21,19 +21,37 @@
 #   6. Prints a status summary
 #
 # Idempotent: safe to re-run. Already-present ZIMs and pulled models are skipped.
+#
+# Implementation is split across scripts/lib/*.sh — this file orchestrates;
+# the libs hold reusable helpers (UI, platform detection, env mutation, etc).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 COMPOSE_DIR="${REPO_ROOT}/compose"
+LIB_DIR="${SCRIPT_DIR}/lib"
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 
-BUNDLE="balanced"
-PI_MODE=false
-COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
+# Platform: auto = detect from `uname` + /proc/device-tree/model. Override with
+# --platform mac|linux|pi|wsl (or the back-compat --pi alias).
+PLATFORM="auto"
 SKIP_BUNDLE=false
+KEEP_ENV=false
+ASSUME_YES=false
+NO_MODEL=false
+
+# Bundle/model/article-cap start unset; per-platform defaults (and an optional
+# low-RAM override) fill them in unless the user passed --bundle / --model /
+# --max-articles / --full-index explicitly.
+BUNDLE=""
+DEFAULT_MODEL=""
+EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
+MAX_ARTICLES=""        # per-ZIM article cap. 0 = unlimited.
+BUNDLE_EXPLICIT=false
+MODEL_EXPLICIT=false
+MAX_ARTICLES_EXPLICIT=false
 
 # Config file — persists per-subsystem storage paths between runs.
 ALLARKIVE_CONFIG_DIR="${XDG_CONFIG_HOME:-${HOME}/.config}/allarkive"
@@ -44,33 +62,37 @@ ZIM_DIR_ARG=""
 MODELS_DIR_ARG=""
 INDEX_DIR_ARG=""
 
-# Data root: used as the fallback base when no per-subsystem dir is configured.
-if [[ -n "${ALLARKIVE_DATA_DIR:-}" ]]; then
-    DATA_DIR="${ALLARKIVE_DATA_DIR}"
-elif [[ "$(uname -s)" == "Darwin" ]]; then
-    DATA_DIR="${HOME}/allarkive-data"
-else
-    DATA_DIR="/var/lib/allarkive"
-fi
-
-DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-qwen2.5:7b}"
-EMBED_MODEL="${EMBED_MODEL:-nomic-embed-text}"
-
 # ── Argument parsing ──────────────────────────────────────────────────────────
-
-KEEP_ENV=false
 
 usage() {
     cat >&2 <<EOF
 Usage: $0 [options]
 
-  --bundle <name>     ZIM bundle: minimal, balanced, comprehensive (default: balanced)
-  --model <name>      Ollama model to pull (default: qwen2.5:7b)
-  --pi                Use docker-compose.pi.yml (Raspberry Pi)
+  --platform <name>   Target platform: auto, mac, linux, pi, wsl (default: auto)
+                      auto detects from uname/proc. Sets compose file, data dir,
+                      and default bundle/model unless overridden.
+  --bundle <name>     ZIM bundle: minimal, balanced, comprehensive
+                      (default: platform-dependent — minimal on Pi/low-RAM, else balanced)
+  --model <name>      Ollama chat model to pull
+                      (default: platform-dependent — qwen2.5:1.5b on Pi, qwen2.5:7b otherwise)
+  --pi                Alias for --platform pi. Kept for back-compat.
+  --no-model          Search-only mode: skip the chat-model pull. The embedding
+                      model is still pulled (indexing needs it). RAG queries
+                      return retrieved passages with citations, no LLM
+                      summarisation. Landing page hides the "Ask AI" UI.
+  --max-articles <N>  Per-ZIM article cap for the indexer. 0 = unlimited (index
+                      every article). Higher values = better RAG coverage but
+                      longer indexing. Defaults vary by platform: 3000 on Pi,
+                      0 (unlimited) elsewhere. Without this flag, the
+                      platform default is used.
+  --full-index        Alias for --max-articles 0. Index every article in every
+                      ZIM. On a Pi with the comprehensive bundle this is days
+                      of indexing; on Apple Silicon / NVIDIA it's hours.
   --skip-bundle       Skip ZIM fetch (use existing files)
   --keep-env          Use ports exactly as set in compose/.env — no auto-adjustment.
                       Without this flag, ports reset to defaults (8080/8081/3000/…)
                       on every run and only increment if those defaults are occupied.
+  --yes, -y           Skip the platform-summary confirmation prompt (for CI / scripts).
   --zim-dir <path>    Store ZIM files here — saved to config for future runs
   --models-dir <path> Store Ollama models here — saved to config for future runs
   --index-dir <path>  Store RAG index here — saved to config for future runs
@@ -84,15 +106,19 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --bundle)      BUNDLE="${2:?--bundle requires an argument}"; shift 2 ;;
-        --model)       DEFAULT_MODEL="${2:?--model requires an argument}"; shift 2 ;;
-        --pi)
-            PI_MODE=true
-            COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.pi.yml"
-            DATA_DIR="${ALLARKIVE_DATA_DIR:-/mnt/ssd/allarkive}"
-            shift ;;
+        --bundle)      BUNDLE="${2:?--bundle requires an argument}"; BUNDLE_EXPLICIT=true; shift 2 ;;
+        --model)       DEFAULT_MODEL="${2:?--model requires an argument}"; MODEL_EXPLICIT=true; shift 2 ;;
+        --platform)    PLATFORM="${2:?--platform requires an argument}"; shift 2 ;;
+        --pi)          PLATFORM="pi"; shift ;;
+        --no-model)    NO_MODEL=true; shift ;;
+        --max-articles)
+            MAX_ARTICLES="${2:?--max-articles requires an argument}"
+            MAX_ARTICLES_EXPLICIT=true
+            shift 2 ;;
+        --full-index)  MAX_ARTICLES=0; MAX_ARTICLES_EXPLICIT=true; shift ;;
         --skip-bundle) SKIP_BUNDLE=true; shift ;;
         --keep-env)    KEEP_ENV=true; shift ;;
+        --yes|-y)      ASSUME_YES=true; shift ;;
         --zim-dir)     ZIM_DIR_ARG="${2:?--zim-dir requires an argument}"; shift 2 ;;
         --models-dir)  MODELS_DIR_ARG="${2:?--models-dir requires an argument}"; shift 2 ;;
         --index-dir)   INDEX_DIR_ARG="${2:?--index-dir requires an argument}"; shift 2 ;;
@@ -101,42 +127,93 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# ── Config file helpers ───────────────────────────────────────────────────────
+# ── Source helper libraries ───────────────────────────────────────────────────
 
-_cfg_get() {
-    # Prints the value for <key> from config.json, or empty string if absent.
-    local key="$1"
-    if [[ ! -f "${ALLARKIVE_CONFIG}" ]]; then
-        echo ""; return 0
+# shellcheck source=lib/platform.sh
+. "${LIB_DIR}/platform.sh"
+# shellcheck source=lib/config.sh
+. "${LIB_DIR}/config.sh"
+# shellcheck source=lib/env-file.sh
+. "${LIB_DIR}/env-file.sh"
+# shellcheck source=lib/checks.sh
+. "${LIB_DIR}/checks.sh"
+# shellcheck source=lib/models.sh
+. "${LIB_DIR}/models.sh"
+
+# ── Platform detection + profile ──────────────────────────────────────────────
+
+if [[ "${PLATFORM}" == "auto" ]]; then
+    PLATFORM="$(_detect_platform)"
+    PLATFORM_AUTO=true
+else
+    PLATFORM_AUTO=false
+fi
+
+case "${PLATFORM}" in
+    mac|linux|pi|wsl) ;;
+    *) echo "ERROR: unknown --platform: ${PLATFORM} (expected: auto, mac, linux, pi, wsl)" >&2; exit 1 ;;
+esac
+
+# Per-platform compose file, data dir base, default bundle/model, and
+# default per-ZIM article cap. The cap is the single biggest knob on RAG
+# coverage: it bounds how many articles per ZIM get embedded. Pi defaults to
+# a conservative cap to keep CPU-bound indexing tractable; everywhere else
+# defaults to unlimited because GPU/Metal acceleration makes full coverage
+# feasible and partial coverage has bitten the demo (article not in the
+# random sample → "no sources found").
+case "${PLATFORM}" in
+    pi)
+        COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.pi.yml"
+        DATA_DIR="${ALLARKIVE_DATA_DIR:-/mnt/ssd/allarkive}"
+        PLATFORM_DEFAULT_BUNDLE="minimal"
+        PLATFORM_DEFAULT_MODEL="qwen2.5:1.5b"
+        PLATFORM_DEFAULT_MAX_ARTICLES=3000
+        ;;
+    mac)
+        COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
+        DATA_DIR="${ALLARKIVE_DATA_DIR:-${HOME}/allarkive-data}"
+        PLATFORM_DEFAULT_BUNDLE="balanced"
+        PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
+        PLATFORM_DEFAULT_MAX_ARTICLES=0
+        ;;
+    wsl)
+        COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
+        DATA_DIR="${ALLARKIVE_DATA_DIR:-${HOME}/allarkive-data}"
+        PLATFORM_DEFAULT_BUNDLE="balanced"
+        PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
+        PLATFORM_DEFAULT_MAX_ARTICLES=0
+        ;;
+    linux|*)
+        COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
+        DATA_DIR="${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}"
+        PLATFORM_DEFAULT_BUNDLE="balanced"
+        PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
+        PLATFORM_DEFAULT_MAX_ARTICLES=0
+        ;;
+esac
+
+# Low-RAM auto-downgrade. Only fires when the user didn't pin a bundle/model.
+TOTAL_RAM_GB="$(_detect_ram_gb)"
+RAM_DOWNGRADED=false
+if [[ "${TOTAL_RAM_GB}" -gt 0 && "${TOTAL_RAM_GB}" -lt 6 ]]; then
+    if [[ "${BUNDLE_EXPLICIT}" == false ]]; then
+        PLATFORM_DEFAULT_BUNDLE="minimal"
+        RAM_DOWNGRADED=true
     fi
-    python3 - "${ALLARKIVE_CONFIG}" "${key}" <<'PYEOF'
-import json, sys, os
-try:
-    with open(sys.argv[1]) as f:
-        val = json.load(f).get(sys.argv[2]) or ""
-    print(os.path.expanduser(str(val)) if val else "")
-except Exception:
-    print("")
-PYEOF
-}
+    if [[ "${MODEL_EXPLICIT}" == false ]]; then
+        PLATFORM_DEFAULT_MODEL="qwen2.5:1.5b"
+        RAM_DOWNGRADED=true
+    fi
+fi
 
-_cfg_save() {
-    # Merge key=value pairs into config.json. Args: key val [key val ...]
-    mkdir -p "${ALLARKIVE_CONFIG_DIR}"
-    python3 - "${ALLARKIVE_CONFIG}" "$@" <<'PYEOF'
-import json, sys
-path, pairs = sys.argv[1], sys.argv[2:]
-try:
-    cfg = json.loads(open(path).read())
-except Exception:
-    cfg = {}
-for i in range(0, len(pairs) - 1, 2):
-    cfg[pairs[i]] = pairs[i + 1]
-with open(path, "w") as f:
-    json.dump(cfg, f, indent=2)
-    f.write("\n")
-PYEOF
-}
+# Fill bundle/model/cap from the resolved platform profile.
+[[ "${BUNDLE_EXPLICIT}" == false ]]       && BUNDLE="${PLATFORM_DEFAULT_BUNDLE}"
+[[ "${MODEL_EXPLICIT}"  == false ]]       && DEFAULT_MODEL="${PLATFORM_DEFAULT_MODEL}"
+[[ "${MAX_ARTICLES_EXPLICIT}" == false ]] && MAX_ARTICLES="${PLATFORM_DEFAULT_MAX_ARTICLES}"
+DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-${DEFAULT_MODEL}}"
+
+DETECTED_GPU="$(_detect_gpu)"
+DOCKER_RAM_GB="$(_detect_docker_ram_gb)"
 
 # ── Resolve per-subsystem storage paths ──────────────────────────────────────
 # Priority: CLI arg → env var → config.json → DATA_DIR/subdir default.
@@ -161,162 +238,68 @@ if [[ "${#_SAVE_ARGS[@]}" -gt 0 ]]; then
     _cfg_save "${_SAVE_ARGS[@]}"
 fi
 
-# ── Progress tracking ─────────────────────────────────────────────────────────
+# ── Progress tracking + UI ────────────────────────────────────────────────────
+# Source UI after PLATFORM/BUNDLE/etc are set so the banner prints correctly.
 
 TOTAL_STEPS=7
 STEP=0
+ZIM_DIR_OK=true  # Set in step 2; gates ZIM operations in steps 4 and 5.
 
-# Set in step 2; gates ZIM operations in steps 4 and 5.
-ZIM_DIR_OK=true
+# shellcheck source=lib/ui.sh
+. "${LIB_DIR}/ui.sh"
 
-# ── Terminal colors ────────────────────────────────────────────────────────────
-# $'...' embeds the literal ESC byte so plain echo works without -e.
-USE_TUI=false
-if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
-    R=$'\033[0m';  B=$'\033[1m';   DIM=$'\033[2m'
-    CY=$'\033[36m';  BCY=$'\033[96m'
-    GR=$'\033[32m';  BGR=$'\033[92m'
-    YL=$'\033[93m';  RD=$'\033[91m';  WH=$'\033[97m'
-    if command -v tput > /dev/null 2>&1 && tput cup 0 0 > /dev/null 2>&1; then
-        USE_TUI=true
+# ── Confirmation prompt ───────────────────────────────────────────────────────
+# Show the user what was detected and what defaults will be used. Skipped when
+# --yes is passed, stdin is not a TTY, or the user pinned the platform explicitly.
+
+if [[ "${ASSUME_YES}" == false && "${PLATFORM_AUTO}" == true && -t 0 ]]; then
+    echo ""
+    echo "  ┌─ AllArkive bootstrap — detected platform ───────────────────────"
+    echo "  │  platform : ${PLATFORM}    (uname=$(uname -s)/$(uname -m))"
+    echo "  │  RAM      : ${TOTAL_RAM_GB} GB total"
+    if [[ "${PLATFORM}" == "mac" || "${PLATFORM}" == "wsl" ]] && [[ "${DOCKER_RAM_GB}" -gt 0 ]]; then
+        echo "  │  Docker   : ${DOCKER_RAM_GB} GB allocated to Docker Desktop"
     fi
-else
-    R=''; B=''; DIM=''; CY=''; BCY=''; GR=''; BGR=''; YL=''; RD=''; WH=''
-fi
-
-# ── Helper functions ──────────────────────────────────────────────────────────
-
-info() { echo "  ${DIM}·${R}  $*"; }
-warn() { echo "  ${YL}⚠${R}  $*" >&2; }
-die()  { echo "  ${RD}✗  $*${R}" >&2; exit 1; }
-
-step() {
-    STEP=$((STEP + 1))
-    local label="$*"
-    local bar_width=50
-    local filled=$(( STEP * bar_width / TOTAL_STEPS ))
-    local pct=$(( STEP * 100 / TOTAL_STEPS ))
-    local filled_bar='' empty_bar='' i=0
-    while [[ $i -lt $filled ]];    do filled_bar+="█"; i=$((i+1)); done
-    while [[ $i -lt $bar_width ]]; do empty_bar+="░"; i=$((i+1)); done
-    printf '\033[2J\033[H'
-    print_banner
-    echo "  ${CY}┌──────────────────────────────────────────────────────────────────${R}"
-    echo "  ${CY}│${R}  ${B}▶  ${label}${R}  ${DIM}(${STEP}/${TOTAL_STEPS})${R}"
-    echo "  ${CY}│${R}  ${BGR}${filled_bar}${DIM}${empty_bar}${R}  ${YL}${pct}%${R}"
-    echo "  ${CY}└──────────────────────────────────────────────────────────────────${R}"
-    echo ""
-}
-
-print_banner() {
-    echo ""
-    echo "  ${CY}╔══════════════════════════════════════════════════════════════════╗${R}"
-    echo "  ${CY}║${R}"
-    echo "  ${CY}║${R}  ${B}${WH}░▒▓  AllArkive  ▓▒░${R}   self-hosted knowledge ark"
-    echo "  ${CY}║${R}"
-    echo "  ${CY}║${R}  ${DIM}bundle : ${BUNDLE}${R}"
-    echo "  ${CY}║${R}  ${DIM}zim    : ${ZIM_DIR}${R}"
-    echo "  ${CY}║${R}  ${DIM}models : ${MODELS_DIR}${R}"
-    echo "  ${CY}║${R}"
-    echo "  ${CY}╚══════════════════════════════════════════════════════════════════╝${R}"
-    echo ""
-}
-
-check_cmd() {
-    command -v "$1" > /dev/null 2>&1 || die "Required command not found: $1"
-}
-
-check_dir_accessible() {
-    # Returns 0 if dir exists/is creatable and writable; 1 with warnings otherwise.
-    local dir="$1" label="$2"
-    if mkdir -p "${dir}" 2>/dev/null && [[ -w "${dir}" ]]; then
-        return 0
+    echo "  │  GPU      : ${DETECTED_GPU}"
+    echo "  │  compose  : $(basename "${COMPOSE_FILE}")"
+    echo "  │  data dir : ${DATA_DIR}"
+    echo "  │  bundle   : ${BUNDLE}$([[ "${BUNDLE_EXPLICIT}" == true ]] && echo '  (explicit)' || echo '  (default)')"
+    if [[ "${NO_MODEL}" == true ]]; then
+        echo "  │  model    : (none — search-only mode)"
+    else
+        echo "  │  model    : ${DEFAULT_MODEL}$([[ "${MODEL_EXPLICIT}" == true ]] && echo '  (explicit)' || echo '  (default)')"
     fi
-    warn "${label} directory is not accessible: ${dir}"
-    case "${dir}" in
-        /Volumes/*|/mnt/*|/media/*)
-            warn "This looks like an external disk path — is the disk mounted?" ;;
+    if [[ "${MAX_ARTICLES}" -eq 0 ]]; then
+        _cap_label="unlimited (index every article)"
+    else
+        _cap_label="${MAX_ARTICLES} per ZIM"
+    fi
+    echo "  │  index cap: ${_cap_label}$([[ "${MAX_ARTICLES_EXPLICIT}" == true ]] && echo '  (explicit)' || echo '  (default)')"
+    if [[ "${RAM_DOWNGRADED}" == true ]]; then
+        echo "  │  ⚠  low RAM (<6 GB) — auto-downgraded to minimal bundle + 1.5b model"
+    fi
+    if [[ "${PLATFORM}" == "mac" ]] && [[ "${DOCKER_RAM_GB}" -gt 0 ]] && [[ "${DOCKER_RAM_GB}" -lt 8 ]]; then
+        echo "  │  ⚠  Docker Desktop has <8 GB allocated — bump in Settings → Resources"
+    fi
+    if [[ "${PLATFORM}" == "mac" ]]; then
+        echo "  │  tip: install Ollama natively (brew install ollama) for Metal speedup"
+    fi
+    # WSL2 without an NVIDIA GPU = CPU-only Ollama. Indexing the balanced
+    # bundle takes hours on CPU; warn early so the user can pick --bundle minimal
+    # or set up nvidia-container-toolkit before walking away from the laptop.
+    if [[ "${PLATFORM}" == "wsl" ]] && [[ "${DETECTED_GPU}" == "none" ]]; then
+        echo "  │  ⚠  WSL2 + no NVIDIA GPU detected — Ollama will run on CPU."
+        echo "  │     Indexing the balanced bundle will take hours. Consider --bundle minimal,"
+        echo "  │     or install nvidia-container-toolkit inside WSL2 to enable GPU passthrough."
+    fi
+    echo "  └─────────────────────────────────────────────────────────────────"
+    echo ""
+    read -r -p "  Continue with these settings? [Y/n] " _CONFIRM
+    case "${_CONFIRM:-y}" in
+        n|N|no|NO|No) echo "  Aborted."; exit 0 ;;
     esac
-    warn "Config: ${ALLARKIVE_CONFIG}"
-    return 1
-}
-
-_env_set() {
-    # Set KEY=VALUE in an env file; updates in-place if key exists, appends if not.
-    local key="$1" val="$2" file="$3"
-    if grep -q "^${key}=" "${file}" 2>/dev/null; then
-        python3 -c "
-import sys; path, key, val = sys.argv[1], sys.argv[2], sys.argv[3]
-lines = open(path).readlines()
-open(path, 'w').write(''.join(f'{key}={val}\n' if l.startswith(key+'=') else l for l in lines))
-" "${file}" "${key}" "${val}"
-    else
-        printf '\n%s=%s\n' "${key}" "${val}" >> "${file}"
-    fi
-}
-
-_port_free() {
-    # Check OS-level bind AND docker's port table (Docker Desktop on Mac doesn't
-    # expose container ports as host sockets, so a plain bind() would miss them).
-    python3 -c "
-import socket, sys
-port = int(sys.argv[1])
-# Try binding — catches native processes and most Linux Docker setups.
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-try:
-    s.bind(('127.0.0.1', port))
-    s.close()
-except OSError:
-    sys.exit(1)
-# Also try connecting — catches Docker Desktop port forwarder on macOS.
-c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-c.settimeout(0.3)
-try:
-    c.connect(('127.0.0.1', port))
-    c.close()
-    sys.exit(1)
-except OSError:
-    pass
-sys.exit(0)
-" "$1"
-}
-
-_ASSIGNED_PORTS=()
-
-_resolve_port() {
-    # Usage: PORT=$(_resolve_port VARNAME DEFAULT)
-    # --keep-env: honour whatever is in .env, only bump on conflict.
-    # default:    always start from DEFAULT so ports reset to well-known values
-    #             on every run and only increment if those values are occupied.
-    local varname="$1" default="$2"
-    local preferred
-    if [[ "${KEEP_ENV}" == true ]]; then
-        preferred="$(grep -E "^${varname}=" "${ENV_FILE}" 2>/dev/null | cut -d= -f2- || true)"
-        preferred="${preferred:-${default}}"
-    else
-        preferred="${default}"
-    fi
-    local port="${preferred}"
-    _already_assigned() {
-        local p="$1" a
-        for a in "${_ASSIGNED_PORTS[@]+"${_ASSIGNED_PORTS[@]}"}"; do
-            [[ "$a" == "$p" ]] && return 0
-        done
-        return 1
-    }
-    while ! _port_free "${port}" || _already_assigned "${port}"; do
-        port=$((port + 1))
-    done
-    if [[ "${port}" != "${preferred}" ]]; then
-        warn "Port ${preferred} already in use — using ${port} for ${varname}."
-    fi
-    _ASSIGNED_PORTS+=("${port}")
-    _env_set "${varname}" "${port}" "${ENV_FILE}"
-    printf '%s' "${port}"
-}
-
-# ── Banner ────────────────────────────────────────────────────────────────────
+    echo ""
+fi
 
 print_banner
 
@@ -367,7 +350,7 @@ info "WebUI   : ${WEBUI_DATA_DIR}"
 info "Config  : ${ALLARKIVE_CONFIG}"
 info "Directories OK."
 
-# ── Step 3: .env file ─────────────────────────────────────────────────────────
+# ── Step 3: .env file + ports + ollama detection ──────────────────────────────
 
 step "Configuring environment"
 ENV_FILE="${COMPOSE_DIR}/.env"
@@ -405,6 +388,10 @@ _env_set ALLARKIVE_ZIM_DIR    "${ZIM_DIR}"    "${ENV_FILE}"
 _env_set ALLARKIVE_MODELS_DIR "${MODELS_DIR}" "${ENV_FILE}"
 _env_set ALLARKIVE_INDEX_DIR  "${INDEX_DIR}"  "${ENV_FILE}"
 _env_set ALLARKIVE_WEBUI_DIR  "${WEBUI_DATA_DIR}" "${ENV_FILE}"
+# RAG_MAX_ARTICLES seeds the indexer's --max-articles default. Keeping it in
+# .env means manual `docker compose exec rag python indexer.py` runs honour
+# the same cap the user picked at bootstrap time.
+_env_set RAG_MAX_ARTICLES     "${MAX_ARTICLES}" "${ENV_FILE}"
 info "Storage paths written to ${ENV_FILE}."
 
 # Release AllArkive ports before checking availability so re-runs don't
@@ -439,24 +426,20 @@ else
     _env_set OLLAMA_BASE_URL "http://ollama:11434" "${ENV_FILE}"
     _env_set OLLAMA_URL      "http://ollama:11434" "${ENV_FILE}"
     OLLAMA_URL="http://127.0.0.1:${OLLAMA_PORT}"
+    # Apple Silicon: Docker-bound Ollama is CPU-only and much slower than
+    # native Ollama using Metal. Surface this once, only when relevant.
+    if [[ "${PLATFORM}" == "mac" && "$(uname -m)" == "arm64" ]]; then
+        warn "macOS detected with no host Ollama — Dockerized Ollama runs on CPU only."
+        warn "  For 5–10× faster embeddings + chat, install native Ollama:"
+        warn "    brew install ollama && ollama serve &"
+        warn "    ollama pull ${DEFAULT_MODEL} && ollama pull ${EMBED_MODEL}"
+        warn "  Then re-run this script; it will auto-detect and use the host instance."
+    fi
 fi
 
 # ── Step 4: Disk space check ──────────────────────────────────────────────────
 
 step "Checking disk space"
-check_disk_space() {
-    local required_gb="$1"
-    local path="$2"
-    local available_gb
-    available_gb="$(df -P "${path}" | awk 'NR==2 {print int($4 / 1048576)}')"
-
-    if [[ "${available_gb}" -lt "${required_gb}" ]]; then
-        warn "Low disk space on ${path}: ${available_gb} GB available, ${required_gb} GB recommended for the ${BUNDLE} bundle."
-        warn "Proceeding anyway — you can always fetch a smaller bundle with --bundle minimal."
-    else
-        info "Disk space OK: ${available_gb} GB available on $(df -P "${path}" | awk 'NR==2 {print $1}')."
-    fi
-}
 
 REQUIRED_GB="$(python3 - "${REPO_ROOT}/bundles/${BUNDLE}/manifest.json" <<'PYEOF'
 import json, sys
@@ -472,7 +455,7 @@ else
     info "Skipping ZIM disk space check — ZIM directory not accessible."
 fi
 
-# ── Step 5: Fetch bundle ───────────────────────────────────────────────────────
+# ── Step 5: Fetch bundle ──────────────────────────────────────────────────────
 
 step "Fetching bundle: ${BUNDLE}"
 if [[ "${SKIP_BUNDLE}" == false ]]; then
@@ -503,6 +486,14 @@ fi
 step "Starting Docker Compose stack"
 
 info "Starting Docker Compose stack (${COMPOSE_FILE})..."
+# Always rebuild the rag image so edits to scripts/rag/*.py take effect.
+# Cached layers make this fast (~5s) when nothing changed; otherwise it
+# picks up the new source. Without this, `up` reuses any locally-tagged
+# allarkive-rag:0.1.0 image even when the source files have been modified —
+# a footgun that's silently shipped stale code in past sessions.
+info "Rebuilding rag image (picks up any scripts/rag/ source changes)..."
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build rag
+
 if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
     info "Skipping Docker Ollama — using local Ollama on 127.0.0.1:11434."
     docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d \
@@ -512,33 +503,6 @@ else
 fi
 
 info "Stack started. Waiting for services to be healthy..."
-
-wait_healthy() {
-    local service="$1"
-    local max_wait="${2:-120}"
-    local elapsed=0
-    local interval=5
-
-    while [[ "${elapsed}" -lt "${max_wait}" ]]; do
-        local status
-        status="$(docker compose -f "${COMPOSE_FILE}" ps --format json "${service}" 2>/dev/null \
-                  | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('Health','unknown'))" \
-                  2>/dev/null || echo "unknown")"
-
-        if [[ "${status}" == "healthy" ]]; then
-            echo "  ${BGR}✓${R}  ${service}: healthy"
-            return 0
-        fi
-
-        sleep "${interval}"
-        elapsed=$((elapsed + interval))
-        printf "  ${DIM}·${R}  waiting for %s  %ds / %ds...\r" "${service}" "${elapsed}" "${max_wait}"
-    done
-
-    warn "${service} did not become healthy within ${max_wait}s."
-    warn "Check logs: docker compose -f ${COMPOSE_FILE} logs ${service}"
-    return 1
-}
 
 # Only wait for Docker Ollama health if we're not using the local instance.
 if [[ "${USE_LOCAL_OLLAMA}" == false ]]; then
@@ -550,65 +514,24 @@ wait_healthy kiwix 60 || true
 
 step "Pulling models and running RAG indexer"
 
-# Write the pull-progress script to a temp file.
-# Using `pipe | python3 - <<'PYEOF'` doesn't work: the heredoc takes python3's
-# stdin, leaving the pipe with no reader and causing curl to exit with code 23.
-_PULL_PY="$(mktemp)"
-cat > "${_PULL_PY}" <<'PYEOF'
-import json, sys
-BGR = '\033[92m'; DIM = '\033[2m'; YL = '\033[93m'; WH = '\033[97m'; R = '\033[0m'
-BAR_W = 36
-for line in sys.stdin:
-    line = line.strip()
-    if not line:
-        continue
-    try:
-        obj = json.loads(line)
-        status = obj.get("status", "")
-        completed = obj.get("completed", 0)
-        total = obj.get("total", 0)
-        if total:
-            pct = completed / total
-            filled = int(pct * BAR_W)
-            bar = f"{BGR}{'█'*filled}{DIM}{'░'*(BAR_W-filled)}{R}"
-            print(f"\r    [{bar}]  {YL}{pct*100:.0f}%{R}  {status}", end="", flush=True)
-        else:
-            print(f"  {DIM}·{R}  {status}    ", flush=True)
-    except json.JSONDecodeError:
-        pass
-print()
-PYEOF
-
-_pull_model() {
-    local model="$1"
-    info "Pulling model: ${model}"
-    if curl -sf "${OLLAMA_URL}/api/version" > /dev/null 2>&1; then
-        curl -s "${OLLAMA_URL}/api/pull" \
-             -H 'Content-Type: application/json' \
-             -d "{\"name\": \"${model}\"}" \
-             | python3 "${_PULL_PY}"
-        echo "  ${BGR}✓${R}  Pull complete: ${model}"
-    else
-        warn "Ollama not reachable at ${OLLAMA_URL} — pull ${model} manually:"
-        if [[ "${USE_LOCAL_OLLAMA}" == true ]]; then
-            warn "  ollama pull ${model}"
-        else
-            warn "  docker compose -f ${COMPOSE_FILE} exec ollama ollama pull ${model}"
-        fi
-    fi
-}
+_pull_model_init
 
 info "(Model weights may take several minutes to download.)"
-_pull_model "${DEFAULT_MODEL}"
-
-# ── Step 7b: Pull embedding model ─────────────────────────────────────────────
-
+if [[ "${NO_MODEL}" == true ]]; then
+    info "--no-model: skipping chat-model pull (search-only mode)."
+    # Sentinel value tells server.py to skip Ollama /api/chat calls and return
+    # raw retrieved passages instead. Compose has a default of qwen2.5:7b that
+    # only applies if CHAT_MODEL is unset, so we must write a value here.
+    _env_set CHAT_MODEL "__none__" "${ENV_FILE}"
+else
+    _pull_model "${DEFAULT_MODEL}"
+    _env_set CHAT_MODEL "${DEFAULT_MODEL}" "${ENV_FILE}"
+fi
 _pull_model "${EMBED_MODEL}"
 
-rm -f "${_PULL_PY}"
+_pull_model_cleanup
 
-# ── Step 7c: Wait for RAG service, then run indexer ───────────────────────────
-
+# Wait for the RAG service, then run the indexer.
 wait_healthy rag 60 || true
 
 info "Running RAG indexer (indexes ZIM content for retrieval)..."
@@ -623,11 +546,17 @@ if docker compose -f "${COMPOSE_FILE}" ps --format json rag 2>/dev/null \
     else
         _INDEXER_OLLAMA_URL="http://ollama:11434"
     fi
+    if [[ "${MAX_ARTICLES}" -eq 0 ]]; then
+        info "Index cap: unlimited (every article in every ZIM)."
+    else
+        info "Index cap: ${MAX_ARTICLES} articles per ZIM (use --full-index to remove)."
+    fi
     docker compose -f "${COMPOSE_FILE}" exec rag \
         python indexer.py \
             --zim-dir /data \
             --index-dir /index \
             --ollama-url "${_INDEXER_OLLAMA_URL}" \
+            --max-articles "${MAX_ARTICLES}" \
     && info "Indexing complete." \
     || warn "Indexer returned an error — see logs above. Queries will return no-sources until indexing succeeds."
 else
