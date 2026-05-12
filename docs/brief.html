@@ -6,6 +6,7 @@
     <title>Brief — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Brief.">
     <link rel="stylesheet" href="styles.css">
+    <script src="docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -744,17 +745,5 @@ cheat sheet (one table)</a></li>
 <li class="toc-h2"><a href="#16-suggested-narrative-arcs">16. Suggested narrative arcs</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

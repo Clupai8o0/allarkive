@@ -6,6 +6,7 @@
     <title>macOS — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: macOS.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -68,12 +69,13 @@ downloads. After the stack starts, RAG indexing runs in the background —
 <em>Indexing takes hours</em> below.</p>
 <hr />
 <h2 id="quick-start-automated">Quick start (automated)</h2>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
-nano compose/.env
-./scripts/bootstrap.sh --bundle balanced</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32  <span class="co"># copy into WEBUI_SECRET_KEY= in compose/.env</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> compose/.env</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span> <span class="at">--bundle</span> balanced</span></code></pre></div>
 <p>On macOS, <code>bootstrap.sh</code> automatically uses
 <code>~/allarkive-data</code> as the data directory (avoids the
 <code>/var/lib/</code> permission issue). No extra config needed.</p>
@@ -98,7 +100,8 @@ where it left off.</p>
 <strong>immediately</strong>. RAG answers improve as coverage grows —
 "no sources found" early on is expected for topics not yet indexed.
 Watch progress:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>
@@ -132,22 +135,28 @@ Download from
 <code>https://www.docker.com/products/docker-desktop/</code>.</p>
 <p>After installing, open Docker Desktop and confirm it is running (the
 whale icon appears in the menu bar). Verify in a terminal:</p>
-<pre class="bash"><code>docker compose version</code></pre></li>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div></li>
 <li><p><strong>Homebrew</strong> (optional but useful for
 <code>git</code>, <code>openssl</code>):</p>
-<pre class="bash"><code>/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/bash</span> <span class="at">-c</span> <span class="st">&quot;</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-fsSL</span> https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span class="va">)</span><span class="st">&quot;</span></span></code></pre></div>
 <p>Or use the Xcode command-line tools:</p>
-<pre class="bash"><code>xcode-select --install</code></pre></li>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">xcode-select</span> <span class="at">--install</span></span></code></pre></div></li>
 </ul>
 <hr />
 <h2 id="step-1-clone-the-repository">Step 1: Clone the repository</h2>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-2-set-up-configuration">Step 2: Set up configuration</h2>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Generate a secret key:</p>
-<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32</span></code></pre></div>
 <p>Open <code>compose/.env</code> in your editor and paste the result
 into <code>WEBUI_SECRET_KEY=</code>.</p>
 <h3 id="data-directory-on-macos">Data directory on macOS</h3>
@@ -156,13 +165,16 @@ macOS you will need to either create this path or use a directory under
 your home folder.</p>
 <p><strong>Option A — Use your home directory (simplest):</strong></p>
 <p>Set in <code>compose/.env</code>:</p>
-<pre class="bash"><code>ALLARKIVE_DATA_DIR=/Users/YOUR_USERNAME/allarkive-data</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="va">ALLARKIVE_DATA_DIR</span><span class="op">=</span>/Users/YOUR_USERNAME/allarkive-data</span></code></pre></div>
 <p>Then create it:</p>
-<pre class="bash"><code>mkdir -p ~/allarkive-data/{zim,index,models,data}</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/allarkive-data/<span class="dt">{zim</span><span class="op">,</span><span class="dt">index</span><span class="op">,</span><span class="dt">models</span><span class="op">,</span><span class="dt">data}</span></span></code></pre></div>
 <p><strong>Option B — Use <code>/var/lib/allarkive</code> (matches Linux
 docs):</strong></p>
-<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
-sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /var/lib/allarkive/<span class="dt">{zim</span><span class="op">,</span><span class="dt">index</span><span class="op">,</span><span class="dt">models</span><span class="op">,</span><span class="dt">data}</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> /var/lib/allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-3-docker-desktop-resource-limits">Step 3: Docker Desktop
 resource limits</h2>
@@ -178,7 +190,8 @@ set:</p>
 <p>Click <strong>Apply &amp; Restart</strong>.</p>
 <hr />
 <h2 id="step-4-fetch-a-bundle">Step 4: Fetch a bundle</h2>
-<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/fetch-bundle.sh</span> balanced</span></code></pre></div>
 <p>The script downloads ZIM files to
 <code>$ALLARKIVE_DATA_DIR/zim/</code> and verifies checksums. A failed
 checksum stops the script — do not proceed if this happens.</p>
@@ -211,8 +224,9 @@ Ubuntu</td>
 </table>
 <hr />
 <h2 id="step-5-start-the-stack">Step 5: Start the stack</h2>
-<pre class="bash"><code>cd compose/
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>On first run, Docker does two things before services start:</p>
 <ol type="1">
 <li><strong>Builds the RAG image from source</strong>
@@ -222,35 +236,40 @@ Open WebUI, nginx).</li>
 </ol>
 <p>Subsequent starts skip both steps and are fast.</p>
 <p>Watch progress:</p>
-<pre class="bash"><code>docker compose logs -f</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs <span class="at">-f</span></span></code></pre></div>
 <p>Wait for all containers to report healthy:</p>
-<pre class="bash"><code>docker compose ps</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose ps</span></code></pre></div>
 <p>Total first-run time: 5–15 minutes depending on network.</p>
 <hr />
 <h2 id="step-6-pull-ai-models">Step 6: Pull AI models</h2>
 <p>Two models are needed — the chat model and the embedding model used
 by the RAG indexer. Pull them before indexing:</p>
-<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
-docker compose exec ollama ollama pull qwen2.5:7b
-
-# Embedding model (~270 MB):
-docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Chat model (~4 GB for qwen2.5:7b):</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull qwen2.5:7b</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Embedding model (~270 MB):</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull nomic-embed-text</span></code></pre></div>
 <p>Both pulls resume automatically if interrupted.</p>
 <p><strong>Apple Silicon note</strong>: Ollama detects Metal
 automatically. No extra config needed — inference will already be using
 GPU acceleration.</p>
 <hr />
 <h2 id="step-7-index-the-archive">Step 7: Index the archive</h2>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <p>To force a full rebuild of an existing index:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434 \
-    --force</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434 <span class="dt">\</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">--force</span></span></code></pre></div>
 <p>Indexing time is roughly 10–30 minutes for the balanced bundle. The
 index persists in <code>$ALLARKIVE_DATA_DIR/index/</code> across
 restarts.</p>
@@ -432,17 +451,5 @@ on port 8080</a></li>
 <li class="toc-h3"><a href="#webui_secret_key-error">WEBUI_SECRET_KEY error</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

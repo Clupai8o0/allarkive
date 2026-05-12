@@ -6,6 +6,7 @@
     <title>Pi as archive node — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Pi as archive node.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -146,53 +147,65 @@ variant, no desktop. Bookworm (Debian 12) or later.</p>
 <li>Wi-Fi if needed (Ethernet preferred for a server)</li>
 </ul>
 <p>Boot, confirm SSH:</p>
-<pre class="bash"><code>ssh pi@allarkive-archive.local</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> pi@allarkive-archive.local</span></code></pre></div>
 <p>Update:</p>
-<pre class="bash"><code>sudo apt update &amp;&amp; sudo apt full-upgrade -y
-sudo reboot</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> apt full-upgrade <span class="at">-y</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> reboot</span></code></pre></div>
 <hr />
 <h2 id="step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</h2>
-<pre class="bash"><code>lsblk</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lsblk</span></span></code></pre></div>
 <p>Format if needed (new SSD):</p>
-<pre class="bash"><code>sudo fdisk /dev/sda     # new GPT partition table, one partition
-sudo mkfs.ext4 /dev/sda1</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> fdisk /dev/sda     <span class="co"># new GPT partition table, one partition</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkfs.ext4 /dev/sda1</span></code></pre></div>
 <p>Mount:</p>
-<pre class="bash"><code>sudo mkdir -p /mnt/ssd
-sudo mount /dev/sda1 /mnt/ssd</code></pre>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /mnt/ssd</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount /dev/sda1 /mnt/ssd</span></code></pre></div>
 <p>Persist across reboots—add to <code>/etc/fstab</code> (get UUID via
 <code>sudo blkid /dev/sda1</code>):</p>
 <pre><code>UUID=YOUR-UUID  /mnt/ssd  ext4  defaults,noatime  0  2</code></pre>
-<pre class="bash"><code>sudo mount -a
-df -h /mnt/ssd</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount <span class="at">-a</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">df</span> <span class="at">-h</span> /mnt/ssd</span></code></pre></div>
 <hr />
 <h2 id="step-3-install-docker">Step 3: Install Docker</h2>
-<pre class="bash"><code>curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker &quot;$USER&quot;
-newgrp docker
-docker compose version</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsSL</span> https://get.docker.com <span class="kw">|</span> <span class="fu">sh</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-aG</span> docker <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">newgrp</span> docker</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div>
 <hr />
 <h2 id="step-4-clone-the-repository">Step 4: Clone the repository</h2>
-<pre class="bash"><code>sudo mkdir -p /mnt/ssd/allarkive-repo
-sudo chown &quot;$USER&quot; /mnt/ssd/allarkive-repo
-git clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo
-cd /mnt/ssd/allarkive-repo</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /mnt/ssd/allarkive-repo</span></code></pre></div>
 <hr />
 <h2 id="step-5-create-data-directory">Step 5: Create data directory</h2>
-<pre class="bash"><code>mkdir -p /mnt/ssd/allarkive/zim</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /mnt/ssd/allarkive/zim</span></code></pre></div>
 <hr />
 <h2 id="step-6-download-a-bundle">Step 6: Download a bundle</h2>
 <p>Run <code>fetch-bundle.sh</code> from the Pi (it resumes partial
 downloads):</p>
-<pre class="bash"><code>ALLARKIVE_DATA_DIR=/mnt/ssd/allarkive \
-  scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="va">ALLARKIVE_DATA_DIR</span><span class="op">=</span>/mnt/ssd/allarkive <span class="dt">\</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">scripts/fetch-bundle.sh</span> minimal <span class="at">--dest</span> /mnt/ssd/allarkive/zim</span></code></pre></div>
 <p>Replace <code>minimal</code> with <code>balanced</code> or
 <code>comprehensive</code> if you have the storage.</p>
 <p>Verify:</p>
-<pre class="bash"><code>ls -lh /mnt/ssd/allarkive/zim/*.zim</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> /mnt/ssd/allarkive/zim/<span class="pp">*</span>.zim</span></code></pre></div>
 <hr />
 <h2 id="step-7-configure-kiwix">Step 7: Configure kiwix</h2>
 <p>Copy the environment template:</p>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Edit <code>compose/.env</code>—only a few fields are relevant for
 archive-only:</p>
 <pre><code>ALLARKIVE_DATA_DIR=/mnt/ssd/allarkive
@@ -207,13 +220,16 @@ KIWIX_PORT=8081</code></pre>
 leave it blank.</p>
 <hr />
 <h2 id="step-8-start-kiwix-serve">Step 8: Start kiwix-serve</h2>
-<pre class="bash"><code>cd /mnt/ssd/allarkive-repo
-docker compose -f compose/docker-compose.pi-archive.yml --env-file compose/.env up -d</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi-archive.yml <span class="at">--env-file</span> compose/.env up <span class="at">-d</span></span></code></pre></div>
 <hr />
 <h2 id="step-9-smoke-test">Step 9: Smoke test</h2>
-<pre class="bash"><code>curl -sf http://127.0.0.1:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix OK&quot;</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sf</span> http://127.0.0.1:8081/ <span class="op">&gt;</span> /dev/null <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;kiwix OK&quot;</span></span></code></pre></div>
 <p>Open a browser on the Pi (or over SSH port-forward):</p>
-<pre class="bash"><code>ssh -L 8081:127.0.0.1:8081 pi@allarkive-archive.local</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-L</span> 8081:127.0.0.1:8081 pi@allarkive-archive.local</span></code></pre></div>
 <p>Then open <code>http://127.0.0.1:8081</code>. You should see the
 kiwix-serve article browser with the downloaded archive listed.</p>
 <hr />
@@ -225,19 +241,22 @@ must be reachable from the AI node.</p>
 <p>Edit <code>compose/.env</code>:</p>
 <pre><code>KIWIX_BIND=0.0.0.0</code></pre>
 <p>Restart:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml --env-file compose/.env up -d</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi-archive.yml <span class="at">--env-file</span> compose/.env up <span class="at">-d</span></span></code></pre></div>
 <p>Verify kiwix is now listening on all interfaces:</p>
-<pre class="bash"><code>ss -tlnp | grep 8081</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ss</span> <span class="at">-tlnp</span> <span class="kw">|</span> <span class="fu">grep</span> 8081</span></code></pre></div>
 <p>Expected: <code>0.0.0.0:8081</code> instead of
 <code>127.0.0.1:8081</code>.</p>
 <p><strong>Firewall recommendation</strong>: if the Pi is on a home LAN,
 restrict access to known IPs using <code>ufw</code>:</p>
-<pre class="bash"><code>sudo apt install -y ufw
-sudo ufw default deny incoming
-sudo ufw allow ssh
-# Allow kiwix from the AI node&#39;s IP only
-sudo ufw allow from &lt;AI-NODE-IP&gt; to any port 8081
-sudo ufw enable</code></pre>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> ufw</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw default deny incoming</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow ssh</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Allow kiwix from the AI node&#39;s IP only</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow from <span class="op">&lt;</span>AI-NODE-IP<span class="op">&gt;</span> to any port 8081</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw enable</span></code></pre></div>
 <p>For a full reverse-proxy setup with auth, see
 <code>docs/deployment/lan-access.md</code>.</p>
 <hr />
@@ -262,7 +281,8 @@ sudo ufw enable</code></pre>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="kiwix-exits-immediately">kiwix exits immediately</h3>
 <p>Check logs:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml logs kiwix</code></pre>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi-archive.yml logs kiwix</span></code></pre></div>
 <p>Common causes:</p>
 <ul>
 <li>No ZIM files in <code>/mnt/ssd/allarkive/zim/</code> — fetch a
@@ -274,12 +294,14 @@ match the actual mount path.</li>
 <p><code>fetch-bundle.sh</code> uses <code>wget --continue</code>.
 Re-run it; it resumes. If the connection is consistently dropping,
 try:</p>
-<pre class="bash"><code>scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/fetch-bundle.sh</span> minimal <span class="at">--dest</span> /mnt/ssd/allarkive/zim</span></code></pre></div>
 <h3 id="ssd-not-mounting-after-reboot">SSD not mounting after
 reboot</h3>
 <p>Check <code>/etc/fstab</code> entries and that the UUID matches:</p>
-<pre class="bash"><code>sudo blkid /dev/sda1
-grep ssd /etc/fstab</code></pre>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> blkid /dev/sda1</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> ssd /etc/fstab</span></code></pre></div>
 <p>If the UUID has changed (replaced SSD), update
 <code>/etc/fstab</code>.</p>
 <h3 id="zim-file-corrupted">ZIM file corrupted</h3>
@@ -296,7 +318,8 @@ checksums.</li>
 verifies the new ones.</li>
 <li>Restart kiwix-serve:</li>
 </ol>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi-archive.yml restart kiwix</code></pre>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi-archive.yml restart kiwix</span></code></pre></div>
 <hr />
 <h2 id="what-is-next">What is next</h2>
 <ul>
@@ -340,17 +363,5 @@ reboot</a></li>
 <li class="toc-h2"><a href="#what-is-next">What is next</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

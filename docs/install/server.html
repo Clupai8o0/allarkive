@@ -6,6 +6,7 @@
     <title>Headless server — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Headless server.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -70,12 +71,13 @@ below.</p>
 <h2 id="quick-start-automated">Quick start (automated)</h2>
 <p>Once Docker is installed (see Prerequisites), the rest is one
 command:</p>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
-nano compose/.env
-./scripts/bootstrap.sh --bundle balanced</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32  <span class="co"># copy into WEBUI_SECRET_KEY= in compose/.env</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> compose/.env</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span> <span class="at">--bundle</span> balanced</span></code></pre></div>
 <p>The manual steps below cover the same actions in detail.</p>
 <h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
 leave it running</h3>
@@ -98,7 +100,8 @@ configured — see <a
 href="../deployment/lan-access.html"><code>docs/deployment/lan-access.md</code></a>).
 RAG answers improve as coverage grows — "no sources found" early on is
 expected for topics not yet indexed. Watch progress:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>
@@ -137,21 +140,24 @@ expected for topics not yet indexed. Watch progress:</p>
 <ul>
 <li><p><strong>Docker Engine 24+</strong> with the Compose plugin. On
 Ubuntu:</p>
-<pre class="bash"><code>sudo apt update
-sudo apt install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo &quot;deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu $(. /etc/os-release &amp;&amp; echo &quot;$VERSION_CODENAME&quot;) stable&quot; \
-  | sudo tee /etc/apt/sources.list.d/docker.list
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-sudo usermod -aG docker &quot;$USER&quot;</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> ca-certificates curl gnupg</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> install <span class="at">-m</span> 0755 <span class="at">-d</span> /etc/apt/keyrings</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsSL</span> https://download.docker.com/linux/ubuntu/gpg <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sudo</span> gpg <span class="at">--dearmor</span> <span class="at">-o</span> /etc/apt/keyrings/docker.gpg</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;deb [arch=</span><span class="va">$(</span><span class="ex">dpkg</span> <span class="at">--print-architecture</span><span class="va">)</span><span class="st"> signed-by=/etc/apt/keyrings/docker.gpg] </span><span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">  https://download.docker.com/linux/ubuntu </span><span class="va">$(</span><span class="bu">.</span> /etc/os-release <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$VERSION_CODENAME</span><span class="st">&quot;</span><span class="va">)</span><span class="st"> stable&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sudo</span> tee /etc/apt/sources.list.d/docker.list</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> docker-ce docker-ce-cli containerd.io docker-compose-plugin</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-aG</span> docker <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span></span></code></pre></div>
 <p>Log out and back in so the group change takes effect. Verify:</p>
-<pre class="bash"><code>docker compose version</code></pre></li>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div></li>
 <li><p><code>git</code>, <code>curl</code>, <code>openssl</code>:</p>
-<pre class="bash"><code>sudo apt install -y git curl openssl</code></pre></li>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> git curl openssl</span></code></pre></div></li>
 </ul>
 <hr />
 <h2 id="viewing-the-ui-without-a-local-browser">Viewing the UI without a
@@ -159,10 +165,11 @@ local browser</h2>
 <p>AllArkive's landing page and Open WebUI are both web interfaces that
 bind to <code>127.0.0.1</code> on the server. To access them from your
 local machine:</p>
-<pre class="bash"><code>ssh -L 8080:127.0.0.1:8080 \
-    -L 3000:127.0.0.1:3000 \
-    -L 8081:127.0.0.1:8081 \
-    user@your-server</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-L</span> 8080:127.0.0.1:8080 <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">-L</span> 3000:127.0.0.1:3000 <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-L</span> 8081:127.0.0.1:8081 <span class="dt">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    user@your-server</span></code></pre></div>
 <p>While this SSH session is open, visit
 <code>http://localhost:8080</code> on your local machine to reach the
 AllArkive landing page on the server.</p>
@@ -170,27 +177,32 @@ AllArkive landing page on the server.</p>
 <code>docs/deployment/lan-access.md</code>.</p>
 <hr />
 <h2 id="step-1-clone-the-repository">Step 1: Clone the repository</h2>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-2-set-up-configuration">Step 2: Set up configuration</h2>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Generate a secret key:</p>
-<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32</span></code></pre></div>
 <p>Open <code>compose/.env</code> and paste the result into
 <code>WEBUI_SECRET_KEY=</code>.</p>
 <p>On a server, also set <code>ALLARKIVE_DATA_DIR</code> to wherever
 your large storage lives. Common choices:</p>
-<pre class="bash"><code># A mounted data volume:
-ALLARKIVE_DATA_DIR=/mnt/data/allarkive
-
-# External drive:
-ALLARKIVE_DATA_DIR=/mnt/external/allarkive</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A mounted data volume:</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="va">ALLARKIVE_DATA_DIR</span><span class="op">=</span>/mnt/data/allarkive</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># External drive:</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="va">ALLARKIVE_DATA_DIR</span><span class="op">=</span>/mnt/external/allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-3-create-data-directories">Step 3: Create data
 directories</h2>
-<pre class="bash"><code>sudo mkdir -p &quot;${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}&quot;/{zim,index,models,data}
-sudo chown -R &quot;$USER&quot; &quot;${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}&quot;</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> <span class="st">&quot;</span><span class="va">${ALLARKIVE_DATA_DIR</span><span class="op">:-</span>/var/lib/allarkive<span class="va">}</span><span class="st">&quot;</span>/<span class="dt">{zim</span><span class="op">,</span><span class="dt">index</span><span class="op">,</span><span class="dt">models</span><span class="op">,</span><span class="dt">data}</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${ALLARKIVE_DATA_DIR</span><span class="op">:-</span>/var/lib/allarkive<span class="va">}</span><span class="st">&quot;</span></span></code></pre></div>
 <hr />
 <h2 id="step-4-fetch-a-bundle">Step 4: Fetch a bundle</h2>
 <p>Choose a bundle based on available disk space:</p>
@@ -221,13 +233,15 @@ Ubuntu</td>
 </tr>
 </tbody>
 </table>
-<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/fetch-bundle.sh</span> balanced</span></code></pre></div>
 <p>Checksum verification runs automatically. A failed checksum stops the
 script.</p>
 <hr />
 <h2 id="step-5-start-the-stack">Step 5: Start the stack</h2>
-<pre class="bash"><code>cd compose/
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>On first run, Docker does two things before services start:</p>
 <ol type="1">
 <li><strong>Builds the RAG image from source</strong>
@@ -237,37 +251,43 @@ Open WebUI, nginx).</li>
 </ol>
 <p>Subsequent starts skip both and are fast.</p>
 <p>Watch startup logs in a separate window:</p>
-<pre class="bash"><code>docker compose logs -f</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs <span class="at">-f</span></span></code></pre></div>
 <p>Wait for all containers to show <code>healthy</code> before
 proceeding:</p>
-<pre class="bash"><code>docker compose ps</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose ps</span></code></pre></div>
 <p>All services should show <code>healthy</code> after a few minutes. If
 one stays <code>unhealthy</code>, check its logs:</p>
-<pre class="bash"><code>docker compose logs rag
-docker compose logs ollama</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs rag</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs ollama</span></code></pre></div>
 <hr />
 <h2 id="step-6-pull-ai-models">Step 6: Pull AI models</h2>
 <p>Two models are needed — the chat model and the embedding model. Pull
 them before indexing:</p>
-<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
-docker compose exec ollama ollama pull qwen2.5:7b
-
-# Embedding model (~270 MB):
-docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Chat model (~4 GB for qwen2.5:7b):</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull qwen2.5:7b</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Embedding model (~270 MB):</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull nomic-embed-text</span></code></pre></div>
 <p>Both pulls resume automatically if interrupted. If you changed the
 default model in <code>compose/.env</code>, substitute it above.</p>
 <hr />
 <h2 id="step-7-index-the-archive">Step 7: Index the archive</h2>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <p>To force a full rebuild:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434 \
-    --force</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434 <span class="dt">\</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">--force</span></span></code></pre></div>
 <p>Indexing time: <strong>10–30 minutes for the minimal bundle, several
 hours for the balanced bundle on CPU</strong>, much faster on a CUDA
 GPU. The indexer is resumable and idempotent — kill it any time and
@@ -293,27 +313,28 @@ when you need full control or want to debug a specific step.</p>
 <h2 id="running-as-a-system-service">Running as a system service</h2>
 <p>To start AllArkive automatically on reboot, create a systemd
 unit:</p>
-<pre class="bash"><code>sudo tee /etc/systemd/system/allarkive.service &lt;&lt;EOF
-[Unit]
-Description=AllArkive docker-compose stack
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=/home/${USER}/allarkive/compose
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
-User=${USER}
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable allarkive
-sudo systemctl start allarkive</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /etc/systemd/system/allarkive.service <span class="op">&lt;&lt;EOF</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="st">[Unit]</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="st">Description=AllArkive docker-compose stack</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="st">After=docker.service</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="st">Requires=docker.service</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="st">[Service]</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="st">Type=oneshot</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="st">RemainAfterExit=yes</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="st">WorkingDirectory=/home/</span><span class="va">${USER}</span><span class="st">/allarkive/compose</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="st">ExecStart=/usr/bin/docker compose up -d</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="st">ExecStop=/usr/bin/docker compose down</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="st">User=</span><span class="va">${USER}</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="st">[Install]</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="st">WantedBy=multi-user.target</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable allarkive</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start allarkive</span></code></pre></div>
 <p>Adjust <code>WorkingDirectory</code> to wherever you cloned the
 repository.</p>
 <hr />
@@ -398,14 +419,16 @@ default.</p>
 <p>The RAG image builds from <code>scripts/rag/</code> on first
 <code>docker compose up</code>. If it fails mid-build (network timeout,
 disk full):</p>
-<pre class="bash"><code>docker compose build rag
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose build rag</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>Check disk with <code>df -h</code> — the build needs ~500 MB
 temporary space.</p>
 <h3 id="docker-permission-denied">Docker permission denied</h3>
 <p>Make sure your user is in the <code>docker</code> group and you have
 re-logged in:</p>
-<pre class="bash"><code>groups | grep docker</code></pre>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">groups</span> <span class="kw">|</span> <span class="fu">grep</span> docker</span></code></pre></div>
 <p>If missing: <code>sudo usermod -aG docker "$USER"</code>, then log
 out and back in.</p>
 <h3 id="out-of-memory-during-inference">Out of memory during
@@ -417,7 +440,8 @@ machine with 8 GB, close other processes. Or use a smaller model: set
 <code>compose/.env</code>.</p>
 <h3 id="services-keep-restarting">Services keep restarting</h3>
 <p>Check logs:</p>
-<pre class="bash"><code>docker compose logs --tail 50 &lt;service-name&gt;</code></pre>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs <span class="at">--tail</span> 50 <span class="op">&lt;</span>service-name<span class="op">&gt;</span></span></code></pre></div>
 <p>Common causes: disk full (<code>df -h</code>), port conflict
 (<code>ss -tlnp | grep 8080</code>), or missing
 <code>WEBUI_SECRET_KEY</code>.</p>
@@ -468,17 +492,5 @@ inference</a></li>
 <li class="toc-h3"><a href="#ssh-tunnel-drops">SSH tunnel drops</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

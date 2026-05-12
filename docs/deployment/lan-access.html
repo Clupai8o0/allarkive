@@ -6,6 +6,7 @@
     <title>Opt-in LAN access — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Opt-in LAN access.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -104,13 +105,14 @@ behind a reverse proxy is the lowest-risk option.</p>
 automatically with a self-signed certificate for LAN use.</p>
 <ol type="1">
 <li><p>Install Caddy on the AllArkive host:</p>
-<pre class="bash"><code># Debian/Ubuntu:
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-curl -1sLf &#39;https://dl.cloudsmith.io/public/caddy/stable/gpg.key&#39; \
-  | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf &#39;https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt&#39; \
-  | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update &amp;&amp; sudo apt install caddy</code></pre></li>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Debian/Ubuntu:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> debian-keyring debian-archive-keyring apt-transport-https curl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-1sLf</span> <span class="st">&#39;https://dl.cloudsmith.io/public/caddy/stable/gpg.key&#39;</span> <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sudo</span> gpg <span class="at">--dearmor</span> <span class="at">-o</span> /usr/share/keyrings/caddy-stable-archive-keyring.gpg</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-1sLf</span> <span class="st">&#39;https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt&#39;</span> <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sudo</span> tee /etc/apt/sources.list.d/caddy-stable.list</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> apt install caddy</span></code></pre></div></li>
 <li><p>Create <code>/etc/caddy/Caddyfile</code>:</p>
 <pre><code>http://0.0.0.0:9080 {
     reverse_proxy 127.0.0.1:8080
@@ -119,13 +121,15 @@ sudo apt update &amp;&amp; sudo apt install caddy</code></pre></li>
 landing page on localhost. Using a non-standard port reduces accidental
 exposure and avoids conflicts.</p></li>
 <li><p>Start Caddy:</p>
-<pre class="bash"><code>sudo systemctl enable --now caddy</code></pre></li>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable <span class="at">--now</span> caddy</span></code></pre></div></li>
 <li><p>On other devices, visit <code>http://&lt;host-ip&gt;:9080</code>.
 Find the host IP: <code>ip addr show | grep 'inet '</code>.</p></li>
 </ol>
 <h3 id="setup-with-nginx">Setup with nginx</h3>
 <p>If you prefer nginx:</p>
-<pre class="bash"><code>sudo apt install -y nginx</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> nginx</span></code></pre></div>
 <p>Create <code>/etc/nginx/sites-available/allarkive</code>:</p>
 <pre class="nginx"><code>server {
     listen 0.0.0.0:9080;
@@ -137,8 +141,9 @@ Find the host IP: <code>ip addr show | grep 'inet '</code>.</p></li>
     }
 }</code></pre>
 <p>Enable it:</p>
-<pre class="bash"><code>sudo ln -s /etc/nginx/sites-available/allarkive /etc/nginx/sites-enabled/
-sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/nginx/sites-available/allarkive /etc/nginx/sites-enabled/</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> nginx <span class="at">-t</span> <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> systemctl reload nginx</span></code></pre></div>
 <hr />
 <h2 id="option-b-expose-the-full-stack-with-authentication">Option B:
 expose the full stack with authentication</h2>
@@ -148,10 +153,12 @@ reverse proxy.</p>
 <h3 id="step-1-enable-open-webui-authentication">Step 1: enable Open
 WebUI authentication</h3>
 <p>In <code>compose/.env</code>:</p>
-<pre class="bash"><code>WEBUI_AUTH=true
-WEBUI_ENABLE_SIGNUP=false</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">WEBUI_AUTH</span><span class="op">=</span>true</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">WEBUI_ENABLE_SIGNUP</span><span class="op">=</span>false</span></code></pre></div>
 <p>Restart the stack:</p>
-<pre class="bash"><code>cd compose/ &amp;&amp; docker compose up -d open-webui</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/ <span class="kw">&amp;&amp;</span> <span class="ex">docker</span> compose up <span class="at">-d</span> open-webui</span></code></pre></div>
 <p>On first load, you will be prompted to create an admin account. Do
 this from localhost before exposing the port.</p>
 <h3 id="step-2-add-basic-auth-in-the-reverse-proxy-belt-and-braces">Step
@@ -166,8 +173,9 @@ proxy layer means an attacker needs two credentials, not one.</p>
     reverse_proxy 127.0.0.1:3000
 }</code></pre>
 <p>Generate a password hash:</p>
-<pre class="bash"><code>caddy hash-password
-# Paste the hash into Caddyfile</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">caddy</span> hash-password</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Paste the hash into Caddyfile</span></span></code></pre></div>
 <p>With nginx (<code>/etc/nginx/sites-available/allarkive</code>):</p>
 <pre class="nginx"><code>server {
     listen 0.0.0.0:9080;
@@ -184,8 +192,9 @@ proxy layer means an attacker needs two credentials, not one.</p>
     }
 }</code></pre>
 <p>Create the password file:</p>
-<pre class="bash"><code>sudo apt install -y apache2-utils
-sudo htpasswd -c /etc/nginx/.htpasswd alice</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> apache2-utils</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> htpasswd <span class="at">-c</span> /etc/nginx/.htpasswd alice</span></code></pre></div>
 <h3 id="step-3-also-expose-kiwix-serve-optional">Step 3: also expose
 kiwix-serve (optional)</h3>
 <p>If you want archive search from other devices too, add a second proxy
@@ -194,9 +203,10 @@ block for port 8081, or extend the existing block with a
 <hr />
 <h2 id="firewall-rules">Firewall rules</h2>
 <p>If you use <code>ufw</code>:</p>
-<pre class="bash"><code># Allow your chosen proxy port from LAN only (e.g. 192.168.1.0/24):
-sudo ufw allow from 192.168.1.0/24 to any port 9080
-sudo ufw deny 9080</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Allow your chosen proxy port from LAN only (e.g. 192.168.1.0/24):</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow from 192.168.1.0/24 to any port 9080</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw deny 9080</span></code></pre></div>
 <p>Replace <code>192.168.1.0/24</code> with your actual LAN subnet. This
 blocks anyone outside your LAN subnet from reaching the proxy port even
 if the firewall is on a machine with a public IP.</p>
@@ -207,13 +217,16 @@ if the firewall is on a machine with a public IP.</p>
 URL. By default this is <code>http://127.0.0.1:8081</code>, which only
 works on the AllArkive host itself.</p>
 <p>If you want citations to be clickable from other devices:</p>
-<pre class="bash"><code># Replace with the AllArkive host&#39;s LAN IP or hostname:
-KIWIX_PUBLIC_URL=http://192.168.1.42:8081</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace with the AllArkive host&#39;s LAN IP or hostname:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="va">KIWIX_PUBLIC_URL</span><span class="op">=</span>http://192.168.1.42:8081</span></code></pre></div>
 <p>Or, if you are proxying kiwix-serve through the same reverse
 proxy:</p>
-<pre class="bash"><code>KIWIX_PUBLIC_URL=http://192.168.1.42:9080/archive</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="va">KIWIX_PUBLIC_URL</span><span class="op">=</span>http://192.168.1.42:9080/archive</span></code></pre></div>
 <p>Restart the RAG service after changing this:</p>
-<pre class="bash"><code>cd compose/ &amp;&amp; docker compose restart rag</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/ <span class="kw">&amp;&amp;</span> <span class="ex">docker</span> compose restart rag</span></code></pre></div>
 <hr />
 <h2 id="security-posture-summary">Security posture summary</h2>
 <p>After enabling LAN access with the steps above:</p>
@@ -301,17 +314,5 @@ compose/.env for LAN use</a></li>
 guide to internet-facing deployment</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

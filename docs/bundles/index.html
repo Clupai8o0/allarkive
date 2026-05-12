@@ -6,6 +6,7 @@
     <title>Bundles overview — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Bundles overview.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -101,7 +102,8 @@ obligations.</p>
 re-downloading the relevant ZIM files.</p>
 <hr />
 <h2 id="fetching-a-bundle">Fetching a bundle</h2>
-<pre class="bash"><code>./scripts/fetch-bundle.sh &lt;bundle-name&gt;</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/fetch-bundle.sh</span> <span class="op">&lt;</span>bundle-name<span class="op">&gt;</span></span></code></pre></div>
 <p>The script downloads each ZIM file listed in
 <code>bundles/&lt;name&gt;/manifest.json</code>, verifies the SHA-256
 checksum, and stops on any verification failure. Do not proceed past a
@@ -359,13 +361,16 @@ in a default bundle:</p>
 <li>Download the ZIM from <code>https://download.kiwix.org/zim/</code>
 or another trusted source.</li>
 <li>Verify the checksum manually:
-<pre class="bash"><code>sha256sum your-file.zim
-# compare against the .sha256 file published alongside the download</code></pre></li>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sha256sum</span> your-file.zim</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># compare against the .sha256 file published alongside the download</span></span></code></pre></div></li>
 <li>Move the verified ZIM to <code>$ALLARKIVE_DATA_DIR/zim/</code>.</li>
 <li>Restart kiwix-serve so it picks up the new file:
-<pre class="bash"><code>docker compose restart kiwix</code></pre></li>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose restart kiwix</span></code></pre></div></li>
 <li>Re-run the RAG indexer so the new content is searchable via AI:
-<pre class="bash"><code>docker compose exec rag python -m rag.index</code></pre></li>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python <span class="at">-m</span> rag.index</span></code></pre></div></li>
 </ol>
 <p><strong>License reminder</strong>: before adding a custom ZIM,
 confirm its license permits your intended use. See the
@@ -451,17 +456,5 @@ bundle</a></li>
 time</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

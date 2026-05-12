@@ -6,6 +6,7 @@
     <title>Windows (WSL2) — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Windows (WSL2).">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -73,12 +74,13 @@ WSL2. See <em>Indexing takes hours</em> below.</p>
 <h2 id="quick-start-automated">Quick start (automated)</h2>
 <p>Once WSL2 and Docker Desktop are installed (Steps 1–3 below), the
 rest is one command inside your Ubuntu terminal:</p>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-openssl rand -hex 32  # copy into WEBUI_SECRET_KEY= in compose/.env
-nano compose/.env
-./scripts/bootstrap.sh --bundle balanced</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32  <span class="co"># copy into WEBUI_SECRET_KEY= in compose/.env</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> compose/.env</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span> <span class="at">--bundle</span> balanced</span></code></pre></div>
 <p>The manual steps below cover WSL2 setup and the same actions in
 detail.</p>
 <h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
@@ -101,7 +103,8 @@ it left off.</p>
 <strong>immediately</strong>. RAG answers in Open WebUI improve as
 coverage grows — "no sources found" early on is expected for topics not
 yet indexed. Watch progress:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>
@@ -143,14 +146,16 @@ specifications</strong>.</p>
 <hr />
 <h2 id="step-1-install-wsl2">Step 1: Install WSL2</h2>
 <p>Open PowerShell as Administrator and run:</p>
-<pre class="powershell"><code>wsl --install</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>install</span></code></pre></div>
 <p>This installs WSL2 and Ubuntu (the default distro). Reboot when
 prompted.</p>
 <p>After rebooting, Ubuntu will finish installing and ask you to create
 a username and password. Use a simple username with no spaces.</p>
 <p>Verify:</p>
-<pre class="powershell"><code>wsl --status
-# Should show: Default Version: 2</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>status</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show: Default Version: 2</span></span></code></pre></div>
 <hr />
 <h2 id="step-2-install-docker-desktop-for-windows">Step 2: Install
 Docker Desktop for Windows</h2>
@@ -166,18 +171,21 @@ pre-selected).</li>
 Desktop → Settings → Resources → WSL Integration → Enable integration
 with additional distros → Ubuntu → Apply &amp; Restart</strong>.</p>
 <p>Verify inside your Ubuntu terminal:</p>
-<pre class="bash"><code>docker compose version</code></pre>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div>
 <hr />
 <h2 id="step-3-configure-wsl2-memory">Step 3: Configure WSL2 memory</h2>
 <p>By default WSL2 may claim too much RAM. Create
 <code>%USERPROFILE%\.wslconfig</code> in Windows (not inside WSL)
 with:</p>
-<pre class="ini"><code>[wsl2]
-memory=10GB
-processors=4</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[wsl2]</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="dt">memory</span><span class="ot">=</span><span class="st">10GB</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="dt">processors</span><span class="ot">=</span><span class="dv">4</span></span></code></pre></div>
 <p>Adjust <code>memory</code> based on your system RAM (leave at least 2
 GB for Windows). Restart WSL for changes to take effect:</p>
-<pre class="powershell"><code>wsl --shutdown</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>shutdown</span></code></pre></div>
 <p>Then reopen your Ubuntu terminal.</p>
 <hr />
 <h2 id="step-4-store-data-on-the-wsl2-filesystem">Step 4: Store data on
@@ -188,29 +196,35 @@ but very slow I/O when accessing Windows paths like
 <code>/mnt/c/</code>. Keep all AllArkive data inside WSL2.</p>
 <p>If you need a large external drive for ZIM files, format it as NTFS
 and mount it inside WSL2:</p>
-<pre class="bash"><code># Example: a drive at D:\ mounted into WSL2
-sudo mkdir /mnt/d
-sudo mount -t drvfs D: /mnt/d
-# Then set ALLARKIVE_DATA_DIR=/mnt/d/allarkive in compose/.env</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: a drive at D:\ mounted into WSL2</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir /mnt/d</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount <span class="at">-t</span> drvfs D: /mnt/d</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Then set ALLARKIVE_DATA_DIR=/mnt/d/allarkive in compose/.env</span></span></code></pre></div>
 <hr />
 <h2 id="step-5-clone-the-repository-inside-ubuntu">Step 5: Clone the
 repository (inside Ubuntu)</h2>
 <p>Open your Ubuntu terminal (search "Ubuntu" in Start):</p>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-6-set-up-configuration">Step 6: Set up configuration</h2>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Generate a secret key:</p>
-<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32</span></code></pre></div>
 <p>Open <code>compose/.env</code> (e.g. <code>nano compose/.env</code>)
 and paste the result into <code>WEBUI_SECRET_KEY=</code>.</p>
 <p>Create data directories:</p>
-<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
-sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /var/lib/allarkive/<span class="dt">{zim</span><span class="op">,</span><span class="dt">index</span><span class="op">,</span><span class="dt">models</span><span class="op">,</span><span class="dt">data}</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> /var/lib/allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-7-fetch-a-bundle">Step 7: Fetch a bundle</h2>
-<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/fetch-bundle.sh</span> balanced</span></code></pre></div>
 <table>
 <thead>
 <tr>
@@ -240,8 +254,9 @@ Ubuntu</td>
 </table>
 <hr />
 <h2 id="step-8-start-the-stack">Step 8: Start the stack</h2>
-<pre class="bash"><code>cd compose/
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>On first run, Docker does two things before services start:</p>
 <ol type="1">
 <li><strong>Builds the RAG image from source</strong>
@@ -252,31 +267,36 @@ Open WebUI, nginx).</li>
 <p>If the build fails with a network error, check Docker Desktop is
 running and WSL integration is enabled (Step 2).</p>
 <p>Watch logs during first startup:</p>
-<pre class="bash"><code>docker compose logs -f</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs <span class="at">-f</span></span></code></pre></div>
 <p>Wait for all containers to show <code>healthy</code>:</p>
-<pre class="bash"><code>docker compose ps</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose ps</span></code></pre></div>
 <hr />
 <h2 id="step-9-pull-ai-models">Step 9: Pull AI models</h2>
 <p>Two models are needed — the chat model and the embedding model. Pull
 them before indexing:</p>
-<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
-docker compose exec ollama ollama pull qwen2.5:7b
-
-# Embedding model (~270 MB):
-docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Chat model (~4 GB for qwen2.5:7b):</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull qwen2.5:7b</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Embedding model (~270 MB):</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull nomic-embed-text</span></code></pre></div>
 <p>Both pulls resume automatically if interrupted.</p>
 <hr />
 <h2 id="step-10-index-the-archive">Step 10: Index the archive</h2>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <p>To force a full rebuild:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434 \
-    --force</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434 <span class="dt">\</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">--force</span></span></code></pre></div>
 <hr />
 <h2 id="step-11-open-the-landing-page">Step 11: Open the landing
 page</h2>
@@ -301,9 +321,11 @@ href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">CUDA on
 WSL2</a> drivers from NVIDIA (Windows-side only — do not install CUDA
 inside WSL).</li>
 <li>Inside WSL, verify:
-<pre class="bash"><code>nvidia-smi</code></pre></li>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">nvidia-smi</span></span></code></pre></div></li>
 <li>Start AllArkive with the GPU profile:
-<pre class="bash"><code>docker compose --profile gpu up -d</code></pre></li>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">--profile</span> gpu up <span class="at">-d</span></span></code></pre></div></li>
 </ol>
 <hr />
 <h2 id="port-summary">Port summary</h2>
@@ -345,12 +367,13 @@ inside WSL).</li>
 </table>
 <hr />
 <h2 id="stopping-and-starting">Stopping and starting</h2>
-<pre class="bash"><code># In your Ubuntu terminal:
-cd allarkive/compose
-docker compose down
-
-# Start again:
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your Ubuntu terminal:</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive/compose</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose down</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Start again:</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>Docker Desktop must be running before starting the stack.</p>
 <hr />
 <h2 id="cleanup-and-uninstall">Cleanup and uninstall</h2>
@@ -391,11 +414,13 @@ before deleting.</td>
 <h3 id="rag-image-build-fails">RAG image build fails</h3>
 <p>Check that Docker Desktop is running and WSL integration is enabled
 (Step 2). If the build fails partway, retry with:</p>
-<pre class="bash"><code>docker compose build rag &amp;&amp; docker compose up -d</code></pre>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose build rag <span class="kw">&amp;&amp;</span> <span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <h3 id="wsl2-does-not-start">WSL2 does not start</h3>
 <p>Open PowerShell as Administrator and run:</p>
-<pre class="powershell"><code>wsl --update
-wsl --shutdown</code></pre>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>update</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>shutdown</span></code></pre></div>
 <p>Then reopen Ubuntu.</p>
 <h3 id="docker-commands-not-found-inside-wsl2">Docker commands not found
 inside WSL2</h3>
@@ -407,16 +432,18 @@ Windows</h3>
 <p>WSL2 forwards ports automatically in recent builds of Windows 11. If
 <code>localhost:8080</code> does not work, try the WSL2 IP address
 directly:</p>
-<pre class="bash"><code># Inside WSL2:
-ip addr show eth0 | grep &#39;inet &#39;
-# Note the IP, e.g. 172.18.45.2</code></pre>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside WSL2:</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ip</span> addr show eth0 <span class="kw">|</span> <span class="fu">grep</span> <span class="st">&#39;inet &#39;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Note the IP, e.g. 172.18.45.2</span></span></code></pre></div>
 <p>Then visit <code>http://172.18.45.2:8080</code> in your Windows
 browser.</p>
 <h3 id="slow-downloads-inside-wsl2">Slow downloads inside WSL2</h3>
 <p>DNS resolution inside WSL2 can be slow on some Windows setups. Add to
 <code>/etc/wsl.conf</code> inside Ubuntu (create if missing):</p>
-<pre class="ini"><code>[network]
-generateResolvConf = false</code></pre>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[network]</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="dt">generateResolvConf </span><span class="ot">=</span><span class="st"> </span><span class="kw">false</span></span></code></pre></div>
 <p>Then edit <code>/etc/resolv.conf</code> to use
 <code>nameserver 8.8.8.8</code>. Restart WSL:
 <code>wsl --shutdown</code>.</p>
@@ -430,10 +457,11 @@ your antivirus exclusion list.</p>
 <p>WSL2 allocates a virtual disk that grows as needed but does not
 shrink automatically. If you delete large files inside WSL and need to
 reclaim Windows disk space:</p>
-<pre class="powershell"><code># In PowerShell (WSL must be shut down first):
-wsl --shutdown
-diskpart
-# then: select vdisk file=&quot;path\to\ext4.vhdx&quot;, compact vdisk</code></pre>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In PowerShell (WSL must be shut down first):</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>shutdown</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>diskpart</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># then: select vdisk file=&quot;path\to\ext4.vhdx&quot;, compact vdisk</span></span></code></pre></div>
 
             </article>
             <footer class="doc-footer">
@@ -483,17 +511,5 @@ Windows</a></li>
 <li class="toc-h3"><a href="#out-of-disk-space">Out of disk space</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

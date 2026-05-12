@@ -347,6 +347,17 @@ body.doc-page {
 .doc-toc .toc-h3 { padding-left: 1.4rem; font-size: 0.78rem; color: var(--text-muted); }
 .doc-toc .toc-h3 a { color: var(--text-muted); }
 
+.doc-toc a.is-active {
+    border-left-color: var(--accent);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.doc-toc .toc-h3 a.is-active {
+    color: var(--text);
+    font-weight: 600;
+}
+
 /* ── Main content column ──────────────────────────────────────────────────── */
 .doc-main {
     min-width: 0;
@@ -526,3 +537,136 @@ body.doc-page {
     .doc-sidebar.is-open { transform: translateX(0); }
     .doc-content h1 { font-size: 1.35rem; }
 }
+
+/* ── Code blocks + copy button ────────────────────────────────────────────── */
+.doc-content div.sourceCode {
+    margin: 0.85rem 0 1rem;
+}
+
+.doc-content pre,
+.doc-content div.sourceCode pre {
+    position: relative;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    margin: 0;
+}
+
+.doc-content pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+.doc-content pre.has-copy,
+.doc-content div.sourceCode.has-copy {
+    position: relative;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    font: inherit;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.55rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease-out, background 0.12s, color 0.12s;
+    z-index: 2;
+}
+
+.doc-content pre:hover .copy-btn,
+.doc-content div.sourceCode:hover .copy-btn,
+.copy-btn:focus-visible {
+    opacity: 1;
+}
+
+.copy-btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+}
+
+.copy-btn.is-error {
+    color: #b44;
+    border-color: #b44;
+}
+
+/* Hide pandoc's per-line empty anchors (used for optional line numbering) */
+.doc-content div.sourceCode pre code > span > a:first-child[aria-hidden="true"] {
+    display: none;
+}
+
+/* ── Pandoc / skylighting syntax highlighting ─────────────────────────────── */
+/* Class names follow pandoc's "sourceCode" emitter. */
+.doc-content code span.co,   /* comment */
+.doc-content code span.cn,   /* constant value */
+.doc-content code span.do {  /* documentation */
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.doc-content code span.kw,   /* keyword */
+.doc-content code span.cf {  /* control flow */
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.doc-content code span.dt,   /* data type */
+.doc-content code span.bu,   /* built-in */
+.doc-content code span.im {  /* import */
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.doc-content code span.st,   /* string */
+.doc-content code span.ch,   /* char */
+.doc-content code span.vs,   /* verbatim string */
+.doc-content code span.ss {  /* special string */
+    color: #6c2a4a;
+}
+
+.doc-content code span.dv,   /* decimal value */
+.doc-content code span.bn,   /* base-n */
+.doc-content code span.fl,   /* float */
+.doc-content code span.sc {  /* special char */
+    color: #6c2a4a;
+}
+
+.doc-content code span.fu,   /* function */
+.doc-content code span.ex,   /* shell executable */
+.doc-content code span.va {  /* variable */
+    color: var(--text);
+    font-weight: 600;
+}
+
+.doc-content code span.op,   /* operator */
+.doc-content code span.at {  /* attribute */
+    color: var(--text);
+}
+
+.doc-content code span.pp,   /* preprocessor */
+.doc-content code span.ot {  /* other */
+    color: var(--accent);
+}
+
+.doc-content code span.al,   /* alert */
+.doc-content code span.er {  /* error */
+    color: #b44;
+    font-weight: 600;
+}
+
+.doc-content code span.wa { color: #8a5a00; }      /* warning */
+.doc-content code span.an,                          /* annotation */
+.doc-content code span.cv,                          /* comment var */
+.doc-content code span.in { color: var(--text-muted); }  /* information */

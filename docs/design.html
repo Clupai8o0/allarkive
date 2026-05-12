@@ -6,6 +6,7 @@
     <title>Design — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Design.">
     <link rel="stylesheet" href="styles.css">
+    <script src="docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -282,17 +283,5 @@ README, in the &quot;What&#x27;s in the default bundle&quot; section</a></li>
 <li class="toc-h2"><a href="#what-this-section-is-not">What this section is not</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

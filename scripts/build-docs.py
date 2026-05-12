@@ -220,7 +220,7 @@ def rewrite_links(body_html: str, source: Path, active_output: Path) -> str:
 
 def pandoc_to_html(md_path: Path) -> str:
     result = subprocess.run(
-        ["pandoc", "--from=gfm", "--to=html5", "--no-highlight", str(md_path)],
+        ["pandoc", "--from=gfm", "--to=html5", str(md_path)],
         capture_output=True,
         text=True,
         check=True,
@@ -236,6 +236,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     <title>{title} — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: {title}.">
     <link rel="stylesheet" href="{css_href}">
+    <script src="{js_href}" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -255,18 +256,6 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 
 {toc}
     </div>
-    <script>
-        (function () {{
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {{
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            }});
-        }})();
-    </script>
 </body>
 </html>
 """
@@ -292,15 +281,18 @@ def build_one(entry: DocEntry) -> None:
     output_path = DOCS_ROOT / entry.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Compute relative links for css and home from this page's directory
+    # Compute relative links for css, js, home from this page's directory
     depth = len(entry.output.parent.parts)
-    css_href = ("../" * depth) + "styles.css" if depth else "styles.css"
-    home_href = ("../" * depth) + "index.html" if depth else "index.html"
+    prefix = "../" * depth if depth else ""
+    css_href = prefix + "styles.css"
+    js_href = prefix + "docs.js"
+    home_href = prefix + "index.html"
 
     html_doc = PAGE_TEMPLATE.format(
         title=html.escape(entry.title),
         section=html.escape(section_for(entry)),
         css_href=css_href,
+        js_href=js_href,
         home_href=home_href,
         sidebar=sidebar,
         content=body,

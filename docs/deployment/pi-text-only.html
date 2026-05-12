@@ -6,6 +6,7 @@
     <title>Raspberry Pi (full stack) — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Raspberry Pi (full stack).">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -144,55 +145,67 @@ icon and:</p>
 <li>Configure Wi-Fi if you are not using Ethernet</li>
 </ul>
 <p>Boot the Pi, confirm SSH access:</p>
-<pre class="bash"><code>ssh pi@allarkive-pi.local</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> pi@allarkive-pi.local</span></code></pre></div>
 <p>Update the system:</p>
-<pre class="bash"><code>sudo apt update &amp;&amp; sudo apt full-upgrade -y
-sudo reboot</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> apt full-upgrade <span class="at">-y</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> reboot</span></code></pre></div>
 <hr />
 <h2 id="step-2-mount-the-usb-ssd">Step 2: Mount the USB SSD</h2>
 <p>Identify the SSD device:</p>
-<pre class="bash"><code>lsblk</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lsblk</span></span></code></pre></div>
 <p>Look for a disk (<code>sda</code>, <code>sdb</code>, etc.) without a
 partition listed in <code>MOUNTPOINTS</code>. Your SSD is typically
 <code>/dev/sda</code> with a partition at <code>/dev/sda1</code>.</p>
 <p>If the SSD is new and has no partition, format it:</p>
-<pre class="bash"><code>sudo fdisk /dev/sda   # create a new GPT partition table and one partition
-sudo mkfs.ext4 /dev/sda1</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> fdisk /dev/sda   <span class="co"># create a new GPT partition table and one partition</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkfs.ext4 /dev/sda1</span></code></pre></div>
 <p>Mount it:</p>
-<pre class="bash"><code>sudo mkdir -p /mnt/ssd
-sudo mount /dev/sda1 /mnt/ssd</code></pre>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /mnt/ssd</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount /dev/sda1 /mnt/ssd</span></code></pre></div>
 <p>Make the mount survive reboots. Add to <code>/etc/fstab</code>:</p>
-<pre class="bash"><code># Get the UUID of the partition
-sudo blkid /dev/sda1</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the UUID of the partition</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> blkid /dev/sda1</span></code></pre></div>
 <p>Add a line to <code>/etc/fstab</code> (replace <code>YOUR-UUID</code>
 with the value from <code>blkid</code>):</p>
 <pre><code>UUID=YOUR-UUID  /mnt/ssd  ext4  defaults,noatime  0  2</code></pre>
 <p>Verify:</p>
-<pre class="bash"><code>sudo mount -a
-df -h /mnt/ssd</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount <span class="at">-a</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">df</span> <span class="at">-h</span> /mnt/ssd</span></code></pre></div>
 <p>Expected: <code>/mnt/ssd</code> mounted with available space matching
 your SSD size.</p>
 <hr />
 <h2 id="step-3-install-docker">Step 3: Install Docker</h2>
-<pre class="bash"><code>curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker &quot;$USER&quot;
-newgrp docker</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsSL</span> https://get.docker.com <span class="kw">|</span> <span class="fu">sh</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-aG</span> docker <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ex">newgrp</span> docker</span></code></pre></div>
 <p>Verify:</p>
-<pre class="bash"><code>docker version
-docker compose version</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> version</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div>
 <p>Expected: Docker Engine 24+ and Compose 2.x.</p>
 <hr />
 <h2 id="step-4-clone-the-repository">Step 4: Clone the repository</h2>
-<pre class="bash"><code>sudo mkdir -p /mnt/ssd/allarkive-repo
-sudo chown &quot;$USER&quot; /mnt/ssd/allarkive-repo
-git clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo
-cd /mnt/ssd/allarkive-repo</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/allarkive/allarkive /mnt/ssd/allarkive-repo</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /mnt/ssd/allarkive-repo</span></code></pre></div>
 <hr />
 <h2 id="step-5-configure-the-environment">Step 5: Configure the
 environment</h2>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Edit <code>compose/.env</code>:</p>
-<pre class="bash"><code>nano compose/.env</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> compose/.env</span></code></pre></div>
 <p>Required changes:</p>
 <pre><code># Generate a secret key:
 #   openssl rand -hex 32
@@ -209,7 +222,8 @@ CHAT_MODEL=qwen2.5:1.5b
 OLLAMA_MEMORY_LIMIT=4G</code></pre>
 <hr />
 <h2 id="step-6-run-bootstrap">Step 6: Run bootstrap</h2>
-<pre class="bash"><code>scripts/bootstrap.sh --pi --bundle minimal</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/bootstrap.sh</span> <span class="at">--pi</span> <span class="at">--bundle</span> minimal</span></code></pre></div>
 <p>This will:</p>
 <ol type="1">
 <li>Check prerequisites (Docker, disk space)</li>
@@ -231,31 +245,35 @@ resumable and idempotent, and Kiwix browsing at
 <code>http://&lt;pi-ip&gt;:8081</code> works immediately. RAG answers in
 Open WebUI improve as coverage grows — "no sources found" early on is
 expected for topics not yet indexed. Watch progress:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml logs -f rag</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml logs <span class="at">-f</span> rag</span></code></pre></div>
 <h3 id="if-the-indexer-ooms-during-first-run">If the indexer OOMs during
 first run</h3>
 <p>The Pi 4 with 4 GB RAM can struggle to run Ollama and the indexer at
 the same time. If the indexer crashes, run it after Ollama is idle:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml exec rag \
-  python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml exec rag <span class="dt">\</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  python indexer.py <span class="at">--zim-dir</span> /data <span class="at">--index-dir</span> /index <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <hr />
 <h2 id="step-7-smoke-test">Step 7: Smoke test</h2>
 <p>From the Pi (or any machine on the same network with the right port
 forwarded):</p>
-<pre class="bash"><code># Check the landing page
-curl -s http://127.0.0.1:8080/ | grep -o &#39;&lt;title&gt;[^&lt;]*&lt;/title&gt;&#39;
-
-# Check kiwix is serving
-curl -sf http://127.0.0.1:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix OK&quot;
-
-# Check Ollama
-curl -s http://127.0.0.1:11434/api/version
-
-# Check RAG health
-curl -s http://127.0.0.1:8000/health</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the landing page</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:8080/ <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-o</span> <span class="st">&#39;&lt;title&gt;[^&lt;]*&lt;/title&gt;&#39;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check kiwix is serving</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sf</span> http://127.0.0.1:8081/ <span class="op">&gt;</span> /dev/null <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;kiwix OK&quot;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Check Ollama</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:11434/api/version</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Check RAG health</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:8000/health</span></code></pre></div>
 <p>Open <code>http://127.0.0.1:8080</code> in a browser (or forward the
 port via SSH):</p>
-<pre class="bash"><code>ssh -L 8080:127.0.0.1:8080 pi@allarkive-pi.local</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-L</span> 8080:127.0.0.1:8080 pi@allarkive-pi.local</span></code></pre></div>
 <p>Then open <code>http://127.0.0.1:8080</code> on your laptop.</p>
 <hr />
 <h2 id="port-summary">Port summary</h2>
@@ -302,22 +320,26 @@ path.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="docker-daemon-not-running-after-reboot">Docker daemon not
 running after reboot</h3>
-<pre class="bash"><code>sudo systemctl enable docker
-sudo systemctl start docker</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable docker</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start docker</span></code></pre></div>
 <h3 id="ollama-oom-killed">Ollama OOM-killed</h3>
 <p>Reduce <code>OLLAMA_MEMORY_LIMIT</code> in <code>compose/.env</code>
 and restart:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml restart ollama</code></pre>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml restart ollama</span></code></pre></div>
 <p>Or switch to a smaller model (<code>qwen2.5:1.5b</code> →
 <code>llama3.2:1b</code> at ~600 MB).</p>
 <h3 id="zim-download-stalls">ZIM download stalls</h3>
 <p><code>fetch-bundle.sh</code> uses <code>wget --continue</code>.
 Re-run the script; it resumes from where it left off:</p>
-<pre class="bash"><code>scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim</code></pre>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/fetch-bundle.sh</span> minimal <span class="at">--dest</span> /mnt/ssd/allarkive/zim</span></code></pre></div>
 <h3 id="kiwix-exits-immediately-no-zim-files-found">Kiwix exits
 immediately ("no ZIM files found")</h3>
 <p>Confirm ZIM files exist and the path is correct:</p>
-<pre class="bash"><code>ls -lh /mnt/ssd/allarkive/zim/*.zim</code></pre>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> /mnt/ssd/allarkive/zim/<span class="pp">*</span>.zim</span></code></pre></div>
 <p>If empty, fetch the bundle before starting the stack.</p>
 <h3 id="rag-indexer-is-slow">RAG indexer is slow</h3>
 <p>Pi 4 with 4 GB RAM processes roughly 5–15 articles per second during
@@ -326,21 +348,25 @@ minutes. Use <code>RAG_MAX_ARTICLES</code> in <code>.env</code> to cap
 indexing time during testing:</p>
 <pre><code>RAG_MAX_ARTICLES=500</code></pre>
 <h3 id="port-already-bound">Port already bound</h3>
-<pre class="bash"><code>ss -tlnp | grep 8080</code></pre>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ss</span> <span class="at">-tlnp</span> <span class="kw">|</span> <span class="fu">grep</span> 8080</span></code></pre></div>
 <p>Find the PID and stop the conflicting process, or change
 <code>LANDING_PORT</code> in <code>compose/.env</code>.</p>
 <h3 id="check-all-service-logs">Check all service logs</h3>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml logs -f</code></pre>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml logs <span class="at">-f</span></span></code></pre></div>
 <hr />
 <h2 id="updating">Updating</h2>
 <p>To pull new images and restart:</p>
-<pre class="bash"><code>cd /mnt/ssd/allarkive-repo
-git pull
-docker compose -f compose/docker-compose.pi.yml pull
-docker compose -f compose/docker-compose.pi.yml up -d</code></pre>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /mnt/ssd/allarkive-repo</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml pull</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml up <span class="at">-d</span></span></code></pre></div>
 <p>Re-index after adding new ZIM files:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.pi.yml exec rag \
-  python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.pi.yml exec rag <span class="dt">\</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  python indexer.py <span class="at">--zim-dir</span> /data <span class="at">--index-dir</span> /index <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <hr />
 <h2 id="what-is-next">What is next</h2>
 <ul>
@@ -389,17 +415,5 @@ immediately (&quot;no ZIM files found&quot;)</a></li>
 <li class="toc-h2"><a href="#what-is-next">What is next</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

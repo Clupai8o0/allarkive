@@ -6,6 +6,7 @@
     <title>Split across two machines — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Split across two machines.">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -118,11 +119,13 @@ or standard docker-compose</td>
 <h2 id="step-1-find-the-archive-nodes-ip-address">Step 1: Find the
 archive node's IP address</h2>
 <p>On the Pi:</p>
-<pre class="bash"><code>ip -4 addr show | grep inet</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ip</span> <span class="at">-4</span> addr show <span class="kw">|</span> <span class="fu">grep</span> inet</span></code></pre></div>
 <p>Look for the LAN IP (typically <code>192.168.x.x</code> or
 <code>10.x.x.x</code>). Note it.</p>
 <p>Alternatively, use the hostname if mDNS is working:</p>
-<pre class="bash"><code>ping -c 1 allarkive-archive.local</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 1 allarkive-archive.local</span></code></pre></div>
 <p>Use whichever address resolves reliably. For a home network, mDNS
 hostnames are convenient but can be flaky—a static DHCP lease or fixed
 IP is more stable.</p>
@@ -130,7 +133,8 @@ IP is more stable.</p>
 <h2 id="step-2-confirm-kiwix-is-reachable-from-the-laptop">Step 2:
 Confirm kiwix is reachable from the laptop</h2>
 <p>From the laptop:</p>
-<pre class="bash"><code>curl -sf http://&lt;ARCHIVE-NODE-IP&gt;:8081/ &gt; /dev/null &amp;&amp; echo &quot;kiwix reachable&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sf</span> http://<span class="op">&lt;</span>ARCHIVE-NODE-IP<span class="op">&gt;</span>:8081/ <span class="op">&gt;</span> /dev/null <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;kiwix reachable&quot;</span></span></code></pre></div>
 <p>If this fails:</p>
 <ul>
 <li>Check that <code>KIWIX_BIND=0.0.0.0</code> in the Pi's
@@ -164,44 +168,50 @@ the Pi's SSD over the network (NFS)</h3>
 <p>Export the ZIM directory from the Pi and mount it on the laptop. This
 lets the indexer read ZIM content directly.</p>
 <p>On the Pi:</p>
-<pre class="bash"><code>sudo apt install -y nfs-kernel-server</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> nfs-kernel-server</span></code></pre></div>
 <p>Add to <code>/etc/exports</code>:</p>
 <pre><code>/mnt/ssd/allarkive/zim  &lt;LAPTOP-IP&gt;(ro,sync,no_subtree_check)</code></pre>
-<pre class="bash"><code>sudo exportfs -ra</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> exportfs <span class="at">-ra</span></span></code></pre></div>
 <p>On the laptop:</p>
-<pre class="bash"><code>sudo apt install -y nfs-common
-sudo mkdir -p /mnt/archive-zim
-sudo mount &lt;ARCHIVE-NODE-IP&gt;:/mnt/ssd/allarkive/zim /mnt/archive-zim</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> nfs-common</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /mnt/archive-zim</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mount <span class="op">&lt;</span>ARCHIVE-NODE-IP<span class="op">&gt;</span>:/mnt/ssd/allarkive/zim /mnt/archive-zim</span></code></pre></div>
 <p>Make it persistent in <code>/etc/fstab</code>:</p>
 <pre><code>&lt;ARCHIVE-NODE-IP&gt;:/mnt/ssd/allarkive/zim  /mnt/archive-zim  nfs  ro,_netdev  0  0</code></pre>
 <p>Set <code>ZIM_DIR</code> in <code>compose/.env</code> to
 <code>/mnt/archive-zim</code>, and update the RAG service volume in
 <code>compose/docker-compose.yml</code>:</p>
-<pre class="yaml"><code>rag:
-  volumes:
-    - &quot;/mnt/archive-zim:/data:ro&quot;
-    - &quot;${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index&quot;</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rag</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;/mnt/archive-zim:/data:ro&quot;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/index:/index&quot;</span></span></code></pre></div>
 <h3
 id="option-b-pre-build-the-index-on-the-pi-and-copy-it-to-the-laptop">Option
 B: Pre-build the index on the Pi and copy it to the laptop</h3>
 <p>Index the ZIMs on the Pi (or any machine with local ZIM access), then
 copy the resulting <code>index.db</code> to the laptop's index
 directory.</p>
-<pre class="bash"><code># On the Pi (or a machine with the ZIMs):
-docker run --rm \
-  -v /mnt/ssd/allarkive/zim:/data:ro \
-  -v /tmp/index:/index \
-  -e OLLAMA_URL=http://&lt;OLLAMA-IP&gt;:11434 \
-  allarkive-rag:0.1.0 \
-  python indexer.py --zim-dir /data --index-dir /index
-
-# Copy the index to the laptop:
-scp /tmp/index/index.db laptop:/var/lib/allarkive/index/index.db</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On the Pi (or a machine with the ZIMs):</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> /mnt/ssd/allarkive/zim:/data:ro <span class="dt">\</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> /tmp/index:/index <span class="dt">\</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> OLLAMA_URL=http://<span class="op">&lt;</span>OLLAMA-IP<span class="op">&gt;</span>:11434 <span class="dt">\</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  allarkive-rag:0.1.0 <span class="dt">\</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  python indexer.py <span class="at">--zim-dir</span> /data <span class="at">--index-dir</span> /index</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy the index to the laptop:</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /tmp/index/index.db laptop:/var/lib/allarkive/index/index.db</span></code></pre></div>
 <p>This avoids the NFS dependency. The index only needs to be rebuilt
 when ZIM content changes.</p>
 <hr />
 <h2 id="step-5-start-the-ai-node">Step 5: Start the AI node</h2>
-<pre class="bash"><code>docker compose -f compose/docker-compose.yml --env-file compose/.env up -d</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml <span class="at">--env-file</span> compose/.env up <span class="at">-d</span></span></code></pre></div>
 <p>The RAG service will now generate citation links pointing at the Pi's
 kiwix-serve.</p>
 <hr />
@@ -209,10 +219,11 @@ kiwix-serve.</p>
 stack</h2>
 <p>From the laptop, test that a RAG query returns citations with the
 archive node's IP:</p>
-<pre class="bash"><code>curl -s http://127.0.0.1:8000/v1/chat/completions \
-  -H &#39;Content-Type: application/json&#39; \
-  -d &#39;{&quot;model&quot;: &quot;allarkive-rag&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is Wikipedia?&quot;}]}&#39; \
-  | python3 -m json.tool | grep kiwix</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://127.0.0.1:8000/v1/chat/completions <span class="dt">\</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;model&quot;: &quot;allarkive-rag&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is Wikipedia?&quot;}]}&#39;</span> <span class="dt">\</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="ex">python3</span> <span class="at">-m</span> json.tool <span class="kw">|</span> <span class="fu">grep</span> kiwix</span></code></pre></div>
 <p>Expected: citation URLs containing the Pi's IP or hostname.</p>
 <p>Open <code>http://127.0.0.1:8080</code> (landing page) in a browser,
 run a chat query, and click a citation. It should load an article from
@@ -228,7 +239,8 @@ links break and the RAG service cannot reach kiwix. Update
 Pi's IP changes.</p>
 <h3 id="firewall-pi">Firewall (Pi)</h3>
 <p>Allow kiwix access from the laptop only:</p>
-<pre class="bash"><code>sudo ufw allow from &lt;LAPTOP-IP&gt; to any port 8081</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow from <span class="op">&lt;</span>LAPTOP-IP<span class="op">&gt;</span> to any port 8081</span></code></pre></div>
 <p>Do not open port 8081 to the public internet.</p>
 <h3 id="latency">Latency</h3>
 <p>The RAG service fetches article text from kiwix over the LAN during
@@ -292,11 +304,13 @@ If the Pi's IP has changed:</p>
 <code>compose/.env</code>.</li>
 <li>Re-run the RAG indexer to rebuild citation URLs:</li>
 </ol>
-<pre class="bash"><code>docker compose exec rag python indexer.py --zim-dir /data --index-dir /index --ollama-url http://ollama:11434 --force</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="at">--zim-dir</span> /data <span class="at">--index-dir</span> /index <span class="at">--ollama-url</span> http://ollama:11434 <span class="at">--force</span></span></code></pre></div>
 <h3 id="rag-returns-no-sources-found-for-everything">RAG returns "no
 sources found" for everything</h3>
 <p>Check that kiwix is reachable from inside the RAG container:</p>
-<pre class="bash"><code>docker compose exec rag curl -sf http://&lt;ARCHIVE-NODE-IP&gt;:8081/ &gt; /dev/null &amp;&amp; echo &quot;OK&quot;</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag curl <span class="at">-sf</span> http://<span class="op">&lt;</span>ARCHIVE-NODE-IP<span class="op">&gt;</span>:8081/ <span class="op">&gt;</span> /dev/null <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;OK&quot;</span></span></code></pre></div>
 <p>If this fails, kiwix is not accessible on the LAN. Review the Pi's
 firewall and the <code>KIWIX_BIND</code> setting.</p>
 <h3 id="nfs-mount-disappears-after-reboot">NFS mount disappears after
@@ -304,11 +318,13 @@ reboot</h3>
 <p>Check <code>/etc/fstab</code> on the laptop and that the
 <code>_netdev</code> option is present. Ensure the Pi is up before the
 laptop tries to mount:</p>
-<pre class="bash"><code>sudo systemctl enable nfs-client.target</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable nfs-client.target</span></code></pre></div>
 <h3 id="index-is-stale-after-zim-update">Index is stale after ZIM
 update</h3>
 <p>Re-run the indexer after adding or replacing ZIM files:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py --zim-dir /data --index-dir /index</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="at">--zim-dir</span> /data <span class="at">--index-dir</span> /index</span></code></pre></div>
 <hr />
 <h2 id="what-is-next">What is next</h2>
 <ul>
@@ -361,17 +377,5 @@ update</a></li>
 <li class="toc-h2"><a href="#what-is-next">What is next</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

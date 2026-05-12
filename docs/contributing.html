@@ -6,6 +6,7 @@
     <title>Contributing — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Contributing.">
     <link rel="stylesheet" href="styles.css">
+    <script src="docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -124,20 +125,22 @@ discuss whether and how before you sink time into a PR.</p>
 proprietary content, no incompatible licenses) won't be merged into the
 defaults but can live as user-curated.</p>
 <h2 id="development-setup">Development setup</h2>
-<pre class="bash"><code>git clone https://github.com/allarkive/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-./scripts/bootstrap.sh</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/allarkive/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span></span></code></pre></div>
 <p>Linters and checks:</p>
-<pre class="bash"><code># Markdown
-npx markdownlint-cli2 &quot;**/*.md&quot;
-# Shell
-shellcheck scripts/**/*.sh
-# Compose
-docker compose -f compose/docker-compose.yml config
-# Python (RAG)
-ruff check scripts/rag/
-ruff format --check scripts/rag/</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Markdown</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npx</span> markdownlint-cli2 <span class="st">&quot;**/*.md&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Shell</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">shellcheck</span> scripts/<span class="pp">**</span>/<span class="pp">*</span>.sh</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Compose</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml config</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Python (RAG)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">ruff</span> check scripts/rag/</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ex">ruff</span> format <span class="at">--check</span> scripts/rag/</span></code></pre></div>
 <p>CI runs all of the above.</p>
 <h2 id="branch-and-commit-conventions">Branch and commit
 conventions</h2>
@@ -156,7 +159,8 @@ docs(install): add Pi text-only walkthrough</code></pre>
 <p>Every commit must include a <code>Signed-off-by</code> line. We use
 the <a href="https://developercertificate.org/">Developer Certificate of
 Origin</a> instead of a CLA.</p>
-<pre class="bash"><code>git commit -s -m &quot;feat(rag): your message&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-s</span> <span class="at">-m</span> <span class="st">&quot;feat(rag): your message&quot;</span></span></code></pre></div>
 <p>This adds:
 <code>Signed-off-by: Your Name &lt;your.email@example.com&gt;</code> and
 asserts you have the right to submit the contribution under the
@@ -271,17 +275,5 @@ conventions</a></li>
 <li class="toc-h3"><a href="#why-agpl-30">Why AGPL-3.0</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

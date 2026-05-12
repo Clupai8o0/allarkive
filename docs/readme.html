@@ -6,6 +6,7 @@
     <title>README — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: README.">
     <link rel="stylesheet" href="styles.css">
+    <script src="docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -114,10 +115,11 @@ not infallible. <strong>Not a substitute for professional medical,
 legal, or safety advice.</strong></p>
 </blockquote>
 <h2 id="install">Install</h2>
-<pre class="bash"><code>git clone https://github.com/allarkive/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-./scripts/bootstrap.sh</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/allarkive/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span></span></code></pre></div>
 <p>System requirements:</p>
 <ul>
 <li><strong>Minimum</strong>: 8 GB RAM, 30 GB disk, x86_64 or arm64</li>
@@ -342,17 +344,5 @@ the open archives we bundle.</p>
 <li class="toc-h2"><a href="#credits">Credits</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>

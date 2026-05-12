@@ -6,6 +6,7 @@
     <title>Laptop / desktop (Linux) — AllArkive docs</title>
     <meta name="description" content="AllArkive documentation: Laptop / desktop (Linux).">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../docs.js" defer></script>
 </head>
 <body class="doc-page">
     <button class="sidebar-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Menu</button>
@@ -77,14 +78,15 @@ See <em>Indexing takes hours</em> below.</p>
 <p>If you just want everything running with one command, use
 <code>bootstrap.sh</code>. It handles directory creation, bundle
 download, image build, model pull, and indexing automatically:</p>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive
-cp compose/.env.example compose/.env
-# Generate and paste a secret key:
-openssl rand -hex 32  # copy this output into WEBUI_SECRET_KEY= in compose/.env
-nano compose/.env
-# Then run everything:
-./scripts/bootstrap.sh --bundle balanced</code></pre>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate and paste a secret key:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32  <span class="co"># copy this output into WEBUI_SECRET_KEY= in compose/.env</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> compose/.env</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Then run everything:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/bootstrap.sh</span> <span class="at">--bundle</span> balanced</span></code></pre></div>
 <p>The manual steps below are equivalent — follow them if you want more
 control or need to debug a specific step.</p>
 <h3 id="indexing-takes-hours--leave-it-running">Indexing takes hours —
@@ -108,7 +110,8 @@ it left off.</p>
 <strong>immediately</strong>. RAG answers in Open WebUI improve as
 coverage grows — "no sources found" early on is expected for topics not
 yet indexed. Watch progress:</p>
-<pre class="bash"><code>docker compose -f compose/docker-compose.yml logs -f rag</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>
@@ -147,7 +150,8 @@ yet indexed. Watch progress:</p>
 <ul>
 <li><p><strong>Docker Engine 24+</strong> with the Compose plugin. Test
 with:</p>
-<pre class="bash"><code>docker compose version</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose version</span></code></pre></div>
 <p>If missing, install from the <a
 href="https://docs.docker.com/engine/install/">official Docker docs</a>.
 Do <strong>not</strong> use the distro-packaged <code>docker.io</code> —
@@ -157,15 +161,18 @@ it may be too old.</p></li>
 </ul>
 <hr />
 <h2 id="step-1-clone-the-repository">Step 1: Clone the repository</h2>
-<pre class="bash"><code>git clone https://github.com/Clupai8o0/allarkive.git
-cd allarkive</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Clupai8o0/allarkive.git</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> allarkive</span></code></pre></div>
 <hr />
 <h2 id="step-2-set-up-configuration">Step 2: Set up configuration</h2>
 <p>Copy the example environment file and fill in the required
 values:</p>
-<pre class="bash"><code>cp compose/.env.example compose/.env</code></pre>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> compose/.env.example compose/.env</span></code></pre></div>
 <p>Generate a secret key for Open WebUI session signing:</p>
-<pre class="bash"><code>openssl rand -hex 32</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 32</span></code></pre></div>
 <p>Open <code>compose/.env</code> and paste the result into
 <code>WEBUI_SECRET_KEY=</code>.</p>
 <p>That is the only required change. Review the rest of the file if you
@@ -176,8 +183,9 @@ defaults work.</p>
 directories</h2>
 <p>All ZIM files, models, the RAG index, and Open WebUI's database live
 under one root. Create it once:</p>
-<pre class="bash"><code>sudo mkdir -p /var/lib/allarkive/{zim,index,models,data}
-sudo chown -R &quot;$USER&quot; /var/lib/allarkive</code></pre>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /var/lib/allarkive/<span class="dt">{zim</span><span class="op">,</span><span class="dt">index</span><span class="op">,</span><span class="dt">models</span><span class="op">,</span><span class="dt">data}</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="st">&quot;</span><span class="va">$USER</span><span class="st">&quot;</span> /var/lib/allarkive</span></code></pre></div>
 <p>If your laptop has limited disk on <code>/var/</code>, change
 <code>ALLARKIVE_DATA_DIR</code> in <code>compose/.env</code> to a path
 with more space (e.g. an external drive mounted at
@@ -217,14 +225,16 @@ Ubuntu</td>
 </tbody>
 </table>
 <p>Download and verify:</p>
-<pre class="bash"><code>./scripts/fetch-bundle.sh balanced</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/fetch-bundle.sh</span> balanced</span></code></pre></div>
 <p>The script downloads each ZIM file and verifies its SHA-256 checksum.
 If verification fails, it stops and tells you which file is corrupt. Do
 not proceed past a checksum failure — re-run or re-download.</p>
 <hr />
 <h2 id="step-5-start-the-stack">Step 5: Start the stack</h2>
-<pre class="bash"><code>cd compose/
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>On first run, Docker does two things before the services start:</p>
 <ol type="1">
 <li><strong>Builds the RAG image from source</strong>
@@ -235,40 +245,46 @@ Open WebUI, nginx).</li>
 </ol>
 <p>Subsequent starts are fast — images are already present.</p>
 <p>To watch progress:</p>
-<pre class="bash"><code>docker compose logs -f</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs <span class="at">-f</span></span></code></pre></div>
 <p>Wait until all containers show <code>healthy</code>:</p>
-<pre class="bash"><code>docker compose ps</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose ps</span></code></pre></div>
 <p>Typically 2–5 minutes on first run (excluding model download), less
 than a minute on subsequent starts.</p>
 <h3 id="gpu-acceleration-optional">GPU acceleration (optional)</h3>
 <p>If your laptop has an NVIDIA GPU with CUDA drivers installed:</p>
-<pre class="bash"><code>docker compose --profile gpu up -d</code></pre>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">--profile</span> gpu up <span class="at">-d</span></span></code></pre></div>
 <hr />
 <h2 id="step-6-pull-ai-models">Step 6: Pull AI models</h2>
 <p>Two models are needed — the chat model (for answering questions) and
 the embedding model (for indexing and search). Pull them before
 indexing:</p>
-<pre class="bash"><code># Chat model (~4 GB for qwen2.5:7b):
-docker compose exec ollama ollama pull qwen2.5:7b
-
-# Embedding model (~270 MB):
-docker compose exec ollama ollama pull nomic-embed-text</code></pre>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Chat model (~4 GB for qwen2.5:7b):</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull qwen2.5:7b</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Embedding model (~270 MB):</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull nomic-embed-text</span></code></pre></div>
 <p>If you chose a different model in <code>compose/.env</code>,
 substitute it here. Both pulls resume automatically if interrupted.</p>
 <hr />
 <h2 id="step-7-index-the-archive">Step 7: Index the archive</h2>
 <p>The RAG pipeline indexes your ZIM files so the AI can search them.
 Trigger it manually so you can watch the output:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434</code></pre>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434</span></code></pre></div>
 <p>To force a full rebuild of an existing index:</p>
-<pre class="bash"><code>docker compose exec rag python indexer.py \
-    --zim-dir /data \
-    --index-dir /index \
-    --ollama-url http://ollama:11434 \
-    --force</code></pre>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py <span class="dt">\</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--zim-dir</span> /data <span class="dt">\</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--index-dir</span> /index <span class="dt">\</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ollama-url</span> http://ollama:11434 <span class="dt">\</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">--force</span></span></code></pre></div>
 <p>Indexing time depends on the bundle and hardware. The balanced bundle
 takes roughly 10–30 minutes on a modern laptop. The index persists
 across restarts; you only need to re-index if you add or change ZIM
@@ -327,11 +343,12 @@ default. Nothing is reachable from outside your machine.</p>
 <p>To change a port, edit <code>compose/.env</code>.</p>
 <hr />
 <h2 id="stopping-and-restarting">Stopping and restarting</h2>
-<pre class="bash"><code># Stop without removing volumes:
-cd compose/ &amp;&amp; docker compose down
-
-# Start again (fast, model already downloaded):
-cd compose/ &amp;&amp; docker compose up -d</code></pre>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop without removing volumes:</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/ <span class="kw">&amp;&amp;</span> <span class="ex">docker</span> compose down</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Start again (fast, model already downloaded):</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/ <span class="kw">&amp;&amp;</span> <span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <hr />
 <h2 id="cleanup-and-uninstall">Cleanup and uninstall</h2>
 <p>Use <code>scripts/cleanup.sh</code>. It has three levels — nothing is
@@ -369,9 +386,10 @@ before deleting.</td>
 <hr />
 <h2 id="updating">Updating</h2>
 <p>Pull new images, then restart:</p>
-<pre class="bash"><code>cd compose/
-docker compose pull
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> compose/</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose pull</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <p>Check <code>CHANGELOG.md</code> before updating to see if any config
 or data migration is needed.</p>
 <hr />
@@ -388,8 +406,9 @@ result into <code>compose/.env</code> as
 <h3 id="open-webui-shows-a-blank-page-or-502-error">Open WebUI shows a
 blank page or 502 error</h3>
 <p>The RAG service or Ollama may still be initialising. Check:</p>
-<pre class="bash"><code>docker compose ps
-docker compose logs rag</code></pre>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose ps</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose logs rag</span></code></pre></div>
 <p>Wait for all containers to show <code>healthy</code>. The first
 startup is slow.</p>
 <h3 id="rag-image-build-fails">RAG image build fails</h3>
@@ -401,22 +420,26 @@ causes:</p>
 </ul>
 <p>Check with <code>docker compose logs rag</code> and
 <code>df -h</code>. To retry the build:</p>
-<pre class="bash"><code>docker compose build rag
-docker compose up -d</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose build rag</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
 <h3 id="ollama-model-download-is-stuck">Ollama model download is
 stuck</h3>
 <p>Ollama resumes interrupted downloads. Run:</p>
-<pre class="bash"><code>docker compose exec ollama ollama pull qwen2.5:7b</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec ollama ollama pull qwen2.5:7b</span></code></pre></div>
 <p>If it keeps stalling, check your disk space: the model needs ~4.4 GB
 free.</p>
 <h3 id="kiwix-shows-no-zim-files-found">Kiwix shows "no ZIM files
 found"</h3>
 <p>Check that your ZIM files landed in the right directory:</p>
-<pre class="bash"><code>ls /var/lib/allarkive/zim/</code></pre>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> /var/lib/allarkive/zim/</span></code></pre></div>
 <p>If the directory is empty, re-run
 <code>./scripts/fetch-bundle.sh balanced</code>.</p>
 <h3 id="port-already-in-use">Port already in use</h3>
-<pre class="bash"><code>ss -tlnp | grep 8080    # or 8081, 3000, 11434, 8000</code></pre>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ss</span> <span class="at">-tlnp</span> <span class="kw">|</span> <span class="fu">grep</span> 8080    <span class="co"># or 8081, 3000, 11434, 8000</span></span></code></pre></div>
 <p>Stop whatever is using that port, or change AllArkive's port in
 <code>compose/.env</code>.</p>
 <hr />
@@ -491,17 +514,5 @@ found&quot;</a></li>
 <li class="toc-h2"><a href="#what-bootstrapsh-does">What bootstrap.sh does</a></li>
 </ul></nav>
     </div>
-    <script>
-        (function () {
-            var btn = document.querySelector('.sidebar-toggle');
-            var sidebar = document.querySelector('.doc-sidebar');
-            if (!btn || !sidebar) return;
-            sidebar.id = 'doc-sidebar';
-            btn.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        })();
-    </script>
 </body>
 </html>
