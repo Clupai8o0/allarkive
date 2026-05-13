@@ -146,12 +146,27 @@ def _drop_zim(conn: sqlite3.Connection, zim_name: str) -> None:
 
 # ── Text processing ───────────────────────────────────────────────────────────
 
+_STRIP_CLASS_PREFIXES = re.compile(
+    r"^(toc|sidebar|navbox|reflist|mw-references|catlinks)", re.I
+)
+
+
 def _html_to_text(html: str) -> str:
+    """Strip chrome from a ZIM HTML page and return the article body as text.
+
+    The class regex matches individual class names (anchored with ^), not the
+    joined class attribute. WikiMed's <body> carries Vector-skin classes like
+    `vector-toc-not-available` that contain the substring `toc` — the old
+    unanchored regex against `class_=` was matching them and decomposing the
+    entire document, yielding 0-char extractions for every Wikipedia article.
+    """
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.find_all(["nav", "aside", "footer", "script", "style"]):
         tag.decompose()
     for tag in soup.find_all(
-        class_=re.compile(r"(toc|sidebar|navbox|reflist|mw-references|catlinks)", re.I)
+        lambda t: any(
+            _STRIP_CLASS_PREFIXES.match(c) for c in (t.get("class") or [])
+        )
     ):
         tag.decompose()
     return soup.get_text(separator="\n", strip=True)
