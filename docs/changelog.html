@@ -78,9 +78,153 @@ in-stack entry point.</li>
 <code>bundles/comprehensive/LICENSE.md</code> — per-bundle license
 summaries listing each ZIM's source, license, and attribution as
 required by CLAUDE.md.</li>
+<li><code>docs/TROUBLESHOOTING.md</code> — new central operational
+reference. Covers: the cap/coverage story ("minimal" means small
+download, not small content); native-Ollama setup for Apple Silicon
+speedup; WSL2 GPU passthrough; the formerly-fatal sqlite-vec errors and
+how the indexer/server now handle them; cap-aware bootstrap re-runs;
+pace tiers per hardware; sanity-check commands for "is photosynthesis
+actually in my index"; demo-question selection. Linked from
+<code>README.md</code>, <code>DOCS.md</code>, all four install guides,
+and <code>docs/deployment/pi-text-only.md</code>.</li>
+<li><code>scripts/bootstrap.sh --max-articles &lt;N&gt;</code> and
+<code>--full-index</code> (alias for <code>--max-articles 0</code>) let
+users control the per-ZIM article cap from bootstrap, no longer
+requiring them to edit <code>compose/.env</code> or run the indexer
+manually. Default cap is now <strong>platform-aware</strong>: 3000 on Pi
+(CPU-bound), <strong>0 (unlimited) on mac / linux / wsl</strong> because
+GPU/Metal acceleration makes full coverage feasible. The previous global
+default of 5000 was randomly sampling 1% of ZIMs like Wikipedia (463k+
+entries) and silently missing demo-critical articles like
+Photosynthesis. Bootstrap writes the chosen cap to
+<code>compose/.env</code> as <code>RAG_MAX_ARTICLES</code>, so manual
+<code>docker compose exec rag python indexer.py</code> runs honour the
+same setting. Surfaces in the platform-summary prompt as
+<code>index cap: …</code>.</li>
+<li><code>scripts/bootstrap.sh --no-model</code> enables
+<strong>search-only mode</strong>: skips the chat-model pull, writes
+<code>CHAT_MODEL=__none__</code> into <code>compose/.env</code>, and the
+RAG service (<code>scripts/rag/server.py</code>) detects the sentinel
+and returns retrieved passages as a numbered citation list instead of
+calling Ollama's <code>/api/chat</code>. The embedding model is still
+pulled because indexing needs it. Surfaces in the platform-summary as
+<code>model : (none — search-only mode)</code>. Useful for low-RAM Pi
+setups or "search the archive, no AI" deployments.</li>
+<li><code>scripts/rag/server.py</code> <code>/status</code> endpoint now
+reports <code>search_only: true|false</code>.
+<code>landing/app.js</code> reads this on each status refresh and hides
+the "Ask AI" UI (nav link + mode toggle) when no chat model is
+configured, forcing the page into search-archive mode. The model line in
+the status bar reads <code>search-only (no chat model)</code> in that
+state.</li>
+<li><code>bundles/comprehensive/manifest.json</code> populated SHA-256
+hashes for the five ZIMs that previously had <code>"sha256": ""</code>
+(Wikipedia maxi 115 GB, Gutenberg 206 GB, Stack Overflow 75 GB,
+SuperUser, Math Stack Exchange). Without these,
+<code>scripts/fetch-bundle.sh</code> would refuse to verify the
+downloaded files per the project policy in CLAUDE.md.</li>
+<li><code>docs/deployment/pi-text-only.md</code> gained two recipes: "Pi
+5 + large external SSD + tiny model + comprehensive ZIMs" (explicit
+flags override the platform default of minimal+1.5b) and "search-only
+mode" (<code>--no-model</code>).</li>
+<li><code>scripts/bootstrap.sh</code> learned a
+<code>--platform &lt;mac|linux|pi|wsl&gt;</code> flag with
+<code>auto</code> detection (Darwin → mac,
+<code>/proc/device-tree/model</code> → pi, <code>/proc/version</code>
+WSL marker → wsl, else linux). Each profile sets the compose file,
+data-dir base, default bundle, and default chat model. RAM probe
+auto-downgrades to the minimal bundle + <code>qwen2.5:1.5b</code> when
+total RAM &lt; 6 GB and the user hasn't pinned bundle/model.
+Confirmation prompt shows detected platform/RAM/GPU and the chosen
+defaults before continuing; <code>--yes</code>/<code>-y</code> skips it
+for CI. On macOS without a host-side Ollama, the script now prints a
+"install native Ollama for Metal speedup" hint, since Dockerized Ollama
+on Darwin is CPU-only. On WSL2 with no NVIDIA GPU detected, it warns
+that indexing will be CPU-bound (recommends
+<code>--bundle minimal</code> or <code>nvidia-container-toolkit</code>),
+since GPU passthrough is the only fast path inside Docker Desktop on
+Windows. <code>--pi</code> is preserved as an alias for
+<code>--platform pi</code>.</li>
+<li><code>scripts/rag/indexer.py</code> cap-aware resume: the indexer
+compares each ZIM's previously-recorded <code>article_count</code> in
+<code>indexed_zims</code> against the archive's total entries and the
+new effective cap. If the prior run was capped and the new cap allows
+more articles (e.g. user re-ran with <code>--full-index</code> or just
+raised <code>--max-articles</code>), the ZIM is dropped and re-indexed.
+ZIMs that were fully covered the first time are still skipped. Means
+<code>./scripts/bootstrap.sh</code> Just Works after raising the cap —
+no manual <code>_drop_zim</code> cleanup needed, and partial-coverage
+ZIMs no longer hide indefinitely behind a stale completion marker.</li>
+<li><code>scripts/rag/indexer.py</code> MediaWiki HTML extraction fix.
+The previous <code>_html_to_text</code> used
+<code>class_=re.compile("(toc|sidebar|navbox|reflist|mw-references|catlinks)")</code>
+— an unanchored regex that BeautifulSoup matched against the
+<em>joined</em> class string. Modern Wikipedia ZIMs put Vector-skin
+classes like <code>vector-toc-not-available</code> /
+<code>vector-feature-toc-pinned-clientpref-0</code> on
+<code>&lt;body&gt;</code>, all containing the substring
+<code>toc</code>. The unanchored regex matched the body wrapper,
+<code>.decompose()</code> killed the entire document, and
+<code>_html_to_text</code> returned 0 characters. Every WikiMed article
+was being skipped via <code>if len(text) &lt; 50: continue</code>, while
+titles slipped through — resulting in ~8,700 chunks of useless
+title-only fragments instead of real content. Now uses anchored
+per-class matching (<code>_STRIP_CLASS_PREFIXES</code>) that won't fire
+on substring collisions. Verified on Aspirin (61k chars extracted) and
+Photosynthesis (54k chars extracted).</li>
+<li><code>scripts/rag/prompt.py</code> system template softened. The
+previous wording ("If no passage is relevant to the question, respond
+with exactly: no sources found for this question.") caused
+<code>qwen2.5:7b</code> to refuse on tangentially-relevant passages —
+e.g. "Adverse effects of aspirin" was judged not-an-answer to "What is
+aspirin used for?". The new wording instructs the model to synthesise
+partial answers from related passages and reserve the "no sources"
+fallback for cases where the passages have no connection to the topic at
+all. Same <code>[N]</code> citation rule, same refusal text — just less
+trigger-happy.</li>
+<li><code>scripts/rag/indexer.py</code> hardening: a single bad
+embedding (zero magnitude, NaN/inf, or one sqlite-vec rejects) no longer
+crashes the whole indexer. The bad chunk is logged and skipped, indexing
+continues. Previously, one malformed vector from Ollama would raise
+<code>sqlite3.OperationalError: Internal sqlite-vec error: could not write vector blob</code>
+and kill the process.</li>
+<li><code>scripts/rag/server.py</code> opens <code>index.db</code> in
+read-only URI mode with a 30-second <code>busy_timeout</code>. This
+stops the FastAPI server's long-lived connection from contending with
+the indexer's writes on sqlite-vec's internal shadow tables, which
+previously surfaced as
+<code>sqlite3.OperationalError: locking protocol</code> mid-indexing —
+especially pronounced once Ollama was Metal-accelerated and writes got
+fast. Indexing can now run via
+<code>docker compose exec rag python indexer.py</code> without first
+stopping the rag service.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li><p><code>docs/TROUBLESHOOTING.md</code> gained five new sections
+from the May 12–13 hardening work: (1) "no sources found despite WikiMed
+indexed" pointing at the MediaWiki extraction bug + sanity check, (2)
+cap-aware logic re-indexing ZIMs you thought were full, with the
+<code>article_count=999999</code> pin workaround, (3) indexer + FastAPI
+server can't share <code>index.db</code> even with read-only mode — the
+canonical stop/run --rm/start dance, (4) auto-shutdown after long
+unattended runs via <code>pmset schedule</code> +
+<code>caffeinate</code>, (5) "Why is <code>index.db</code> bigger than
+my ZIM files?" — observed ratios per ZIM type, the per-chunk overhead
+breakdown, and v0.2 mitigations to consider.
+<code>docs/ARCHITECTURE.md</code> <em>Decisions to revisit in v0.2+</em>
+picks up matching bullets for the index-storage overhead and the
+cap-aware <code>all_entry_count</code> comparison bug. The two earlier
+duplicate <code>### Added</code> headers under <code>[Unreleased]</code>
+are also collapsed.</p></li>
+<li><p><code>scripts/bootstrap.sh</code> now runs
+<code>docker compose build rag</code> on every invocation before
+<code>up</code>. <code>docker compose up</code> reuses locally-tagged
+images even when the source files behind them have changed, so prior
+bootstrap re-runs were silently shipping stale <code>server.py</code> /
+<code>indexer.py</code> until the user remembered to manually rebuild.
+Cached layers make the build near-instant (~5s) when nothing
+changed.</p></li>
 <li><p><code>scripts/bootstrap.sh</code> final summary now prints chunk
 counts per archive from the RAG <code>index.db</code>, so a fresh user
 can see exactly what got indexed rather than discovering an

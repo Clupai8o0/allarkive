@@ -105,6 +105,12 @@ coverage grows — "no sources found" early on is expected for topics not
 yet indexed. Watch progress:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
+<p>For Windows specifically: without NVIDIA +
+<code>nvidia-container-toolkit</code> inside WSL2, Ollama runs on CPU
+and indexing is hours/days for any non-minimal bundle. See <a
+href="../TROUBLESHOOTING.md"><code>docs/TROUBLESHOOTING.md</code></a>
+for GPU passthrough setup, coverage-cap tuning, and re-running bootstrap
+to expand RAG coverage incrementally.</p>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>

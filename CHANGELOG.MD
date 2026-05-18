@@ -15,8 +15,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `bundles/minimal/LICENSE.md`, `bundles/balanced/LICENSE.md`,
   `bundles/comprehensive/LICENSE.md` — per-bundle license summaries listing
   each ZIM's source, license, and attribution as required by CLAUDE.md.
-
-### Added
 - `docs/TROUBLESHOOTING.md` — new central operational reference. Covers:
   the cap/coverage story ("minimal" means small download, not small content);
   native-Ollama setup for Apple Silicon speedup; WSL2 GPU passthrough; the
@@ -78,6 +76,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Just Works after raising the cap — no manual `_drop_zim` cleanup needed,
   and partial-coverage ZIMs no longer hide indefinitely behind a stale
   completion marker.
+- `scripts/rag/indexer.py` MediaWiki HTML extraction fix. The previous
+  `_html_to_text` used `class_=re.compile("(toc|sidebar|navbox|reflist|mw-references|catlinks)")`
+  — an unanchored regex that BeautifulSoup matched against the *joined* class
+  string. Modern Wikipedia ZIMs put Vector-skin classes like
+  `vector-toc-not-available` / `vector-feature-toc-pinned-clientpref-0` on
+  `<body>`, all containing the substring `toc`. The unanchored regex matched
+  the body wrapper, `.decompose()` killed the entire document, and
+  `_html_to_text` returned 0 characters. Every WikiMed article was being
+  skipped via `if len(text) < 50: continue`, while titles slipped through —
+  resulting in ~8,700 chunks of useless title-only fragments instead of real
+  content. Now uses anchored per-class matching (`_STRIP_CLASS_PREFIXES`)
+  that won't fire on substring collisions. Verified on Aspirin
+  (61k chars extracted) and Photosynthesis (54k chars extracted).
+- `scripts/rag/prompt.py` system template softened. The previous wording
+  ("If no passage is relevant to the question, respond with exactly: no
+  sources found for this question.") caused `qwen2.5:7b` to refuse on
+  tangentially-relevant passages — e.g. "Adverse effects of aspirin" was
+  judged not-an-answer to "What is aspirin used for?". The new wording
+  instructs the model to synthesise partial answers from related passages
+  and reserve the "no sources" fallback for cases where the passages have
+  no connection to the topic at all. Same `[N]` citation rule, same refusal
+  text — just less trigger-happy.
 - `scripts/rag/indexer.py` hardening: a single bad embedding (zero magnitude,
   NaN/inf, or one sqlite-vec rejects) no longer crashes the whole indexer. The
   bad chunk is logged and skipped, indexing continues. Previously, one
@@ -93,6 +113,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   stopping the rag service.
 
 ### Changed
+- `docs/TROUBLESHOOTING.md` gained five new sections from the May 12–13
+  hardening work: (1) "no sources found despite WikiMed indexed" pointing at
+  the MediaWiki extraction bug + sanity check, (2) cap-aware logic re-indexing
+  ZIMs you thought were full, with the `article_count=999999` pin workaround,
+  (3) indexer + FastAPI server can't share `index.db` even with read-only
+  mode — the canonical stop/run --rm/start dance, (4) auto-shutdown after
+  long unattended runs via `pmset schedule` + `caffeinate`, (5) "Why is
+  `index.db` bigger than my ZIM files?" — observed ratios per ZIM type,
+  the per-chunk overhead breakdown, and v0.2 mitigations to consider.
+  `docs/ARCHITECTURE.md` *Decisions to revisit in v0.2+* picks up matching
+  bullets for the index-storage overhead and the cap-aware `all_entry_count`
+  comparison bug. The two earlier duplicate `### Added` headers under
+  `[Unreleased]` are also collapsed.
 - `scripts/bootstrap.sh` now runs `docker compose build rag` on every invocation
   before `up`. `docker compose up` reuses locally-tagged images even when the
   source files behind them have changed, so prior bootstrap re-runs were

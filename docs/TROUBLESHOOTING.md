@@ -244,6 +244,136 @@ You want `OLLAMA_URL=http://host.docker.internal:11434`. If it says `http://olla
 
 ---
 
+## "no sources found" on Wikipedia-style topics despite a successful WikiMed index
+
+Symptom: `/status` shows WikiMed indexed at thousands of articles, the chunk count looks healthy, but every Wikipedia-style question returns "no sources found for this question." Kiwix full-text search finds the article fine.
+
+**Likely cause: MediaWiki HTML extraction is returning empty text.** Sanity check:
+
+```bash
+docker compose exec rag python3 -c "
+import sqlite3
+db = sqlite3.connect('file:/index/index.db?mode=ro', uri=True)
+for r in db.execute(\"SELECT zim_name, AVG(length(text)) FROM chunks GROUP BY zim_name\"):
+    print(r)
+"
+```
+
+If WikiMed's avg chunk length is < 100 chars, you're hitting an extraction bug — chunks are just title fragments, not article bodies. The shipped `_html_to_text` in `scripts/rag/indexer.py` uses an anchored per-class matcher to avoid this; older versions (or local edits) using `class_=re.compile(...)` against the joined class string will silently strip Wikipedia bodies because Vector-skin classes like `vector-toc-not-available` contain the substring `toc` from the strip-list.
+
+**Fix.** Rebuild the rag image to pick up the latest extractor, drop the broken WikiMed state, re-index. See *Re-running bootstrap to expand coverage* below for the safe drop+re-index pattern.
+
+---
+
+## Cap-aware logic re-indexes a ZIM I already fully covered
+
+Symptom: you ran `--full-index` (unlimited) on a ZIM and it finished. You re-run bootstrap and it wants to drop+re-index that ZIM again.
+
+**Why it happens.** The cap-aware logic at `scripts/rag/indexer.py` compares the recorded `article_count` to `archive.all_entry_count`. But `all_entry_count` includes *redirects and images* (often ~80% of the archive), not just real HTML articles. WikiMed has 463k total entries but only ~102k actual articles — so a 100% real-article-coverage run records `article_count=80231` which the comparison reads as "only 17% covered."
+
+**Workaround: pin the ZIM as fully covered.** Set `article_count` to a value larger than `all_entry_count`:
+
+```bash
+docker compose -f compose/docker-compose.yml exec rag python3 -c "import sqlite3; db=sqlite3.connect('/index/index.db'); db.execute(\"UPDATE indexed_zims SET article_count=999999 WHERE zim_name='wikipedia_en_medicine_maxi_2026-04'\"); db.commit(); print('pinned')"
+```
+
+Adjust `zim_name` for your ZIM. After pinning, cap-aware sees `prev_was_capped = 999999 < 463451 = False` and skips re-indexing.
+
+**Proper v0.2 fix** would teach the indexer to track *HTML-article count* (filtered) rather than `all_entry_count` when judging "fully covered." For v0.1 the pin trick is the workaround.
+
+---
+
+## Server and indexer can't be running concurrently (sqlite-vec locking)
+
+Symptom: indexer was happily running, then crashed with:
+
+```
+sqlite3.OperationalError: locking protocol
+```
+
+at `conn.commit()`.
+
+**Root cause.** `scripts/rag/server.py` opens the index in read-only URI mode with `busy_timeout` — sufficient for normal SQLite locking, but **sqlite-vec's `vec0` virtual tables maintain internal page state across connections that still contends** during writes. The read-only flag isn't enough on its own. Got dramatically worse once native Ollama made the indexer fast enough to commit frequently.
+
+**The canonical workaround** (used throughout this project's history):
+
+```bash
+# 1. Stop the FastAPI server — releases its connection entirely
+docker compose -f compose/docker-compose.yml stop rag
+
+# 2. Run the indexer in a one-off container with no competing connection
+docker compose -f compose/docker-compose.yml run --rm rag \
+    python indexer.py --zim-dir /data --index-dir /index \
+                       --ollama-url http://host.docker.internal:11434
+
+# 3. After indexing finishes, bring rag back
+docker compose -f compose/docker-compose.yml start rag
+```
+
+This is reliable even on long overnight runs. `docker compose exec rag python indexer.py` (which bootstrap uses internally) **will still hit the locking issue** for big runs — use this dance for anything beyond a quick test.
+
+A proper v0.2 fix would change `server.py` to open ephemeral per-query connections rather than holding a long-lived one. Trades ~10 ms per query for true zero-contention.
+
+---
+
+## "Why is `index.db` bigger than my ZIM files?"
+
+This is normal and expected for text-heavy archives. Observed ratios:
+
+| Archive | ZIM (compressed) | Index after full coverage | Ratio |
+|---|---|---|---|
+| WikiMed | 1.4 GB | ~3 GB | **~2.1× ZIM** |
+| iFixit (image-heavy) | 3.3 GB | ~1–2 GB | ~0.4–0.6× ZIM |
+| Wikipedia full + images (projected) | 115 GB | ~50–80 GB | ~0.5× ZIM |
+| Comprehensive bundle (projected) | 411 GB | ~200–300 GB | ~0.5–0.7× ZIM |
+
+**Why.** ZIMs store article content compressed and de-duplicated. The vector index stores, per chunk:
+
+- A 768-dim `float32` embedding = exactly **3 KB**, fixed, regardless of source size
+- The chunk text (~800 chars) — **uncompressed**
+- A 100-char overlap with the next chunk — duplication
+
+So a 1 GB body of compressed Wikipedia prose blows up into many ~4 KB chunks. Text-heavy archives (WikiMed, Stack Overflow, books) have higher ratios than image-heavy ones (iFixit, where most ZIM bytes are images the indexer ignores).
+
+**You probably don't need to do anything.** Just plan disk accordingly: budget at least **2× the ZIM size** when you size your storage for a text-heavy bundle.
+
+**Future v0.2+ mitigations** under consideration:
+
+- Smaller-dimension embedding models (`all-MiniLM-L6-v2` = 384-dim, halves the vector size).
+- Quantised vectors via `sqlite-vec` (`float16` halves storage, `int8` quarters it, with small recall loss).
+- `zstd` compression on chunk text before insert.
+- Storing only an offset into the ZIM rather than the chunk text itself, re-extracting at query time.
+
+Tracked in `docs/ARCHITECTURE.md` under *Decisions to revisit in v0.2+*.
+
+---
+
+## Auto-shutdown after long unattended indexing
+
+For overnight or multi-day runs where you want the Mac to power off when the indexer finishes:
+
+```bash
+# Schedule a hard shutdown 16 hours from now (adjust to your expected ETA + buffer)
+sudo pmset schedule shutdown "$(date -v +16H '+%m/%d/%y %H:%M:%S')"
+
+# Run the indexer with caffeinate to prevent sleep during work
+caffeinate -di docker compose -f compose/docker-compose.yml run --rm rag \
+    python indexer.py --zim-dir /data --index-dir /index \
+                       --ollama-url http://host.docker.internal:11434 \
+                       --max-articles 0
+```
+
+When the indexer exits, `caffeinate` exits, the Mac can sleep. At the scheduled time `pmset` wakes if needed and shuts down. Survives lid-close and sleep.
+
+**Always remember to cancel** if you change your mind or run finishes before you walk away from the keyboard:
+
+```bash
+sudo pmset schedule cancelAll
+pmset -g sched   # verify nothing is scheduled
+```
+
+---
+
 ## Bootstrap doesn't pick up my source edits
 
 **Used to be:** `docker compose up` reuses any locally-tagged `allarkive-rag:0.1.0` image, even after you edited `scripts/rag/*.py`. Footgun.

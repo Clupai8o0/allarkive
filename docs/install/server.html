@@ -102,6 +102,10 @@ RAG answers improve as coverage grows — "no sources found" early on is
 expected for topics not yet indexed. Watch progress:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">-f</span> compose/docker-compose.yml logs <span class="at">-f</span> rag</span></code></pre></div>
+<p>For tuning coverage (<code>--max-articles</code> /
+<code>--full-index</code>), GPU passthrough, and common failure modes,
+see <a
+href="../TROUBLESHOOTING.md"><code>docs/TROUBLESHOOTING.md</code></a>.</p>
 <hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <h3 id="hardware">Hardware</h3>

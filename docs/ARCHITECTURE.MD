@@ -195,6 +195,24 @@ These are not commitments, just things we noted while building v0.1:
 
 - Embedding model: `nomic-embed-text` is the v0.1 default; better recall vs. speed tradeoffs
   exist (e.g. `mxbai-embed-large`, `all-minilm`).
+- **Index storage overhead.** At full coverage, `index.db` can be 1.5–3× the
+  ZIM file size for text-heavy archives (WikiMed 1.4 GB ZIM → ~3 GB index;
+  comprehensive bundle 411 GB ZIM → estimated ~250 GB index). Each chunk
+  stores a 768-dim float32 vector (3 KB) plus its source text (~800 chars) plus
+  sqlite-vec overhead, while the ZIM stores the same content compressed and
+  *without* per-chunk duplication of overlapping text. Mitigations to consider
+  for v0.2: smaller-dimension embedding models, quantised vectors
+  (`sqlite-vec` supports `float16` / `int8` / `bit`), chunk-text compression
+  (zstd before insert), or storing only the chunk offset into the ZIM and
+  re-extracting at query time. The right answer depends on whether disk or
+  query latency is the binding constraint.
+- Cap-aware resume in `scripts/rag/indexer.py` compares `article_count`
+  against `archive.all_entry_count`, which includes redirects and images.
+  This causes false-positive "needs re-index" triggers on ZIMs that *are*
+  fully covered (every real HTML article embedded) but where redirects make
+  the entry total much larger than the article total. Workaround documented
+  in `docs/TROUBLESHOOTING.md`. Proper fix: track HTML-article count (post-filter)
+  and compare against that.
 - Whether RAG should also surface "related entries you didn't ask about."
 - Multi-language retrieval and response.
 - Bundle deltas (don't re-download 50 GB to update).
