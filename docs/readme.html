@@ -131,14 +131,19 @@ SSD</li>
 landing page.</p>
 <blockquote>
 <p><strong>Heads-up: indexing runs after the stack starts and takes
-time.</strong> The RAG indexer embeds every ZIM chunk through your local
-Ollama. On CPU this is <strong>several hours for the balanced
-bundle</strong>, less for minimal. Leave it running — it's resumable and
-idempotent. Kiwix browsing works immediately at
+time.</strong> The v0.2 RAG indexer batches embeddings, quantizes
+vectors to int8 by default, and stores chunks as ZIM offsets instead of
+full text — the balanced bundle now indexes in <strong>10–25 minutes on
+a laptop CPU</strong>, well under an hour. On a Raspberry Pi 5, picking
+<code>--profile pi</code> enables BM25 fallback for large ZIMs and
+brings the <code>comprehensive</code> bundle from "weeks" to "an
+evening." Kiwix browsing works immediately at
 <code>http://localhost:8081</code>; RAG answers in Open WebUI improve as
-coverage grows, so "no sources found" early on is expected for topics
-not yet indexed. Watch progress with
-<code>docker compose -f compose/docker-compose.yml logs -f rag</code>.</p>
+coverage grows. Watch progress with
+<code>docker compose -f compose/docker-compose.yml logs -f rag</code>.
+See <a
+href="docs/rag-optimization.md"><code>docs/rag-optimization.md</code></a>
+for the profile matrix.</p>
 </blockquote>
 <h2 id="documentation">Documentation</h2>
 <p>Pick your starting point:</p>
@@ -191,9 +196,14 @@ href="deployment/split.html"><code>docs/deployment/split.md</code></a></td>
 href="deployment/lan-access.html"><code>docs/deployment/lan-access.md</code></a></td>
 </tr>
 <tr>
-<td>Choose a content bundle</td>
+<td>Choose a content bundle (or compose your own)</td>
 <td><a
 href="bundles/index.html"><code>docs/bundles/README.md</code></a></td>
+</tr>
+<tr>
+<td>Tune indexing for a Pi, laptop, or workstation</td>
+<td><a
+href="docs/rag-optimization.md"><code>docs/rag-optimization.md</code></a></td>
 </tr>
 <tr>
 <td>Understand how it works</td>
@@ -238,15 +248,33 @@ href="docs/TROUBLESHOOTING.md"><code>docs/TROUBLESHOOTING.md</code></a></td>
 <td>First-run setup. Checks prerequisites, creates data directories,
 fetches a bundle, starts the Docker Compose stack, pulls both AI models,
 and runs the RAG indexer. Idempotent — safe to re-run. Accepts
-<code>--bundle</code>, <code>--pi</code>, <code>--zim-dir</code>,
-<code>--models-dir</code>, and other flags.</td>
+<code>--bundle</code> (incl. <code>custom</code>),
+<code>--profile pi|laptop|workstation</code>,
+<code>--add &lt;url|handle&gt;</code> (custom only), <code>--pi</code>,
+<code>--zim-dir</code>, <code>--models-dir</code>, and other flags.</td>
 </tr>
 <tr>
 <td><code>scripts/fetch-bundle.sh</code></td>
 <td>Downloads a named bundle (<code>minimal</code>,
-<code>balanced</code>, or <code>comprehensive</code>). Verifies every
-ZIM file against its SHA-256 checksum and stops on any failure. Resumes
-interrupted downloads.</td>
+<code>balanced</code>, <code>comprehensive</code>, or
+<code>custom</code>). Verifies every ZIM file against its SHA-256
+checksum and stops on any failure. Resumes interrupted downloads.
+<code>custom</code> accepts repeatable
+<code>--add &lt;url|handle&gt;</code> flags that resolve to
+<code>bundles/custom/manifest.json</code>.</td>
+</tr>
+<tr>
+<td><code>scripts/build-custom-manifest.py</code></td>
+<td>Builds or extends <code>bundles/custom/manifest.json</code> from
+URLs / Kiwix library handles. Invoked indirectly by
+<code>fetch-bundle.sh custom --add …</code>.</td>
+</tr>
+<tr>
+<td><code>scripts/reindex.sh</code></td>
+<td>Rebuilds the RAG vector index at a chosen depth level
+(<code>--level quick|standard|full</code>) and profile
+(<code>--profile pi|laptop|workstation</code>). Use after switching
+profiles or quantization modes.</td>
 </tr>
 <tr>
 <td><code>scripts/teardown.sh</code></td>

@@ -58,10 +58,13 @@
             <p class="doc-breadcrumb"><a href="../index.html">AllArkive</a> / <span>Bundles</span> / <span>Bundles overview</span></p>
             <article class="doc-content">
 <h1 id="allarkive-bundles">AllArkive bundles</h1>
-<p>A bundle is a curated set of ZIM files — offline knowledge archives
-in Kiwix's packaged format. This page describes the three bundles
-included with AllArkive v0.1, their contents, sizes, and license
-obligations.</p>
+<p>A bundle is a set of ZIM files — offline knowledge archives in
+Kiwix's packaged format. AllArkive ships three curated bundles
+(<code>minimal</code>, <code>balanced</code>,
+<code>comprehensive</code>) and supports user-defined bundles via
+<code>custom</code>. This page describes the contents, sizes, and
+license obligations for each, plus the workflow for
+<code>custom</code>.</p>
 <hr />
 <h2 id="choosing-a-bundle">Choosing a bundle</h2>
 <table>
@@ -96,6 +99,13 @@ obligations.</p>
 <td>~4 GB</td>
 <td>~335 GB</td>
 </tr>
+<tr>
+<td><code>custom</code></td>
+<td>Compose your own — any URL or Kiwix handle</td>
+<td>varies</td>
+<td>varies</td>
+<td>varies</td>
+</tr>
 </tbody>
 </table>
 <p>All bundles run fully offline once installed. Updates require
@@ -108,6 +118,9 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="
 <code>bundles/&lt;name&gt;/manifest.json</code>, verifies the SHA-256
 checksum, and stops on any verification failure. Do not proceed past a
 checksum failure — re-download the affected file.</p>
+<p>For <code>custom</code>, pass one or more
+<code>--add &lt;url|handle&gt;</code> flags. See <a
+href="#adding-a-custom-bundle">Adding a custom bundle</a> below.</p>
 <hr />
 <h2 id="the-minimal-bundle">The <code>minimal</code> bundle</h2>
 <p><strong>Good for</strong>: Raspberry Pi 4, machines with less than 10
@@ -355,26 +368,73 @@ licenses. Each bundle's license detail is in
 <code>bundles/&lt;name&gt;/LICENSE.md</code>.</p>
 <hr />
 <h2 id="adding-a-custom-bundle">Adding a custom bundle</h2>
-<p>AllArkive does not restrict which ZIM files you use. To add a ZIM not
-in a default bundle:</p>
-<ol type="1">
-<li>Download the ZIM from <code>https://download.kiwix.org/zim/</code>
-or another trusted source.</li>
-<li>Verify the checksum manually:
+<p>AllArkive does not restrict which ZIM files you use. There are three
+paths:</p>
+<ul>
+<li><strong>The <code>custom</code> bundle</strong>, driven by
+<code>--add</code> flags. Recommended — uses the same verified
+download/checksum pipeline as the named bundles.</li>
+<li><strong>Build a ZIM from your own documents</strong> (markdown
+notes, docx files, a folder of HTML, etc.): see <a
+href="./custom-docs.md"><code>custom-docs.md</code></a>, which walks
+through the <code>scripts/make-zim.sh</code> wrapper.</li>
+<li><strong>Drop a ZIM in by hand</strong> — copy the file into
+<code>$ALLARKIVE_DATA_DIR/zim/</code>, restart <code>kiwix</code>,
+re-run the indexer.</li>
+</ul>
+<h3 id="using-custom-with---add">Using <code>custom</code> with
+<code>--add</code></h3>
+<p>Each <code>--add</code> takes a Kiwix library handle or a full
+URL.</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sha256sum</span> your-file.zim</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># compare against the .sha256 file published alongside the download</span></span></code></pre></div></li>
-<li>Move the verified ZIM to <code>$ALLARKIVE_DATA_DIR/zim/</code>.</li>
-<li>Restart kiwix-serve so it picks up the new file:
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose restart kiwix</span></code></pre></div></li>
-<li>Re-run the RAG indexer so the new content is searchable via AI:
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python <span class="at">-m</span> rag.index</span></code></pre></div></li>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># At install time, with bootstrap.sh</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/bootstrap.sh</span> <span class="at">--bundle</span> custom <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--add</span> wikipedia_en_simple_all_maxi_2026-03 <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">--add</span> ifixit_en_all_2025-12</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Or after install, just to fetch</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/fetch-bundle.sh</span> custom <span class="dt">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">--add</span> https://download.kiwix.org/zim/other/foo.zim</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-running with --add appends to bundles/custom/manifest.json.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-running without --add re-fetches whatever the manifest already lists.</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/fetch-bundle.sh</span> custom</span></code></pre></div>
+<p>What the script does:</p>
+<ol type="1">
+<li>Calls <code>scripts/build-custom-manifest.py</code> with the
+<code>--add</code> specs.</li>
+<li>For each spec, either uses the URL verbatim or resolves a Kiwix
+handle through the project-prefix → download-category map (Wikipedia →
+<code>/zim/wikipedia/</code>, Stack Exchange family →
+<code>/zim/stack_exchange/</code>, etc.).</li>
+<li>HEADs the URL to populate approximate size, then writes/appends to
+<code>bundles/custom/manifest.json</code> (gitignored — per-user
+state).</li>
+<li>Downloads + SHA-256 verifies each entry through the standard
+fetch-bundle path.</li>
 </ol>
-<p><strong>License reminder</strong>: before adding a custom ZIM,
-confirm its license permits your intended use. See the
-<code>THREAT_MODEL.md</code> section on custom bundles and poisoned
+<h3 id="handles-that-dont-resolve">Handles that don't resolve</h3>
+<p>If a handle's first segment isn't in the mapping table (rare science
+wikis, project subdomains, etc.), the script errors out with a pointer
+to <a href="https://library.kiwix.org/">library.kiwix.org</a> so you can
+grab the full URL. Either pass the URL, or extend <a
+href="../../scripts/build-custom-manifest.py"><code>scripts/build-custom-manifest.py</code></a>
+with the new prefix.</p>
+<h3 id="indexing-a-custom-bundle">Indexing a custom bundle</h3>
+<p>The RAG indexer doesn't care what bundle a ZIM came from — it walks
+<code>$ALLARKIVE_DATA_DIR/zim/</code> and indexes everything it finds.
+After adding ZIMs, either:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Full reindex with the active profile</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/reindex.sh</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Or just the new ZIMs (the indexer skips already-indexed files)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose exec rag python indexer.py</span></code></pre></div>
+<h3 id="license-reminder">License reminder</h3>
+<p>Before redistributing your custom bundle, fill out
+<code>bundles/custom/LICENSE.md</code> with the per-archive license for
+everything you added. The shipped file is a template. See
+<code>docs/THREAT_MODEL.md</code> on custom bundles and poisoned
 content.</p>
 <hr />
 <h2 id="updating-a-bundle">Updating a bundle</h2>
@@ -393,41 +453,75 @@ filename and SHA-256.</li>
 <h2 id="zim-file-sizes-and-indexing-time">ZIM file sizes and indexing
 time</h2>
 <p>The RAG indexer reads article text from each ZIM, generates
-embeddings, and writes them to
-<code>$ALLARKIVE_DATA_DIR/index/index.db</code>. Approximate times on a
-modern laptop CPU:</p>
+embeddings via Ollama, and writes them to
+<code>$ALLARKIVE_DATA_DIR/index/index.db</code>.</p>
+<p>Indexing time and index size depend on the <strong>profile</strong>
+(<code>RAG_PROFILE=pi|laptop|workstation</code>). Full breakdown: <a
+href="../rag-optimization.md"><code>docs/rag-optimization.md</code></a>.</p>
+<p>Approximate first-run times on a modern laptop CPU (no GPU) with the
+<code>laptop</code> profile:</p>
 <table>
 <thead>
 <tr>
 <th>Bundle</th>
-<th>Index size</th>
+<th>Index size (v0.2 laptop)</th>
 <th>First-run index time</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>minimal</td>
-<td>~200 MB</td>
-<td>~5 minutes</td>
+<td>~50 MB</td>
+<td>~1–3 minutes</td>
 </tr>
 <tr>
 <td>balanced</td>
-<td>~1–2 GB</td>
-<td>~15–30 minutes</td>
+<td>~400 MB–1 GB</td>
+<td>~10–25 minutes</td>
 </tr>
 <tr>
 <td>comprehensive</td>
-<td>~5–10 GB</td>
+<td>~3–5 GB</td>
 <td>~2–4 hours</td>
 </tr>
 </tbody>
 </table>
+<p>On a Raspberry Pi 5 with the <code>pi</code> profile (hybrid mode on,
+BM25 fallback for ZIMs ≥ 4 GB):</p>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>Index size (Pi profile)</th>
+<th>First-run index time on Pi 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>minimal</td>
+<td>~50 MB</td>
+<td>~5–10 minutes</td>
+</tr>
+<tr>
+<td>balanced</td>
+<td>~150–300 MB</td>
+<td>~30–60 minutes</td>
+</tr>
+<tr>
+<td>comprehensive</td>
+<td>~200–400 MB</td>
+<td>~1–3 hours</td>
+</tr>
+</tbody>
+</table>
 <p>The index persists across restarts. Re-indexing is only needed when
-ZIM files change.</p>
+ZIM files change, you switch profiles, or you bump
+<code>RAG_QUANTIZATION</code> / <code>RAG_CHUNK_SIZE</code>.</p>
 <p>The <code>RAG_MAX_ARTICLES</code> setting in
-<code>compose/.env</code> caps articles indexed per ZIM. The default
-(5000) keeps indexing time manageable. Increase it on faster hardware
-with more time available.</p>
+<code>compose/.env</code> caps articles indexed per ZIM. With the v0.2
+pipeline the default is <code>0</code> (unlimited) on non-Pi platforms;
+the Pi profile pairs <code>RAG_MAX_ARTICLES=0</code> with hybrid mode so
+coverage stays complete via BM25 for big ZIMs.</p>
 
             </article>
             <footer class="doc-footer">
@@ -451,6 +545,11 @@ note</a></li>
 bundle</a></li>
 <li class="toc-h2"><a href="#license-summary">License summary</a></li>
 <li class="toc-h2"><a href="#adding-a-custom-bundle">Adding a custom bundle</a></li>
+<li class="toc-h3"><a href="#using-custom-with---add">Using custom with
+--add</a></li>
+<li class="toc-h3"><a href="#handles-that-dont-resolve">Handles that don&#x27;t resolve</a></li>
+<li class="toc-h3"><a href="#indexing-a-custom-bundle">Indexing a custom bundle</a></li>
+<li class="toc-h3"><a href="#license-reminder">License reminder</a></li>
 <li class="toc-h2"><a href="#updating-a-bundle">Updating a bundle</a></li>
 <li class="toc-h2"><a href="#zim-file-sizes-and-indexing-time">ZIM file sizes and indexing
 time</a></li>

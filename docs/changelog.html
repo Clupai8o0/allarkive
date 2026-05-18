@@ -65,8 +65,166 @@ this project adheres to <a
 href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased"><a
 href="https://github.com/allarkive/allarkive/compare/v0.1.0...HEAD">Unreleased</a></h2>
-<h3 id="added">Added</h3>
+<h3 id="added--v02-rag-overhaul-schema-v2">Added — v0.2 RAG overhaul
+(schema v2)</h3>
 <ul>
+<li><strong><code>scripts/rag/indexer.py</code> rewritten
+end-to-end.</strong> Batched async embeddings via Ollama's
+<code>/api/embed</code> (plural) endpoint replace the per-chunk serial
+round-trips that dominated wall time. Batch size is profile-driven
+(Pi=16, laptop=64, workstation=128). With lxml HTML parsing, larger
+2000-char chunks, and title-prefixed embeddings, dense indexing is
+<strong>10–30× faster on CPU</strong> and saturates a GPU on a laptop.
+Resume support: a crashed run picks up at the next
+<code>last_entry_id</code>, and a
+<code>UNIQUE(zim_name, article_path, chunk_idx)</code> constraint with
+<code>ON CONFLICT DO UPDATE</code> prevents the duplicate-rows footgun
+the v0.1 indexer had when a partial run was restarted.</li>
+<li><strong>Schema v2 (<code>meta.schema_version=2</code>).</strong>
+Chunk text is no longer duplicated into the DB; the indexer stores
+<code>(char_offset, char_len)</code> and the RAG server reads the text
+from the backing ZIM lazily at query time via a shared
+<code>textproc.html_to_text</code> extractor. The extractor is versioned
+(<code>meta.extractor_version</code>) and the server refuses to start on
+mismatch, pointing the user at <code>scripts/reindex.sh --force</code>.
+On Wikipedia-class archives this cuts index size by ~60% before
+quantization.</li>
+<li><strong>Vector quantization</strong> — <code>int8</code> is the new
+default storage format for embeddings (4× smaller than the v0.1 float32,
+&lt;1 MTEB-point recall drop on cosine-normalised models).
+<code>float32</code> remains available via
+<code>RAG_QUANTIZATION=float32</code> for workstations that don't want
+any recall hit. Stored in <code>meta.quantization</code>; the server
+packs the query vector to match.</li>
+<li><strong>Hybrid retrieval (off by default, on for Pi
+profile).</strong> ZIMs at or above <code>RAG_HYBRID_THRESHOLD_GB</code>
+(default 4 GB when hybrid is enabled) are registered with
+<code>mode='bm25'</code> in <code>indexed_zims</code> instead of
+dense-indexed. At query time the RAG server queries each BM25 ZIM via
+libzim's built-in Xapian search and merges the candidates with the dense
+top-K through reciprocal rank fusion. This skips dense indexing entirely
+for multi-100-GB archives — a Pi 5 with a USB SSD can now hold the
+<code>comprehensive</code> bundle in a useful, searchable state in hours
+instead of weeks.</li>
+<li><strong>Profile presets —
+<code>RAG_PROFILE=pi|laptop|workstation</code>.</strong> A single knob
+bundles sensible defaults for chunk size, quantization, hybrid mode and
+threshold, batch size, and embed model. Individual <code>RAG_*</code>
+env vars / CLI flags still override.
+<code>scripts/bootstrap.sh --profile</code> and
+<code>scripts/reindex.sh --profile</code> thread the choice through, and
+<code>compose/docker-compose.pi.yml</code> defaults to the
+<code>pi</code> profile so a fresh Pi bootstrap gets the right tradeoffs
+without flags. Profiles are documented in
+<code>docs/rag-optimization.md</code>.</li>
+<li><strong><code>scripts/rag/textproc.py</code>, <code>quant.py</code>,
+<code>profiles.py</code></strong> — new shared modules.
+<code>textproc</code> is the single source of truth for HTML → text and
+chunk-offset computation; lxml is the parser. <code>quant</code> exposes
+pack / normalize / degenerate-vector helpers across float32 and int8
+modes. <code>profiles</code> defines the preset table.</li>
+<li><strong>Custom bundle support —
+<code>scripts/fetch-bundle.sh custom --add …</code></strong> and
+<code>scripts/bootstrap.sh --bundle custom --add …</code>. Users can
+append any ZIM to <code>bundles/custom/manifest.json</code> by passing a
+full URL or a Kiwix library handle (e.g.
+<code>wikipedia_en_simple_all_maxi_2026-03</code>); handles are resolved
+against the Kiwix project-prefix → download directory map in
+<code>scripts/build-custom-manifest.py</code>. The download + verify
+path reuses the existing fetch flow; sizes are populated from HEAD
+requests at manifest build time.
+<code>bundles/custom/manifest.json</code> is gitignored (per-user, not
+checked in); <code>bundles/custom/LICENSE.md</code> ships a template
+reminding users they own the license-tracking burden for self-supplied
+archives.</li>
+<li><strong><code>scripts/rag/server.py</code> <code>/status</code>
+endpoint</strong> now reports the active index meta
+(<code>schema_version</code>, <code>embed_model</code>,
+<code>embed_dim</code>, <code>quantization</code>,
+<code>chunk_size</code>, <code>extractor_version</code>) plus the list
+of BM25-registered ZIMs, so the landing page can display the active
+retrieval mode honestly.</li>
+<li><strong><code>docs/rag-optimization.md</code></strong> — new doc
+walking through the profile matrix, the schema-v2 storage savings math,
+quantization trade-offs, hybrid retrieval semantics, custom-bundle
+workflow, and migration notes from a v0.1 index. Indexed in
+<code>DOCS.md</code>; linked from <code>README.md</code>,
+<code>docs/bundles/README.md</code>, and the install guides.</li>
+<li><code>lxml==5.3.0</code> pinned in
+<code>scripts/rag/requirements.txt</code>;
+<code>libxml2</code>/<code>libxslt1.1</code> added to the rag
+Dockerfile.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><code>scripts/reindex.sh</code> learns
+<code>--profile pi|laptop|workstation</code> and passes it to the
+indexer. The existing <code>--level quick|standard|full</code> flag
+still controls the article cap.</li>
+<li><code>scripts/bootstrap.sh</code> shows the indexing profile in the
+platform-summary prompt and writes it to <code>compose/.env</code> as
+<code>RAG_PROFILE</code>. The <code>/status</code> line at the end of
+bootstrap reports BM25-mode ZIMs separately from dense ZIMs in the
+coverage table.</li>
+<li><code>compose/.env.example</code>,
+<code>compose/docker-compose.yml</code>,
+<code>compose/docker-compose.pi.yml</code> — added
+<code>RAG_PROFILE</code>, <code>RAG_QUANTIZATION</code>,
+<code>RAG_CHUNK_SIZE</code>, <code>RAG_CHUNK_OVERLAP</code>,
+<code>RAG_BATCH_SIZE</code>, <code>RAG_HYBRID</code>,
+<code>RAG_HYBRID_THRESHOLD_GB</code>, and <code>RAG_BM25_K</code>. Pi
+compose defaults to the <code>pi</code> profile + hybrid mode at 4
+GB.</li>
+<li><code>RAG_MAX_ARTICLES</code> default changed from <code>5000</code>
+to <code>0</code> in <code>compose/.env.example</code>. The
+platform-aware bootstrap defaults are unchanged; only the manual-edit
+fallback shifts. Unlimited indexing is now the recommended default with
+the new pipeline because the per-article cost is no longer
+prohibitive.</li>
+</ul>
+<h3 id="migration-from-v01">Migration from v0.1</h3>
+<p>A v0.1 index (<code>meta.schema_version</code> unset or !=
+<code>2</code>) is <strong>not compatible</strong> with the new server.
+The indexer refuses to start on mismatch and prints the exact
+<code>reindex.sh --force</code> command. There is no in-place migration
+— the chunk text column was dropped and vectors are quantized
+differently. Pi installs that built a v0.1 index should expect a
+one-time rebuild, which the new pipeline finishes in a fraction of the
+original time anyway.</p>
+<h3 id="added-pre-overhaul-backlog-still-applies">Added (pre-overhaul
+backlog, still applies)</h3>
+<ul>
+<li><code>scripts/make-zim.sh</code> — wrapper that turns a directory of
+user-supplied documents (markdown, docx, txt, rst, html, …) into a ZIM
+file via pinned Docker images (<code>pandoc/minimal:3.5.0</code> +
+<code>ghcr.io/openzim/zim-tools:3.4.2</code>). No host installs required
+beyond Docker. Stages source into a temp dir so the user's tree is never
+mutated, runs pandoc over convertible extensions, auto-generates an
+<code>index.html</code> listing when none exists, then invokes
+<code>zimwriterfs</code> with metadata flags (<code>--title</code>,
+<code>--description</code>, <code>--creator</code>,
+<code>--publisher</code>, <code>--language</code>, etc.). Optional
+<code>--install</code> copies the resulting <code>.zim</code> into
+<code>$ALLARKIVE_ZIM_DIR</code> and restarts the kiwix container;
+<code>--reindex</code> additionally chains into
+<code>scripts/reindex.sh</code> so the new content becomes searchable
+via the RAG layer. Surfaces the resulting file size and SHA-256 so users
+can pin them if they plan to redistribute. Addresses a recurring
+talk-Q&amp;A question: "can I add my own docs?"</li>
+<li><code>docs/bundles/custom-docs.md</code> — companion doc covering
+ZIM format internals (clusters, Zstandard, Xapian indexes, the URL/title
+pointer lists) at the level needed to understand the workflow, then
+walks through <code>scripts/make-zim.sh</code> for the
+document-conversion path and <code>zimit</code> for the website-mirror
+path. Includes a "what gets converted, what doesn't" matrix (PDFs are
+passed through but not full-text indexed unless converted), a
+hand-rolled equivalent of the script for users who prefer not to use the
+wrapper, the two-index gotcha (Kiwix-side Xapian vs RAG-side vector
+index — only the wrapper's <code>--reindex</code> handles the latter), a
+license/trust reminder section pointing at <code>THREAT_MODEL.md</code>,
+and a troubleshooting table. Referenced from
+<code>docs/bundles/README.md</code> and indexed in
+<code>DOCS.md</code>.</li>
 <li><code>docs/index.html</code>, <code>docs/styles.css</code>,
 <code>docs/.nojekyll</code> — public-facing landing page intended to be
 served by GitHub Pages from <code>main</code>/<code>docs</code>. Short
@@ -199,7 +357,7 @@ fast. Indexing can now run via
 <code>docker compose exec rag python indexer.py</code> without first
 stopping the rag service.</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed-1">Changed</h3>
 <ul>
 <li><p><code>docs/TROUBLESHOOTING.md</code> gained five new sections
 from the May 12–13 hardening work: (1) "no sources found despite WikiMed
@@ -279,7 +437,7 @@ enforcement, Docker bridge isolation, RAG API key not being a security
 boundary, image digest pinning status, and iFixit commercial-use
 restriction.</p></li>
 </ul>
-<h3 id="changed-1">Changed</h3>
+<h3 id="changed-2">Changed</h3>
 <ul>
 <li><code>compose/docker-compose.pi-archive.yml</code> — archive-only
 compose stack for a dedicated Raspberry Pi kiwix node (deployment
@@ -298,7 +456,7 @@ topology: AI (Ollama + RAG) on a laptop, archive (kiwix) on a separate
 Pi; covers NFS mount, index copy alternatives, network configuration,
 and citation URL consistency.</li>
 </ul>
-<h3 id="changed-2">Changed</h3>
+<h3 id="changed-3">Changed</h3>
 <ul>
 <li><p><code>compose/docker-compose.pi.yml</code> — added
 <code>OPENAI_API_BASE_URLS</code> and <code>OPENAI_API_KEYS</code> to
@@ -368,7 +526,7 @@ Ollama models.</p></li>
 <code>nomic-embed-text</code> embedding model and runs the indexer
 automatically on first boot.</p></li>
 </ul>
-<h3 id="changed-3">Changed</h3>
+<h3 id="changed-4">Changed</h3>
 <ul>
 <li><p><code>compose/docker-compose.yml</code> — <code>open-webui</code>
 now depends on <code>rag</code> being healthy before starting, ensuring
@@ -447,7 +605,7 @@ bundle-proposal templates.</p></li>
 <li><p>License rationale paragraph in <code>CONTRIBUTING.md</code> —
 documents why AGPL-3.0 was chosen over MIT/Apache-2.0.</p></li>
 </ul>
-<h3 id="changed-4">Changed</h3>
+<h3 id="changed-5">Changed</h3>
 <ul>
 <li><em>Nothing yet.</em></li>
 </ul>
@@ -499,12 +657,17 @@ licenses.</li>
 <p class="doc-toc-label">On this page</p>
 <ul>
 <li class="toc-h2"><a href="#unreleased">Unreleased</a></li>
-<li class="toc-h3"><a href="#added">Added</a></li>
+<li class="toc-h3"><a href="#added--v02-rag-overhaul-schema-v2">Added — v0.2 RAG overhaul
+(schema v2)</a></li>
 <li class="toc-h3"><a href="#changed">Changed</a></li>
+<li class="toc-h3"><a href="#migration-from-v01">Migration from v0.1</a></li>
+<li class="toc-h3"><a href="#added-pre-overhaul-backlog-still-applies">Added (pre-overhaul
+backlog, still applies)</a></li>
 <li class="toc-h3"><a href="#changed-1">Changed</a></li>
 <li class="toc-h3"><a href="#changed-2">Changed</a></li>
 <li class="toc-h3"><a href="#changed-3">Changed</a></li>
 <li class="toc-h3"><a href="#changed-4">Changed</a></li>
+<li class="toc-h3"><a href="#changed-5">Changed</a></li>
 <li class="toc-h3"><a href="#deprecated">Deprecated</a></li>
 <li class="toc-h3"><a href="#removed">Removed</a></li>
 <li class="toc-h3"><a href="#fixed">Fixed</a></li>
