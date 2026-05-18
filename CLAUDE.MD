@@ -25,7 +25,9 @@ Co-built and co-presented by Sam and Sham. Soft-launches alongside a BSides Melb
 These are settled. If a change feels needed, raise it in an issue, do not silently drift.
 
 - **Three-layer architecture**: archive (Kiwix/ZIM) → local AI (Ollama + Open WebUI + RAG) → glue (docker-compose, scripts, landing page, docs).
-- **v0.1 scope only**: no clustering, no mesh networking, no phone apps, no hardened security builds, no specialized medical/agricultural bundles. See `ROADMAP.md`.
+- **v0.1 scope was locked at BSides 2026-05-16/17**. Active dev is v0.2 (post-launch quality of life) — see `ROADMAP.md` for what's `Shipped` vs `Candidates`. Out of scope across near-term versions: clustering, mesh networking, phone apps, hardened security builds, specialised medical/agricultural bundles.
+- **RAG schema is versioned** (`meta.schema_version` in `index.db`). Current is **2** (offset-only chunk storage, int8 vectors by default, profile-driven config, opt-in BM25 hybrid). Server refuses to start on mismatch. Bumping it means a forced reindex — never an in-place migration. Bump `EXTRACTOR_VERSION` in `scripts/rag/textproc.py` if you change the HTML→text extractor in a way that shifts byte offsets.
+- **RAG profile system**: `RAG_PROFILE=pi|laptop|workstation` is the canonical knob. Individual `RAG_*` env vars override the preset. New tuning options should be added to `scripts/rag/profiles.py` as fields on the preset, not as one-off env vars. See `docs/rag-optimization.md`.
 - **License**: AGPL-3.0 for the glue code (this repo). Bundled content keeps its own licenses (Wikipedia CC-BY-SA, Project Gutenberg public domain, etc.). Track every bundle's license in `bundles/<name>/LICENSE.md`.
 - **Hosting**: GitHub primary, Codeberg mirror via GitHub Action.
 - **Default network binding**: localhost only. Remote access is opt-in and requires documented reverse-proxy + auth setup.

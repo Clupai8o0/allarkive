@@ -1,6 +1,10 @@
 # TODO.md
 
-v0.1 task list. Updated as work happens. If a task is no longer needed, strike it through with an explanation rather than deleting it.
+v0.1 task list. v0.1 scope was locked at BSides Melbourne 2026-05-16/17;
+the post-launch v0.2 work-in-progress lives under "v0.2 — post-launch"
+at the bottom of this file and in `ROADMAP.md` (`Shipped` vs
+`Candidates`). Update as work happens; strike through with a reason
+rather than deleting.
 
 **Owner key**: `[S]` Sam, `[Sh]` Sham, `[E]` either, `[CC]` Claude Code.
 
@@ -124,3 +128,33 @@ If you're tempted, file in `ROADMAP.md` instead.
 - Specialised medical or agricultural bundles
 - Telemetry of any kind
 - Public-internet-facing default deployment
+
+## v0.2 — post-launch (active)
+
+Active dev shifted to v0.2 after the BSides demo. See `ROADMAP.md` for
+the canonical list. Shipped so far this milestone:
+
+- [x] `[CC]` RAG indexer rewrite — batched async embeddings, lxml,
+      larger chunks, crash-resume, UNIQUE dedup constraint
+- [x] `[CC]` Schema v2 — offset-only chunk storage, int8 quantization,
+      `schema_version` / `extractor_version` meta with refuse-to-start
+      on mismatch
+- [x] `[CC]` Hybrid retrieval — `RAG_HYBRID` opt-in, BM25 fallback for
+      large ZIMs via libzim's Xapian index, RRF merge in the server
+- [x] `[CC]` Profile presets — `RAG_PROFILE=pi|laptop|workstation`
+      threaded through bootstrap, reindex, compose, env
+- [x] `[CC]` Custom bundle — `fetch-bundle.sh custom --add` for URLs and
+      Kiwix handles, with `bundles/custom/` gitignored manifest
+- [x] `[CC]` Docs — `docs/rag-optimization.md` plus CHANGELOG, ROADMAP,
+      CLAUDE.md, README, DOCS.md, bundles README updates
+
+Open follow-ups (filed as candidates in ROADMAP.md):
+
+- [ ] `[E]` Pre-built index distribution — feasibility validated by the
+      storage work above. Decide on release-pipeline integration.
+- [ ] `[S]` Smoke-test the new indexer end-to-end on Laptop 1 with each
+      profile; record before/after wall-clock + index-size numbers in
+      `docs/rag-optimization.md`.
+- [ ] `[S]` Smoke-test on Pi 1 with hybrid mode + comprehensive bundle.
+- [ ] `[Sh]` UX review of the landing-page `/status` line now that it
+      surfaces profile/quantization/hybrid state.

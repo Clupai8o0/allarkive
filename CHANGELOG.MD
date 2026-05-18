@@ -6,7 +6,133 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Added
+### Added — v0.2 RAG overhaul (schema v2)
+- **`scripts/rag/indexer.py` rewritten end-to-end.** Batched async
+  embeddings via Ollama's `/api/embed` (plural) endpoint replace the
+  per-chunk serial round-trips that dominated wall time. Batch size is
+  profile-driven (Pi=16, laptop=64, workstation=128). With lxml HTML
+  parsing, larger 2000-char chunks, and title-prefixed embeddings, dense
+  indexing is **10–30× faster on CPU** and saturates a GPU on a laptop.
+  Resume support: a crashed run picks up at the next `last_entry_id`,
+  and a `UNIQUE(zim_name, article_path, chunk_idx)` constraint with
+  `ON CONFLICT DO UPDATE` prevents the duplicate-rows footgun the v0.1
+  indexer had when a partial run was restarted.
+- **Schema v2 (`meta.schema_version=2`).** Chunk text is no longer
+  duplicated into the DB; the indexer stores `(char_offset, char_len)`
+  and the RAG server reads the text from the backing ZIM lazily at query
+  time via a shared `textproc.html_to_text` extractor. The extractor is
+  versioned (`meta.extractor_version`) and the server refuses to start on
+  mismatch, pointing the user at `scripts/reindex.sh --force`. On
+  Wikipedia-class archives this cuts index size by ~60% before
+  quantization.
+- **Vector quantization** — `int8` is the new default storage format for
+  embeddings (4× smaller than the v0.1 float32, <1 MTEB-point recall drop
+  on cosine-normalised models). `float32` remains available via
+  `RAG_QUANTIZATION=float32` for workstations that don't want any
+  recall hit. Stored in `meta.quantization`; the server packs the query
+  vector to match.
+- **Hybrid retrieval (off by default, on for Pi profile).** ZIMs at or
+  above `RAG_HYBRID_THRESHOLD_GB` (default 4 GB when hybrid is enabled)
+  are registered with `mode='bm25'` in `indexed_zims` instead of
+  dense-indexed. At query time the RAG server queries each BM25 ZIM via
+  libzim's built-in Xapian search and merges the candidates with the
+  dense top-K through reciprocal rank fusion. This skips dense indexing
+  entirely for multi-100-GB archives — a Pi 5 with a USB SSD can now
+  hold the `comprehensive` bundle in a useful, searchable state in
+  hours instead of weeks.
+- **Profile presets — `RAG_PROFILE=pi|laptop|workstation`.** A single
+  knob bundles sensible defaults for chunk size, quantization, hybrid
+  mode and threshold, batch size, and embed model. Individual `RAG_*`
+  env vars / CLI flags still override. `scripts/bootstrap.sh --profile`
+  and `scripts/reindex.sh --profile` thread the choice through, and
+  `compose/docker-compose.pi.yml` defaults to the `pi` profile so a
+  fresh Pi bootstrap gets the right tradeoffs without flags. Profiles
+  are documented in `docs/rag-optimization.md`.
+- **`scripts/rag/textproc.py`, `quant.py`, `profiles.py`** — new shared
+  modules. `textproc` is the single source of truth for HTML → text and
+  chunk-offset computation; lxml is the parser. `quant` exposes pack /
+  normalize / degenerate-vector helpers across float32 and int8 modes.
+  `profiles` defines the preset table.
+- **Custom bundle support — `scripts/fetch-bundle.sh custom --add …`**
+  and `scripts/bootstrap.sh --bundle custom --add …`. Users can append
+  any ZIM to `bundles/custom/manifest.json` by passing a full URL or a
+  Kiwix library handle (e.g. `wikipedia_en_simple_all_maxi_2026-03`);
+  handles are resolved against the Kiwix project-prefix → download
+  directory map in `scripts/build-custom-manifest.py`. The download +
+  verify path reuses the existing fetch flow; sizes are populated from
+  HEAD requests at manifest build time. `bundles/custom/manifest.json`
+  is gitignored (per-user, not checked in); `bundles/custom/LICENSE.md`
+  ships a template reminding users they own the license-tracking burden
+  for self-supplied archives.
+- **`scripts/rag/server.py` `/status` endpoint** now reports the active
+  index meta (`schema_version`, `embed_model`, `embed_dim`,
+  `quantization`, `chunk_size`, `extractor_version`) plus the list of
+  BM25-registered ZIMs, so the landing page can display the active
+  retrieval mode honestly.
+- **`docs/rag-optimization.md`** — new doc walking through the profile
+  matrix, the schema-v2 storage savings math, quantization trade-offs,
+  hybrid retrieval semantics, custom-bundle workflow, and migration
+  notes from a v0.1 index. Indexed in `DOCS.md`; linked from
+  `README.md`, `docs/bundles/README.md`, and the install guides.
+- `lxml==5.3.0` pinned in `scripts/rag/requirements.txt`;
+  `libxml2`/`libxslt1.1` added to the rag Dockerfile.
+
+### Changed
+- `scripts/reindex.sh` learns `--profile pi|laptop|workstation` and
+  passes it to the indexer. The existing `--level quick|standard|full`
+  flag still controls the article cap.
+- `scripts/bootstrap.sh` shows the indexing profile in the
+  platform-summary prompt and writes it to `compose/.env` as
+  `RAG_PROFILE`. The `/status` line at the end of bootstrap reports
+  BM25-mode ZIMs separately from dense ZIMs in the coverage table.
+- `compose/.env.example`, `compose/docker-compose.yml`,
+  `compose/docker-compose.pi.yml` — added `RAG_PROFILE`,
+  `RAG_QUANTIZATION`, `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`,
+  `RAG_BATCH_SIZE`, `RAG_HYBRID`, `RAG_HYBRID_THRESHOLD_GB`, and
+  `RAG_BM25_K`. Pi compose defaults to the `pi` profile + hybrid mode
+  at 4 GB.
+- `RAG_MAX_ARTICLES` default changed from `5000` to `0` in
+  `compose/.env.example`. The platform-aware bootstrap defaults are
+  unchanged; only the manual-edit fallback shifts. Unlimited indexing
+  is now the recommended default with the new pipeline because the
+  per-article cost is no longer prohibitive.
+
+### Migration from v0.1
+A v0.1 index (`meta.schema_version` unset or != `2`) is **not
+compatible** with the new server. The indexer refuses to start on
+mismatch and prints the exact `reindex.sh --force` command. There is
+no in-place migration — the chunk text column was dropped and vectors
+are quantized differently. Pi installs that built a v0.1 index should
+expect a one-time rebuild, which the new pipeline finishes in a
+fraction of the original time anyway.
+
+### Added (pre-overhaul backlog, still applies)
+- `scripts/make-zim.sh` — wrapper that turns a directory of user-supplied
+  documents (markdown, docx, txt, rst, html, …) into a ZIM file via pinned
+  Docker images (`pandoc/minimal:3.5.0` + `ghcr.io/openzim/zim-tools:3.4.2`).
+  No host installs required beyond Docker. Stages source into a temp dir so
+  the user's tree is never mutated, runs pandoc over convertible extensions,
+  auto-generates an `index.html` listing when none exists, then invokes
+  `zimwriterfs` with metadata flags (`--title`, `--description`, `--creator`,
+  `--publisher`, `--language`, etc.). Optional `--install` copies the
+  resulting `.zim` into `$ALLARKIVE_ZIM_DIR` and restarts the kiwix
+  container; `--reindex` additionally chains into `scripts/reindex.sh` so
+  the new content becomes searchable via the RAG layer. Surfaces the
+  resulting file size and SHA-256 so users can pin them if they plan to
+  redistribute. Addresses a recurring talk-Q&A question: "can I add my own
+  docs?"
+- `docs/bundles/custom-docs.md` — companion doc covering ZIM format
+  internals (clusters, Zstandard, Xapian indexes, the URL/title pointer
+  lists) at the level needed to understand the workflow, then walks
+  through `scripts/make-zim.sh` for the document-conversion path and
+  `zimit` for the website-mirror path. Includes a "what gets converted,
+  what doesn't" matrix (PDFs are passed through but not full-text
+  indexed unless converted), a hand-rolled equivalent of the script for
+  users who prefer not to use the wrapper, the two-index gotcha
+  (Kiwix-side Xapian vs RAG-side vector index — only the wrapper's
+  `--reindex` handles the latter), a license/trust reminder section
+  pointing at `THREAT_MODEL.md`, and a troubleshooting table.
+  Referenced from `docs/bundles/README.md` and indexed in `DOCS.md`.
 - `docs/index.html`, `docs/styles.css`, `docs/.nojekyll` — public-facing
   landing page intended to be served by GitHub Pages from `main`/`docs`.
   Short project explanation, install snippet, links to the hosted docs.

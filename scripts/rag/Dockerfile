@@ -2,8 +2,11 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
+# curl is used by HEALTHCHECK. libxml2 + libxslt are needed by lxml's manylinux
+# wheel runtime on slim images (the wheel ships the .so but still links libz).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends \
+         curl libxml2 libxslt1.1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

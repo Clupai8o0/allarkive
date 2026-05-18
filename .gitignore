@@ -48,6 +48,10 @@ $RECYCLE.BIN/
 *.zim.part
 *.torrent
 
+# Custom bundle manifests are per-user, not checked in. The LICENSE.md
+# template stays in git; the generated manifest.json does not.
+bundles/custom/manifest.json
+
 # Secrets / credentials
 *.pem
 *.key

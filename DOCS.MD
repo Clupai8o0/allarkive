@@ -35,6 +35,7 @@ If you're **evaluating the project's trustworthiness**, read `THREAT_MODEL.md`, 
 | `docs/DESIGN.md` | Tone, voice, UX principles, landing page direction, naming conventions, required disclaimer text. |
 | `docs/THREAT_MODEL.md` | What the project does and does not protect against. Disclaimers. |
 | `docs/TROUBLESHOOTING.md` | Operational notes, common failure modes, performance tuning, the cap/coverage story, native-Ollama setup, indexer resume behaviour. Read when something feels wrong. |
+| `docs/rag-optimization.md` | v0.2 RAG pipeline — profiles, quantization, hybrid BM25 retrieval, custom bundles, schema v2 migration. Read before tuning indexing on a constrained device. |
 
 ### Public web landing page
 
@@ -62,6 +63,7 @@ If you're **evaluating the project's trustworthiness**, read `THREAT_MODEL.md`, 
 | `docs/bundles/balanced.md` | Default bundle for most laptops. |
 | `docs/bundles/comprehensive.md` | Full Wikipedia with images plus extras. |
 | `docs/bundles/custom.md` | How to build your own bundle. License checklist included. |
+| `docs/bundles/custom-docs.md` | How to turn your own documents (markdown, docx, html…) into a ZIM and get them indexed. Walks through `scripts/make-zim.sh`. |
 
 ### Deployment patterns (`docs/deployment/`)
 
@@ -118,11 +120,13 @@ Internal-ish, but kept in the public repo because the talk is part of the launch
 | `docs/DESIGN.MD` | ✅ written |
 | `docs/THREAT_MODEL.md` | ✅ written |
 | `docs/TROUBLESHOOTING.md` | ✅ written |
+| `docs/rag-optimization.md` | ✅ written (v0.2 RAG pipeline guide) |
 | `docs/install/laptop.md` | ✅ written |
 | `docs/install/server.md` | ✅ written |
 | `docs/install/macos.md` | ✅ written |
 | `docs/install/windows.md` | ✅ written |
 | `docs/bundles/README.md` | ✅ written |
+| `docs/bundles/custom-docs.md` | ✅ written |
 | `docs/deployment/laptop.md` | ⬜ to write (single-machine default; laptop.md install guide covers it) |
 | `docs/deployment/pi-text-only.md` | ✅ written |
 | `docs/deployment/pi-archive-only.md` | ✅ written |

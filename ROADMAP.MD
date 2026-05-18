@@ -37,9 +37,24 @@ What ships when. The v0.1 scope is locked. Everything else is "interesting later
 
 **Goal**: the install is smoother, the AI is better, the docs cover the long tail.
 
+### Shipped (post-BSides 2026-05-18)
+- **Improved RAG: better embeddings, hybrid search (vector + keyword).**
+  Indexer rewritten with batched async embeddings (10–30× faster on CPU),
+  int8 vector quantization (4× smaller vectors), offset-only chunk
+  storage (~60% smaller index), and an opt-in Xapian/BM25 hybrid mode
+  that skips dense indexing on multi-100-GB ZIMs entirely. Bundled
+  under `RAG_PROFILE=pi|laptop|workstation` presets. See
+  `docs/rag-optimization.md` and the `[Unreleased]` CHANGELOG entry.
+- **Custom bundles.** `scripts/fetch-bundle.sh custom --add <url|handle>`
+  lets users compose their own bundle from any ZIM on
+  `download.kiwix.org` or a direct URL. Manifest is generated
+  incrementally and gitignored. See `docs/bundles/README.md`.
+
 ### Candidates (not commitments)
 - Bundle deltas — update an archive without re-downloading 50 GB.
-- Improved RAG: better embeddings, hybrid search (vector + keyword).
+- Pre-built index distribution — ship a vector index alongside the ZIM
+  bundle so a Pi can skip indexing entirely. Feasibility validated in
+  the v0.2 storage work; not yet wired into the release pipeline.
 - Multi-language retrieval.
 - A first-run wizard on the landing page (pick a bundle, pick a model).
 - Pre-flight check script: "does your machine actually have what this needs."

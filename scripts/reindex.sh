@@ -2,15 +2,17 @@
 # reindex.sh — rebuild the RAG vector index at a chosen depth level
 #
 # Usage:
-#   scripts/reindex.sh                  # standard level (default)
-#   scripts/reindex.sh --level quick    # fast, good for demos
-#   scripts/reindex.sh --level standard # solid coverage, run overnight
-#   scripts/reindex.sh --level full     # complete, no article cap
-#   scripts/reindex.sh --force          # rebuild even if ZIMs are unchanged
-#   scripts/reindex.sh --pi             # use Pi compose file
+#   scripts/reindex.sh                       # standard level, default profile
+#   scripts/reindex.sh --level quick         # fast, good for demos
+#   scripts/reindex.sh --level standard      # solid coverage, run overnight
+#   scripts/reindex.sh --level full          # complete, no article cap
+#   scripts/reindex.sh --profile pi          # use Pi indexing profile
+#   scripts/reindex.sh --profile workstation # use workstation profile
+#   scripts/reindex.sh --force               # rebuild even if ZIMs unchanged
+#   scripts/reindex.sh --pi                  # use Pi compose file
 #
-# Levels
-# ──────
+# Levels (article cap for large ZIMs)
+# ───────────────────────────────────
 #   quick    Large ZIMs (≥ 4 GB) → 10 000 articles  │ Small ZIMs → unlimited
 #            Est. 1–3 hours. Good enough for demos and sanity checks.
 #
@@ -18,11 +20,18 @@
 #            Est. 10–18 hours. Run overnight before the demo.
 #
 #   full     All ZIMs → unlimited (no article cap)
-#            Est. days for large Wikipedia ZIMs. Maximum coverage.
+#            Est. days for large Wikipedia ZIMs (unless --profile pi flips on
+#            hybrid mode, in which case large ZIMs are registered for BM25
+#            and skip dense indexing entirely).
 #
-# "Large" vs "small" is decided by ZIM file size (threshold: 4 GB).
-# Stack Exchange, iFixit, WikiMed (typically < 4 GB) are always fully indexed.
-# Wikipedia mini (~12 GB) is capped by level.
+# Profiles
+# ────────
+#   pi          chunk=2000, int8 vectors, hybrid ON at 4 GB, batch=16
+#   laptop      chunk=2000, int8 vectors, dense everywhere, batch=64 (default)
+#   workstation chunk=1500, float32 vectors, dense everywhere, batch=128
+#
+# A profile change usually requires a full rebuild (the indexer detects
+# schema/quantization mismatch via the meta table). --force speeds this up.
 
 set -euo pipefail
 
@@ -34,6 +43,7 @@ COMPOSE_DIR="${REPO_ROOT}/compose"
 
 LEVEL="standard"
 FORCE=false
+PROFILE=""            # empty = inherit RAG_PROFILE from .env
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
 
 LARGE_ZIM_GB=4        # ZIMs at or above this size are "large"
@@ -66,6 +76,9 @@ usage() {
 Usage: $0 [options]
 
   --level quick|standard|full   Indexing depth (default: standard)
+  --profile pi|laptop|workstation
+                                Indexing profile preset. Empty = use the
+                                RAG_PROFILE value from compose/.env.
   --force                       Rebuild even if ZIMs are unchanged
   --pi                          Use docker-compose.pi.yml
   -h, --help                    Show this message
@@ -76,6 +89,12 @@ Levels:
   full      all ZIMs   → unlimited                                  (days)
 
 "Large" = ZIM file ≥ ${LARGE_ZIM_GB} GB.
+
+Profiles:
+  pi          int8 vectors, hybrid mode ON at 4 GB (BM25 fallback for
+              large ZIMs), batch=16. Designed for Raspberry Pi 4/5.
+  laptop      int8 vectors, dense everywhere, batch=64 (default).
+  workstation float32 vectors, dense everywhere, batch=128.
 EOF
     exit 1
 }
@@ -86,12 +105,21 @@ while [[ $# -gt 0 ]]; do
             LEVEL="${2:?--level requires quick|standard|full}"
             shift 2
             ;;
+        --profile)
+            PROFILE="${2:?--profile requires pi|laptop|workstation}"
+            shift 2
+            ;;
         --force) FORCE=true; shift ;;
         --pi)    COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.pi.yml"; shift ;;
         -h|--help) usage ;;
         *) echo "ERROR: unknown argument: $1" >&2; usage ;;
     esac
 done
+
+case "${PROFILE}" in
+    ""|pi|laptop|workstation) ;;
+    *) echo "ERROR: invalid --profile: ${PROFILE} (expected: pi, laptop, workstation)" >&2; exit 1 ;;
+esac
 
 case "${LEVEL}" in
     quick)    LARGE_MAX=${CAP_QUICK}    ;;
@@ -177,10 +205,19 @@ echo ""
 FORCE_FLAG=""
 [[ "${FORCE}" == true ]] && FORCE_FLAG="--force"
 
+PROFILE_FLAG=()
+if [[ -n "${PROFILE}" ]]; then
+    PROFILE_FLAG=(--profile "${PROFILE}")
+fi
+
 OLLAMA_BASE_URL="$(grep -E '^OLLAMA_BASE_URL=' "${ENV_FILE}" | cut -d= -f2- || true)"
 OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
 
-info "Starting indexer (level=${LEVEL}, large-zim-gb=${LARGE_ZIM_GB}, large-max-articles=${LARGE_MAX})..."
+if [[ -n "${PROFILE}" ]]; then
+    info "Starting indexer (level=${LEVEL}, profile=${PROFILE}, large-zim-gb=${LARGE_ZIM_GB}, large-max-articles=${LARGE_MAX})..."
+else
+    info "Starting indexer (level=${LEVEL}, large-zim-gb=${LARGE_ZIM_GB}, large-max-articles=${LARGE_MAX}; profile from .env)..."
+fi
 info "Logs stream below. This runs in the foreground — leave the terminal open."
 echo ""
 
@@ -191,6 +228,7 @@ docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec rag \
         --ollama-url "${OLLAMA_BASE_URL}" \
         --large-zim-gb "${LARGE_ZIM_GB}" \
         --large-max-articles "${LARGE_MAX}" \
+        "${PROFILE_FLAG[@]}" \
         ${FORCE_FLAG}
 
 echo ""

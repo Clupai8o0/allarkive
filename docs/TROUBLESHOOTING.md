@@ -4,6 +4,32 @@ Things that have bitten us or other users, with the honest explanation and the f
 
 If something here is wrong or out of date, fix it — this doc is meant to grow as we hit new failure modes.
 
+> For the v0.2 RAG pipeline — profiles, quantization modes, hybrid
+> BM25, schema-v2 migration — read
+> [`rag-optimization.md`](rag-optimization.md). This doc covers
+> operational gotchas; that doc covers tuning.
+
+---
+
+## "Incompatible index schema_version" / "extractor_version mismatch"
+
+The v0.2 server stores a `meta` table in `index.db` and refuses to
+start when the recorded `schema_version`, `extractor_version`,
+`embed_model`, `embed_dim`, `quantization`, or chunk-size doesn't match
+the current code. A v0.1 index trips this on first start.
+
+```bash
+# Rebuild with the active profile (chosen at bootstrap time).
+scripts/reindex.sh --force
+
+# Or switch profile while rebuilding.
+scripts/reindex.sh --profile pi --force
+```
+
+The new pipeline finishes in a fraction of v0.1's wall-clock time
+on the same hardware, so the forced rebuild is cheaper than it
+sounds. See `rag-optimization.md` for what the meta keys mean.
+
 ---
 
 ## "no sources found for this question" — but the article exists in Kiwix

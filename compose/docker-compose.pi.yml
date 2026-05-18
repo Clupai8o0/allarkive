@@ -83,9 +83,20 @@ services:
       # Pi default: qwen2.5:1.5b fits in 4 GB RAM with headroom for the OS.
       # Use qwen2.5:3b on an 8 GB Pi 4 or Pi 5.
       - CHAT_MODEL=${CHAT_MODEL:-qwen2.5:1.5b}
+      # Pi profile: int8 vectors, hybrid retrieval on for ZIMs ≥ 4 GB,
+      # small embed batches. Index size drops ~5x vs v0.1; comprehensive
+      # bundle becomes feasible on USB SSD.
+      - RAG_PROFILE=${RAG_PROFILE:-pi}
+      - RAG_QUANTIZATION=${RAG_QUANTIZATION:-int8}
+      - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-}
+      - RAG_CHUNK_OVERLAP=${RAG_CHUNK_OVERLAP:-}
+      - RAG_BATCH_SIZE=${RAG_BATCH_SIZE:-}
+      - RAG_HYBRID=${RAG_HYBRID:-1}
+      - RAG_HYBRID_THRESHOLD_GB=${RAG_HYBRID_THRESHOLD_GB:-4}
       - RAG_TOP_K=${RAG_TOP_K:-5}
+      - RAG_BM25_K=${RAG_BM25_K:-5}
       - RAG_MAX_DISTANCE=${RAG_MAX_DISTANCE:-1.0}
-      - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-3000}
+      - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-0}
     volumes:
       - "${ALLARKIVE_INDEX_DIR:-/mnt/ssd/allarkive/index}:/index"
       - "${ALLARKIVE_ZIM_DIR:-/mnt/ssd/allarkive/zim}:/data:ro"

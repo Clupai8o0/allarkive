@@ -53,6 +53,14 @@ BUNDLE_EXPLICIT=false
 MODEL_EXPLICIT=false
 MAX_ARTICLES_EXPLICIT=false
 
+# Indexing profile (pi|laptop|workstation). Empty = pick from platform.
+PROFILE=""
+PROFILE_EXPLICIT=false
+
+# Custom-bundle additions. Each --add <url|handle> appends; passed through to
+# scripts/fetch-bundle.sh which calls build-custom-manifest.py.
+CUSTOM_ADDS=()
+
 # Config file — persists per-subsystem storage paths between runs.
 ALLARKIVE_CONFIG_DIR="${XDG_CONFIG_HOME:-${HOME}/.config}/allarkive"
 ALLARKIVE_CONFIG="${ALLARKIVE_CONFIG_DIR}/config.json"
@@ -71,10 +79,17 @@ Usage: $0 [options]
   --platform <name>   Target platform: auto, mac, linux, pi, wsl (default: auto)
                       auto detects from uname/proc. Sets compose file, data dir,
                       and default bundle/model unless overridden.
-  --bundle <name>     ZIM bundle: minimal, balanced, comprehensive
+  --bundle <name>     ZIM bundle: minimal, balanced, comprehensive, custom
                       (default: platform-dependent — minimal on Pi/low-RAM, else balanced)
+  --add <url|handle>  (custom bundle only, repeatable) Append an archive to
+                      bundles/custom/manifest.json. Accepts full URLs or
+                      Kiwix library handles. See docs/bundles/README.md.
   --model <name>      Ollama chat model to pull
                       (default: platform-dependent — qwen2.5:1.5b on Pi, qwen2.5:7b otherwise)
+  --profile <name>    RAG indexing profile: pi, laptop, workstation
+                      (default: platform-dependent — pi on Pi, laptop elsewhere).
+                      Sets chunk size, vector quantization, hybrid mode, batch
+                      size for indexer.py. Written to compose/.env as RAG_PROFILE.
   --pi                Alias for --platform pi. Kept for back-compat.
   --no-model          Search-only mode: skip the chat-model pull. The embedding
                       model is still pulled (indexing needs it). RAG queries
@@ -107,6 +122,8 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --bundle)      BUNDLE="${2:?--bundle requires an argument}"; BUNDLE_EXPLICIT=true; shift 2 ;;
+        --add)         CUSTOM_ADDS+=("${2:?--add requires <url|handle>}"); shift 2 ;;
+        --profile)     PROFILE="${2:?--profile requires an argument}"; PROFILE_EXPLICIT=true; shift 2 ;;
         --model)       DEFAULT_MODEL="${2:?--model requires an argument}"; MODEL_EXPLICIT=true; shift 2 ;;
         --platform)    PLATFORM="${2:?--platform requires an argument}"; shift 2 ;;
         --pi)          PLATFORM="pi"; shift ;;
@@ -168,6 +185,7 @@ case "${PLATFORM}" in
         PLATFORM_DEFAULT_BUNDLE="minimal"
         PLATFORM_DEFAULT_MODEL="qwen2.5:1.5b"
         PLATFORM_DEFAULT_MAX_ARTICLES=3000
+        PLATFORM_DEFAULT_PROFILE="pi"
         ;;
     mac)
         COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
@@ -175,6 +193,7 @@ case "${PLATFORM}" in
         PLATFORM_DEFAULT_BUNDLE="balanced"
         PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
         PLATFORM_DEFAULT_MAX_ARTICLES=0
+        PLATFORM_DEFAULT_PROFILE="laptop"
         ;;
     wsl)
         COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
@@ -182,6 +201,7 @@ case "${PLATFORM}" in
         PLATFORM_DEFAULT_BUNDLE="balanced"
         PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
         PLATFORM_DEFAULT_MAX_ARTICLES=0
+        PLATFORM_DEFAULT_PROFILE="laptop"
         ;;
     linux|*)
         COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
@@ -189,6 +209,7 @@ case "${PLATFORM}" in
         PLATFORM_DEFAULT_BUNDLE="balanced"
         PLATFORM_DEFAULT_MODEL="qwen2.5:7b"
         PLATFORM_DEFAULT_MAX_ARTICLES=0
+        PLATFORM_DEFAULT_PROFILE="laptop"
         ;;
 esac
 
@@ -206,11 +227,31 @@ if [[ "${TOTAL_RAM_GB}" -gt 0 && "${TOTAL_RAM_GB}" -lt 6 ]]; then
     fi
 fi
 
-# Fill bundle/model/cap from the resolved platform profile.
+# Fill bundle/model/cap/profile from the resolved platform profile.
 [[ "${BUNDLE_EXPLICIT}" == false ]]       && BUNDLE="${PLATFORM_DEFAULT_BUNDLE}"
 [[ "${MODEL_EXPLICIT}"  == false ]]       && DEFAULT_MODEL="${PLATFORM_DEFAULT_MODEL}"
 [[ "${MAX_ARTICLES_EXPLICIT}" == false ]] && MAX_ARTICLES="${PLATFORM_DEFAULT_MAX_ARTICLES}"
+[[ "${PROFILE_EXPLICIT}" == false ]]      && PROFILE="${PLATFORM_DEFAULT_PROFILE}"
 DEFAULT_MODEL="${OLLAMA_DEFAULT_MODEL:-${DEFAULT_MODEL}}"
+
+case "${PROFILE}" in
+    pi|laptop|workstation) ;;
+    *) echo "ERROR: invalid --profile: ${PROFILE} (expected: pi, laptop, workstation)" >&2; exit 1 ;;
+esac
+
+# Validate --add usage: only meaningful with --bundle custom.
+if [[ ${#CUSTOM_ADDS[@]} -gt 0 ]] && [[ "${BUNDLE}" != "custom" ]]; then
+    echo "ERROR: --add is only valid with --bundle custom (got --bundle ${BUNDLE})." >&2
+    exit 1
+fi
+if [[ "${BUNDLE}" == "custom" ]] \
+        && [[ ${#CUSTOM_ADDS[@]} -eq 0 ]] \
+        && [[ ! -f "${REPO_ROOT}/bundles/custom/manifest.json" ]]; then
+    echo "ERROR: --bundle custom requires --add <url|handle>, or an existing" >&2
+    echo "       bundles/custom/manifest.json. Build one with:" >&2
+    echo "         scripts/fetch-bundle.sh custom --add <url|handle> [--add ...]" >&2
+    exit 1
+fi
 
 DETECTED_GPU="$(_detect_gpu)"
 DOCKER_RAM_GB="$(_detect_docker_ram_gb)"
@@ -275,6 +316,10 @@ if [[ "${ASSUME_YES}" == false && "${PLATFORM_AUTO}" == true && -t 0 ]]; then
         _cap_label="${MAX_ARTICLES} per ZIM"
     fi
     echo "  │  index cap: ${_cap_label}$([[ "${MAX_ARTICLES_EXPLICIT}" == true ]] && echo '  (explicit)' || echo '  (default)')"
+    echo "  │  profile  : ${PROFILE}$([[ "${PROFILE_EXPLICIT}" == true ]] && echo '  (explicit)' || echo '  (default)')"
+    if [[ ${#CUSTOM_ADDS[@]} -gt 0 ]]; then
+        echo "  │  --add    : ${#CUSTOM_ADDS[@]} archive(s) queued for bundles/custom/manifest.json"
+    fi
     if [[ "${RAM_DOWNGRADED}" == true ]]; then
         echo "  │  ⚠  low RAM (<6 GB) — auto-downgraded to minimal bundle + 1.5b model"
     fi
@@ -392,6 +437,9 @@ _env_set ALLARKIVE_WEBUI_DIR  "${WEBUI_DATA_DIR}" "${ENV_FILE}"
 # .env means manual `docker compose exec rag python indexer.py` runs honour
 # the same cap the user picked at bootstrap time.
 _env_set RAG_MAX_ARTICLES     "${MAX_ARTICLES}" "${ENV_FILE}"
+# RAG_PROFILE picks defaults for chunk size, quantization, hybrid mode, etc.
+# See scripts/rag/profiles.py for the full preset.
+_env_set RAG_PROFILE          "${PROFILE}"      "${ENV_FILE}"
 info "Storage paths written to ${ENV_FILE}."
 
 # Release AllArkive ports before checking availability so re-runs don't
@@ -470,7 +518,18 @@ if [[ "${SKIP_BUNDLE}" == false ]]; then
         else
             info "No ZIM files found. Fetching bundle: ${BUNDLE}..."
         fi
-        "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${ZIM_DIR}"
+        # Forward --add specs to fetch-bundle.sh (only relevant for custom).
+        # Build the arg list, then pass it explicitly to avoid set -u
+        # tripping on an empty array expansion in older bashes.
+        if [[ ${#CUSTOM_ADDS[@]} -gt 0 ]]; then
+            _ADD_ARGS=()
+            for _spec in "${CUSTOM_ADDS[@]}"; do
+                _ADD_ARGS+=(--add "${_spec}")
+            done
+            "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${ZIM_DIR}" "${_ADD_ARGS[@]}"
+        else
+            "${SCRIPT_DIR}/fetch-bundle.sh" "${BUNDLE}" --dest "${ZIM_DIR}"
+        fi
     fi
 else
     info "--skip-bundle set. Skipping ZIM download."
@@ -556,6 +615,7 @@ if docker compose -f "${COMPOSE_FILE}" ps --format json rag 2>/dev/null \
             --zim-dir /data \
             --index-dir /index \
             --ollama-url "${_INDEXER_OLLAMA_URL}" \
+            --profile "${PROFILE}" \
             --max-articles "${MAX_ARTICLES}" \
     && info "Indexing complete." \
     || warn "Indexer returned an error — see logs above. Queries will return no-sources until indexing succeeds."
@@ -586,17 +646,23 @@ from pathlib import Path
 p = '/index/index.db'
 if not Path(p).exists():
     print('  (index not built yet)')
-else:
-    rows = sqlite3.connect(p).execute(
-        'SELECT zim_name, COUNT(*) FROM chunks GROUP BY zim_name ORDER BY zim_name'
-    ).fetchall()
-    if not rows:
-        print('  (index empty)')
-    else:
-        total = sum(n for _, n in rows)
-        for name, n in rows:
-            print(f'  {name[:44]:<44s} {n:>8,d} chunks')
-        print(f'  {\"TOTAL\":<44s} {total:>8,d} chunks')
+    raise SystemExit(0)
+conn = sqlite3.connect(p)
+# Schema v2: indexed_zims.mode tells us dense vs bm25. Dense ZIMs have
+# chunk rows; BM25 ZIMs use the on-ZIM Xapian index at query time.
+zims = list(conn.execute(
+    'SELECT zim_name, mode, article_count, chunk_count FROM indexed_zims ORDER BY zim_name'
+))
+if not zims:
+    print('  (index empty)')
+    raise SystemExit(0)
+total = 0
+for name, mode, _arts, chunks in zims:
+    label = f'{chunks:>8,d} chunks' if mode == 'dense' else '   (bm25)'
+    print(f'  {name[:44]:<44s} {label}')
+    if mode == 'dense':
+        total += chunks
+print(f'  {\"TOTAL\":<44s} {total:>8,d} chunks')
 " 2>/dev/null
 }
 

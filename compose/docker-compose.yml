@@ -137,9 +137,17 @@ services:
       - WEBUI_PUBLIC_URL=http://127.0.0.1:${WEBUI_PORT:-3000}
       - EMBED_MODEL=${EMBED_MODEL:-nomic-embed-text}
       - CHAT_MODEL=${CHAT_MODEL:-qwen2.5:7b}
+      - RAG_PROFILE=${RAG_PROFILE:-laptop}
+      - RAG_QUANTIZATION=${RAG_QUANTIZATION:-int8}
+      - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-}
+      - RAG_CHUNK_OVERLAP=${RAG_CHUNK_OVERLAP:-}
+      - RAG_BATCH_SIZE=${RAG_BATCH_SIZE:-}
+      - RAG_HYBRID=${RAG_HYBRID:-}
+      - RAG_HYBRID_THRESHOLD_GB=${RAG_HYBRID_THRESHOLD_GB:-}
       - RAG_TOP_K=${RAG_TOP_K:-5}
+      - RAG_BM25_K=${RAG_BM25_K:-5}
       - RAG_MAX_DISTANCE=${RAG_MAX_DISTANCE:-1.0}
-      - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-5000}
+      - RAG_MAX_ARTICLES=${RAG_MAX_ARTICLES:-0}
     volumes:
       - "${ALLARKIVE_INDEX_DIR:-/var/lib/allarkive/index}:/index"
       - "${ALLARKIVE_ZIM_DIR:-/var/lib/allarkive/zim}:/data:ro"

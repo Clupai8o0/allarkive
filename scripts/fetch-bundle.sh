@@ -5,20 +5,30 @@
 #   scripts/fetch-bundle.sh <bundle-name> [--dest <dir>]
 #   scripts/fetch-bundle.sh balanced
 #   scripts/fetch-bundle.sh minimal --dest /mnt/ssd/allarkive/zim
+#   scripts/fetch-bundle.sh custom \
+#     --add wikipedia_en_simple_all_maxi_2026-03 \
+#     --add https://example.com/my-archive.zim
 #
 # Arguments:
-#   bundle-name   One of: minimal, balanced, comprehensive
-#   --dest <dir>  ZIM destination directory (default: /var/lib/allarkive/zim)
+#   bundle-name        One of: minimal, balanced, comprehensive, custom
+#   --dest <dir>       ZIM destination directory (default: /var/lib/allarkive/zim)
+#   --add <url|handle> (custom bundle only, repeatable) Adds an archive to
+#                      bundles/custom/manifest.json before downloading.
+#                      Spec can be a full URL or a Kiwix library handle —
+#                      see scripts/build-custom-manifest.py for the
+#                      handle → URL resolution table.
 #
 # What it does:
-#   1. Reads bundles/<bundle-name>/manifest.json
-#   2. For each ZIM in the manifest:
+#   1. For `custom`: rewrites bundles/custom/manifest.json from --add specs
+#      (or uses the existing manifest if no --add given).
+#   2. Reads bundles/<bundle-name>/manifest.json.
+#   3. For each ZIM in the manifest:
 #      a. Skips the file if it already exists and passes checksum verification
 #      b. Downloads the ZIM from the URL in the manifest
 #      c. Downloads the official .sha256 file from Kiwix
 #      d. Verifies the downloaded file
 #      e. If the manifest's sha256 field is non-empty, also checks against it
-#   3. Reports a summary of pass/fail per ZIM
+#   4. Reports a summary of pass/fail per ZIM.
 #
 # Requirements: bash, curl, sha256sum, python3
 
@@ -31,31 +41,42 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 BUNDLE_NAME=""
 DEST_DIR="${ALLARKIVE_DATA_DIR:-/var/lib/allarkive}/zim"
+CUSTOM_ADDS=()
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
 usage() {
     cat >&2 <<EOF
-Usage: $0 <bundle-name> [--dest <dir>]
+Usage: $0 <bundle-name> [--dest <dir>] [--add <url|handle> ...]
 
-  bundle-name   One of: minimal, balanced, comprehensive
-  --dest <dir>  ZIM destination directory (default: ${DEST_DIR})
+  bundle-name        One of: minimal, balanced, comprehensive, custom
+  --dest <dir>       ZIM destination directory (default: ${DEST_DIR})
+  --add <url|handle> (custom only, repeatable) Add an archive to
+                     bundles/custom/manifest.json before fetching. Accepts
+                     full URLs or Kiwix library handles
+                     (e.g. wikipedia_en_simple_all_maxi_2026-03).
 
-Example:
+Examples:
   $0 balanced
   $0 minimal --dest /mnt/ssd/allarkive/zim
+  $0 custom --add wikipedia_en_simple_all_maxi_2026-03
+  $0 custom --add https://download.kiwix.org/zim/other/foo.zim
 EOF
     exit 1
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        minimal|balanced|comprehensive)
+        minimal|balanced|comprehensive|custom)
             BUNDLE_NAME="$1"
             shift
             ;;
         --dest)
             DEST_DIR="${2:?--dest requires an argument}"
+            shift 2
+            ;;
+        --add)
+            CUSTOM_ADDS+=("${2:?--add requires <url|handle>}")
             shift 2
             ;;
         -h|--help)
@@ -73,10 +94,25 @@ if [[ -z "${BUNDLE_NAME}" ]]; then
     usage
 fi
 
+if [[ ${#CUSTOM_ADDS[@]} -gt 0 ]] && [[ "${BUNDLE_NAME}" != "custom" ]]; then
+    echo "ERROR: --add is only valid with 'custom' bundle." >&2
+    usage
+fi
+
+# Build or extend bundles/custom/manifest.json from --add specs.
+if [[ "${BUNDLE_NAME}" == "custom" ]] && [[ ${#CUSTOM_ADDS[@]} -gt 0 ]]; then
+    python3 "${SCRIPT_DIR}/build-custom-manifest.py" "${CUSTOM_ADDS[@]}"
+fi
+
 MANIFEST="${REPO_ROOT}/bundles/${BUNDLE_NAME}/manifest.json"
 
 if [[ ! -f "${MANIFEST}" ]]; then
-    echo "ERROR: manifest not found: ${MANIFEST}" >&2
+    if [[ "${BUNDLE_NAME}" == "custom" ]]; then
+        echo "ERROR: bundles/custom/manifest.json not found." >&2
+        echo "       Build one with: $0 custom --add <url|handle> [--add ...]" >&2
+    else
+        echo "ERROR: manifest not found: ${MANIFEST}" >&2
+    fi
     exit 1
 fi
 

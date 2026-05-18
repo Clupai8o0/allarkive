@@ -54,7 +54,7 @@ System requirements:
 
 After install, open `http://localhost:8080` for the landing page.
 
-> **Heads-up: indexing runs after the stack starts and takes time.** The RAG indexer embeds every ZIM chunk through your local Ollama. On CPU this is **several hours for the balanced bundle**, less for minimal. Leave it running — it's resumable and idempotent. Kiwix browsing works immediately at `http://localhost:8081`; RAG answers in Open WebUI improve as coverage grows, so "no sources found" early on is expected for topics not yet indexed. Watch progress with `docker compose -f compose/docker-compose.yml logs -f rag`.
+> **Heads-up: indexing runs after the stack starts and takes time.** The v0.2 RAG indexer batches embeddings, quantizes vectors to int8 by default, and stores chunks as ZIM offsets instead of full text — the balanced bundle now indexes in **10–25 minutes on a laptop CPU**, well under an hour. On a Raspberry Pi 5, picking `--profile pi` enables BM25 fallback for large ZIMs and brings the `comprehensive` bundle from "weeks" to "an evening." Kiwix browsing works immediately at `http://localhost:8081`; RAG answers in Open WebUI improve as coverage grows. Watch progress with `docker compose -f compose/docker-compose.yml logs -f rag`. See [`docs/rag-optimization.md`](docs/rag-optimization.md) for the profile matrix.
 
 ## Documentation
 
@@ -70,7 +70,8 @@ Pick your starting point:
 | Run a Pi as a dedicated archive node | [`docs/deployment/pi-archive-only.md`](docs/deployment/pi-archive-only.md) |
 | Split the archive and AI across two machines | [`docs/deployment/split.md`](docs/deployment/split.md) |
 | Enable LAN access for other devices | [`docs/deployment/lan-access.md`](docs/deployment/lan-access.md) |
-| Choose a content bundle | [`docs/bundles/README.md`](docs/bundles/README.md) |
+| Choose a content bundle (or compose your own) | [`docs/bundles/README.md`](docs/bundles/README.md) |
+| Tune indexing for a Pi, laptop, or workstation | [`docs/rag-optimization.md`](docs/rag-optimization.md) |
 | Understand how it works | [`docs/ARCHITECTURE.MD`](docs/ARCHITECTURE.MD) |
 | Understand what it protects against | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) |
 | Debug a problem, tune coverage, or speed up indexing | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
@@ -82,8 +83,10 @@ Pick your starting point:
 
 | Script | What it does |
 |--------|-------------|
-| `scripts/bootstrap.sh` | First-run setup. Checks prerequisites, creates data directories, fetches a bundle, starts the Docker Compose stack, pulls both AI models, and runs the RAG indexer. Idempotent — safe to re-run. Accepts `--bundle`, `--pi`, `--zim-dir`, `--models-dir`, and other flags. |
-| `scripts/fetch-bundle.sh` | Downloads a named bundle (`minimal`, `balanced`, or `comprehensive`). Verifies every ZIM file against its SHA-256 checksum and stops on any failure. Resumes interrupted downloads. |
+| `scripts/bootstrap.sh` | First-run setup. Checks prerequisites, creates data directories, fetches a bundle, starts the Docker Compose stack, pulls both AI models, and runs the RAG indexer. Idempotent — safe to re-run. Accepts `--bundle` (incl. `custom`), `--profile pi\|laptop\|workstation`, `--add <url\|handle>` (custom only), `--pi`, `--zim-dir`, `--models-dir`, and other flags. |
+| `scripts/fetch-bundle.sh` | Downloads a named bundle (`minimal`, `balanced`, `comprehensive`, or `custom`). Verifies every ZIM file against its SHA-256 checksum and stops on any failure. Resumes interrupted downloads. `custom` accepts repeatable `--add <url\|handle>` flags that resolve to `bundles/custom/manifest.json`. |
+| `scripts/build-custom-manifest.py` | Builds or extends `bundles/custom/manifest.json` from URLs / Kiwix library handles. Invoked indirectly by `fetch-bundle.sh custom --add …`. |
+| `scripts/reindex.sh` | Rebuilds the RAG vector index at a chosen depth level (`--level quick\|standard\|full`) and profile (`--profile pi\|laptop\|workstation`). Use after switching profiles or quantization modes. |
 | `scripts/teardown.sh` | Stops the Docker Compose stack. Mirrors `bootstrap.sh`'s compose-file selection — pass `--pi` or `--pi-archive` to stop the matching stack. Does not delete data. |
 | `scripts/cleanup.sh` | Stops the stack and optionally removes images (`--images`), data directories (`--data`), or both (`--all`). Prompts before any destructive step. |
 

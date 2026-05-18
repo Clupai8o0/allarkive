@@ -1,8 +1,10 @@
 # AllArkive bundles
 
-A bundle is a curated set of ZIM files — offline knowledge archives in
-Kiwix's packaged format. This page describes the three bundles included
-with AllArkive v0.1, their contents, sizes, and license obligations.
+A bundle is a set of ZIM files — offline knowledge archives in Kiwix's
+packaged format. AllArkive ships three curated bundles (`minimal`,
+`balanced`, `comprehensive`) and supports user-defined bundles via
+`custom`. This page describes the contents, sizes, and license
+obligations for each, plus the workflow for `custom`.
 
 ---
 
@@ -13,6 +15,7 @@ with AllArkive v0.1, their contents, sizes, and license obligations.
 | `minimal` | Pi 4, low-disk machines, testing | ~4 GB | ~2–4 GB | ~6–8 GB |
 | `balanced` | Daily-use laptop (recommended) | ~23 GB | ~5 GB | ~28 GB |
 | `comprehensive` | Large-disk machines, full research | ~330 GB | ~4 GB | ~335 GB |
+| `custom` | Compose your own — any URL or Kiwix handle | varies | varies | varies |
 
 All bundles run fully offline once installed. Updates require re-downloading
 the relevant ZIM files.
@@ -28,6 +31,9 @@ the relevant ZIM files.
 The script downloads each ZIM file listed in `bundles/<name>/manifest.json`,
 verifies the SHA-256 checksum, and stops on any verification failure.
 Do not proceed past a checksum failure — re-download the affected file.
+
+For `custom`, pass one or more `--add <url|handle>` flags. See [Adding a
+custom bundle](#adding-a-custom-bundle) below.
 
 ---
 
@@ -150,29 +156,76 @@ Each bundle's license detail is in `bundles/<name>/LICENSE.md`.
 
 ## Adding a custom bundle
 
-AllArkive does not restrict which ZIM files you use. To add a ZIM not in
-a default bundle:
+AllArkive does not restrict which ZIM files you use. There are three paths:
 
-1. Download the ZIM from `https://download.kiwix.org/zim/` or another
-   trusted source.
-2. Verify the checksum manually:
-   ```bash
-   sha256sum your-file.zim
-   # compare against the .sha256 file published alongside the download
-   ```
-3. Move the verified ZIM to `$ALLARKIVE_DATA_DIR/zim/`.
-4. Restart kiwix-serve so it picks up the new file:
-   ```bash
-   docker compose restart kiwix
-   ```
-5. Re-run the RAG indexer so the new content is searchable via AI:
-   ```bash
-   docker compose exec rag python -m rag.index
-   ```
+- **The `custom` bundle**, driven by `--add` flags. Recommended — uses
+  the same verified download/checksum pipeline as the named bundles.
+- **Build a ZIM from your own documents** (markdown notes, docx files, a
+  folder of HTML, etc.): see [`custom-docs.md`](./custom-docs.md), which
+  walks through the `scripts/make-zim.sh` wrapper.
+- **Drop a ZIM in by hand** — copy the file into
+  `$ALLARKIVE_DATA_DIR/zim/`, restart `kiwix`, re-run the indexer.
 
-**License reminder**: before adding a custom ZIM, confirm its license
-permits your intended use. See the `THREAT_MODEL.md` section on custom
-bundles and poisoned content.
+### Using `custom` with `--add`
+
+Each `--add` takes a Kiwix library handle or a full URL.
+
+```bash
+# At install time, with bootstrap.sh
+scripts/bootstrap.sh --bundle custom \
+    --add wikipedia_en_simple_all_maxi_2026-03 \
+    --add ifixit_en_all_2025-12
+
+# Or after install, just to fetch
+scripts/fetch-bundle.sh custom \
+    --add https://download.kiwix.org/zim/other/foo.zim
+
+# Re-running with --add appends to bundles/custom/manifest.json.
+# Re-running without --add re-fetches whatever the manifest already lists.
+scripts/fetch-bundle.sh custom
+```
+
+What the script does:
+
+1. Calls `scripts/build-custom-manifest.py` with the `--add` specs.
+2. For each spec, either uses the URL verbatim or resolves a Kiwix
+   handle through the project-prefix → download-category map (Wikipedia
+   → `/zim/wikipedia/`, Stack Exchange family → `/zim/stack_exchange/`,
+   etc.).
+3. HEADs the URL to populate approximate size, then writes/appends to
+   `bundles/custom/manifest.json` (gitignored — per-user state).
+4. Downloads + SHA-256 verifies each entry through the standard
+   fetch-bundle path.
+
+### Handles that don't resolve
+
+If a handle's first segment isn't in the mapping table (rare science
+wikis, project subdomains, etc.), the script errors out with a pointer
+to [library.kiwix.org](https://library.kiwix.org/) so you can grab the
+full URL. Either pass the URL, or extend
+[`scripts/build-custom-manifest.py`](../../scripts/build-custom-manifest.py)
+with the new prefix.
+
+### Indexing a custom bundle
+
+The RAG indexer doesn't care what bundle a ZIM came from — it walks
+`$ALLARKIVE_DATA_DIR/zim/` and indexes everything it finds. After
+adding ZIMs, either:
+
+```bash
+# Full reindex with the active profile
+scripts/reindex.sh
+
+# Or just the new ZIMs (the indexer skips already-indexed files)
+docker compose exec rag python indexer.py
+```
+
+### License reminder
+
+Before redistributing your custom bundle, fill out
+`bundles/custom/LICENSE.md` with the per-archive license for everything
+you added. The shipped file is a template. See `docs/THREAT_MODEL.md`
+on custom bundles and poisoned content.
 
 ---
 
@@ -191,19 +244,36 @@ Bundle updates are noted in `CHANGELOG.md`.
 
 ## ZIM file sizes and indexing time
 
-The RAG indexer reads article text from each ZIM, generates embeddings,
-and writes them to `$ALLARKIVE_DATA_DIR/index/index.db`. Approximate times
-on a modern laptop CPU:
+The RAG indexer reads article text from each ZIM, generates embeddings via
+Ollama, and writes them to `$ALLARKIVE_DATA_DIR/index/index.db`.
 
-| Bundle | Index size | First-run index time |
-|--------|-----------|---------------------|
-| minimal | ~200 MB | ~5 minutes |
-| balanced | ~1–2 GB | ~15–30 minutes |
-| comprehensive | ~5–10 GB | ~2–4 hours |
+Indexing time and index size depend on the **profile**
+(`RAG_PROFILE=pi|laptop|workstation`). Full breakdown:
+[`docs/rag-optimization.md`](../rag-optimization.md).
+
+Approximate first-run times on a modern laptop CPU (no GPU) with the
+`laptop` profile:
+
+| Bundle | Index size (v0.2 laptop) | First-run index time |
+|--------|-------------------------|----------------------|
+| minimal | ~50 MB | ~1–3 minutes |
+| balanced | ~400 MB–1 GB | ~10–25 minutes |
+| comprehensive | ~3–5 GB | ~2–4 hours |
+
+On a Raspberry Pi 5 with the `pi` profile (hybrid mode on, BM25
+fallback for ZIMs ≥ 4 GB):
+
+| Bundle | Index size (Pi profile) | First-run index time on Pi 5 |
+|--------|-------------------------|------------------------------|
+| minimal | ~50 MB | ~5–10 minutes |
+| balanced | ~150–300 MB | ~30–60 minutes |
+| comprehensive | ~200–400 MB | ~1–3 hours |
 
 The index persists across restarts. Re-indexing is only needed when ZIM
-files change.
+files change, you switch profiles, or you bump `RAG_QUANTIZATION` /
+`RAG_CHUNK_SIZE`.
 
-The `RAG_MAX_ARTICLES` setting in `compose/.env` caps articles indexed per
-ZIM. The default (5000) keeps indexing time manageable. Increase it on
-faster hardware with more time available.
+The `RAG_MAX_ARTICLES` setting in `compose/.env` caps articles indexed
+per ZIM. With the v0.2 pipeline the default is `0` (unlimited) on
+non-Pi platforms; the Pi profile pairs `RAG_MAX_ARTICLES=0` with hybrid
+mode so coverage stays complete via BM25 for big ZIMs.
